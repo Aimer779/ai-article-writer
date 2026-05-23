@@ -1,31 +1,48 @@
 <template>
   <a-layout-header class="global-header">
     <div class="header-content">
-      <!-- Logo -->
       <div class="logo">
         <router-link to="/">
           AI Article Writer
         </router-link>
       </div>
 
-      <!-- Navigation menu -->
       <a-menu
         v-model:selectedKeys="selectedKeys"
         mode="horizontal"
         :items="menuItems"
         @click="handleMenuClick"
       />
+
+      <div class="user-actions">
+        <a-space v-if="!loginUserStore.isLoggedIn">
+          <a-button type="link" @click="router.push('/user/login')">Login</a-button>
+          <a-button type="primary" @click="router.push('/user/register')">Register</a-button>
+        </a-space>
+        <a-dropdown v-else>
+          <a-button>
+            {{ displayName }}
+          </a-button>
+          <template #overlay>
+            <a-menu @click="handleUserMenuClick">
+              <a-menu-item key="logout">Logout</a-menu-item>
+            </a-menu>
+          </template>
+        </a-dropdown>
+      </div>
     </div>
   </a-layout-header>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import type { MenuProps } from 'ant-design-vue'
+import { message, type MenuProps } from 'ant-design-vue'
+import { useLoginUserStore } from '@/stores'
 
 const router = useRouter()
 const route = useRoute()
+const loginUserStore = useLoginUserStore()
 
 const selectedKeys = ref<string[]>([route.path])
 
@@ -34,14 +51,41 @@ const menuItems = computed<MenuProps['items']>(() => [
     key: '/',
     label: 'Home',
   },
-  {
-    key: '/about',
-    label: 'About',
-  },
+  ...(loginUserStore.isAdmin
+    ? [
+        {
+          key: '/admin/userManage',
+          label: 'User Management',
+        },
+      ]
+    : []),
 ])
 
+const displayName = computed(() => {
+  return loginUserStore.loginUser.userName || loginUserStore.loginUser.userAccount || 'User'
+})
+
+watch(
+  () => route.path,
+  (path) => {
+    selectedKeys.value = [path]
+  },
+)
+
 const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
-  router.push(key)
+  router.push(String(key))
+}
+
+const handleUserMenuClick: MenuProps['onClick'] = async ({ key }) => {
+  if (key === 'logout') {
+    const response = await loginUserStore.logout()
+    if (response.data.code === 0) {
+      message.success('Logged out')
+      router.push('/user/login')
+    } else {
+      message.error(response.data.message || 'Logout failed')
+    }
+  }
 }
 </script>
 
@@ -80,5 +124,11 @@ const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
 :deep(.ant-menu) {
   flex: 1;
   border: none;
+}
+
+.user-actions {
+  display: flex;
+  align-items: center;
+  margin-left: 24px;
 }
 </style>

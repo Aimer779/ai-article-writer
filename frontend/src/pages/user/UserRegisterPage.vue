@@ -7,34 +7,34 @@
         @finish="handleRegister"
       >
         <a-form-item
-          label="Username"
-          name="username"
-          :rules="[{ required: true, message: 'Please input your username!' }]"
+          label="Account"
+          name="userAccount"
+          :rules="[{ required: true, message: 'Please input your account!' }]"
         >
-          <a-input v-model:value="formState.username" />
+          <a-input v-model:value="formState.userAccount" />
         </a-form-item>
 
         <a-form-item
           label="Password"
-          name="password"
+          name="userPassword"
           :rules="[{ required: true, message: 'Please input your password!' }]"
         >
-          <a-input-password v-model:value="formState.password" />
+          <a-input-password v-model:value="formState.userPassword" />
         </a-form-item>
 
         <a-form-item
           label="Confirm Password"
-          name="confirmPassword"
+          name="checkPassword"
           :rules="[
             { required: true, message: 'Please confirm your password!' },
             { validator: validateConfirmPassword }
           ]"
         >
-          <a-input-password v-model:value="formState.confirmPassword" />
+          <a-input-password v-model:value="formState.checkPassword" />
         </a-form-item>
 
         <a-form-item>
-          <a-button type="primary" html-type="submit" block>
+          <a-button type="primary" html-type="submit" block :loading="loading">
             Register
           </a-button>
         </a-form-item>
@@ -48,29 +48,40 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
+import { userRegister, type UserRegisterRequest } from '@/api/user'
 
 const router = useRouter()
 
-const formState = reactive({
-  username: '',
-  password: '',
-  confirmPassword: '',
+const loading = ref(false)
+
+const formState = reactive<UserRegisterRequest>({
+  userAccount: '',
+  userPassword: '',
+  checkPassword: '',
 })
 
 const validateConfirmPassword = async (_rule: any, value: string) => {
-  if (value && value !== formState.password) {
+  if (value && value !== formState.userPassword) {
     throw new Error('Passwords do not match!')
   }
 }
 
-const handleRegister = async (values: any) => {
-  // TODO: Call register API
-  console.log('Register:', values)
-  message.success('Registration successful')
-  router.push('/user/login')
+const handleRegister = async (values: UserRegisterRequest) => {
+  loading.value = true
+  try {
+    const response = await userRegister(values)
+    if (response.data.code === 0) {
+      message.success('Registration successful')
+      router.push('/user/login')
+    } else {
+      message.error(response.data.message || 'Registration failed')
+    }
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 

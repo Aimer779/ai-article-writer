@@ -1,7 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { message } from 'ant-design-vue'
 import HomePage from '@/pages/HomePage.vue'
 import UserLoginPage from '@/pages/user/UserLoginPage.vue'
 import UserRegisterPage from '@/pages/user/UserRegisterPage.vue'
+import { useLoginUserStore } from '@/stores'
+import { USER_ROLE } from '@/constants/user'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -25,8 +28,34 @@ const router = createRouter({
       path: '/admin/userManage',
       name: 'User Management',
       component: () => import('@/pages/admin/UserManagePage.vue'),
+      meta: {
+        requiresAuth: true,
+        requiresAdmin: true,
+      },
     },
   ],
+})
+
+router.beforeEach(async (to) => {
+  const loginUserStore = useLoginUserStore()
+
+  if (!loginUserStore.isLoggedIn && !to.path.startsWith('/user/')) {
+    await loginUserStore.fetchLoginUser()
+  }
+
+  if (to.meta.requiresAuth && !loginUserStore.isLoggedIn) {
+    return {
+      path: '/user/login',
+      query: {
+        redirect: to.fullPath,
+      },
+    }
+  }
+
+  if (to.meta.requiresAdmin && loginUserStore.loginUser.userRole !== USER_ROLE.ADMIN) {
+    message.warning('No permission')
+    return '/'
+  }
 })
 
 export default router

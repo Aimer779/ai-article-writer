@@ -27,6 +27,9 @@ CREATE TABLE IF NOT EXISTS `user` (
   COMMENT='User table';
 
 -- Test data
+-- Default credentials:
+-- admin / admin1234
+-- test_user / test1234
 INSERT INTO `user` (
     id,
     userAccount,
@@ -36,5 +39,5 @@ INSERT INTO `user` (
     userProfile,
     userRole
 ) VALUES
-    (1000000000000000001, 'admin', 'admin_password_hash', 'admin', NULL, '系统管理员', 'admin'),
-    (1000000000000000002, 'test_user', 'test_password_hash', '测试用户', NULL, '测试用户账号', 'user');
+    (1000000000000000001, 'admin', '98dec0af5c1db56bc34188e01c9e2ced', 'admin', NULL, 'System administrator', 'admin'),
+    (1000000000000000002, 'test_user', '103443bedcb2140e97854980db798ce4', 'test_user', NULL, 'Test user account', 'user');

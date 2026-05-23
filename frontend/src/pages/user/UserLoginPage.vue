@@ -7,23 +7,23 @@
         @finish="handleLogin"
       >
         <a-form-item
-          label="Username"
-          name="username"
-          :rules="[{ required: true, message: 'Please input your username!' }]"
+          label="Account"
+          name="userAccount"
+          :rules="[{ required: true, message: 'Please input your account!' }]"
         >
-          <a-input v-model:value="formState.username" />
+          <a-input v-model:value="formState.userAccount" />
         </a-form-item>
 
         <a-form-item
           label="Password"
-          name="password"
+          name="userPassword"
           :rules="[{ required: true, message: 'Please input your password!' }]"
         >
-          <a-input-password v-model:value="formState.password" />
+          <a-input-password v-model:value="formState.userPassword" />
         </a-form-item>
 
         <a-form-item>
-          <a-button type="primary" html-type="submit" block>
+          <a-button type="primary" html-type="submit" block :loading="loading">
             Login
           </a-button>
         </a-form-item>
@@ -37,22 +37,51 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
+import { userLogin, type UserLoginRequest } from '@/api/user'
+import { useLoginUserStore } from '@/stores'
 
 const router = useRouter()
+const route = useRoute()
+const loginUserStore = useLoginUserStore()
 
-const formState = reactive({
-  username: '',
-  password: '',
+const loading = ref(false)
+
+const formState = reactive<UserLoginRequest>({
+  userAccount: '',
+  userPassword: '',
 })
 
-const handleLogin = async (values: any) => {
-  // TODO: Call login API
-  console.log('Login:', values)
-  message.success('Login successful')
-  router.push('/')
+const getRedirectPath = () => {
+  const redirect = route.query.redirect
+  if (typeof redirect !== 'string') {
+    return '/'
+  }
+  if (redirect.startsWith('http')) {
+    const target = new URL(redirect)
+    return target.origin === window.location.origin
+      ? `${target.pathname}${target.search}${target.hash}`
+      : '/'
+  }
+  return redirect
+}
+
+const handleLogin = async (values: UserLoginRequest) => {
+  loading.value = true
+  try {
+    const response = await userLogin(values)
+    if (response.data.code === 0 && response.data.data) {
+      loginUserStore.setLoginUser(response.data.data)
+      message.success('Login successful')
+      router.push(getRedirectPath())
+    } else {
+      message.error(response.data.message || 'Login failed')
+    }
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
