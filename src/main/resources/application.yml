@@ -1,0 +1,52 @@
+spring:
+  application:
+    name: ai-article-writer
+  profiles:
+    active: local
+  # session 配置
+  session:
+    store-type: redis
+    # session 30 天过期
+    timeout: 2592000
+  # MySQL 数据库配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/ai_article_writer
+    username: root
+    password: ${MYSQL_PASSWORD:}
+  # Redis 配置
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+      password:
+mybatis-flex:
+  configuration:
+    map-underscore-to-camel-case: false
+server:
+  port: 8567
+  servlet:
+    context-path: /api
+    # cookie 30 days
+    session:
+      cookie:
+        max-age: 2592000
+# springdoc-openapi settings
+springdoc:
+  group-configs:
+    - group: 'default'
+      paths-to-match: '/**'
+      packages-to-scan: cn.nuist.aiarticlewriter.controller
+# knife4j settings
+knife4j:
+  enable: true
+  setting:
+    language: en
+
+
+
+
+
+
+
