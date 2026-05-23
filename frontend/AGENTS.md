@@ -58,10 +58,8 @@ frontend/
 ## Key Points
 
 1. **API Requests**: Unified in `utils/request.ts` with interceptors configured
-2. **Environment Variables**: Sensitive info uses env vars, e.g., `${MYSQL_PASSWORD:}`
-3. **CORS Proxy**: Vite configured `/api` proxy to backend `http://localhost:8567`
-4. **Type Safety**: Vue components use `.vue` suffix, TypeScript auto-recognizes
-5. **Code Generation**: Run `pnpm openapi2ts` after starting backend to generate API code
+2. **CORS Proxy**: Vite configured `/api` proxy to backend `http://localhost:8567`
+3. **Code Generation**: Run `pnpm openapi2ts` after starting backend to generate API code
 
 
 ## Development Commands
