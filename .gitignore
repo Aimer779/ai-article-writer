@@ -85,6 +85,11 @@ application-local.yml
 application-local.properties
 *.secret
 
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.pnpm-store/
+
 # Spring Boot
 application-local.yml
 application-local.properties
