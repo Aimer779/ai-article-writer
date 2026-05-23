@@ -18,6 +18,7 @@ A full-stack web application for AI-powered article writing, built with Spring B
 | Utility | Hutool | 5.8.x |
 | Connection Pool | HikariCP | 4.0.x |
 | AOP | Spring AOP | - |
+| LLM Integration | LangChain4j | 1.15.x beta |
 
 ### Frontend
 
@@ -36,7 +37,7 @@ ai-article-writer/
 │   ├── controller/        # REST controllers
 │   ├── exception/         # Exception handling
 │   ├── mapper/            # MyBatis-Flex mappers
-│   ├── model/             # Entity, DTO, VO, and enum models
+│   ├── model/             # Entity, DTO, VO, enum, and workflow state models
 │   └── service/           # Business services
 ├── src/main/resources/    # Application resources
 ├── frontend/              # Vue 3 frontend project
@@ -57,7 +58,7 @@ ai-article-writer/
 | `controller` | REST API endpoints, including health checks and user APIs |
 | `exception` | Exception handling with error codes and custom exceptions |
 | `mapper` | MyBatis-Flex data access mappers |
-| `model` | Entities, request DTOs, response VOs, and enums |
+| `model` | Entities, request DTOs, response VOs, enums, and workflow state models |
 | `service` | Business service interfaces and implementations |
 
 ## Code Style
@@ -83,6 +84,15 @@ When adding a new business entity, follow this core path:
 8. Add controller under `controller`.
 9. Use `BusinessException` and `ErrorCode` for validation and business failures.
 10. Use `@AuthCheck` for endpoints that require role-based access control.
+11. For MyBatis-Flex entities, use `@Table(..., camelToUnderline = false)` when table columns use camelCase.
+
+When adding AI article generation workflow code:
+
+1. Use `model/state/article` for runtime state shared between serial agents.
+2. Keep agent outputs as typed serializable state classes.
+3. Do not store LLM call details in `article`; use a dedicated LLM call log table later.
+4. Keep `article` as the current task/result table.
+5. Use `ArticleStatusEnum` and `ArticleStepEnum` for generation status and workflow steps.
 
 ## Development
 
@@ -95,6 +105,14 @@ mvn spring-boot:run
 # Build project
 mvn package
 ```
+
+AI model configuration should be placed in `application-local.yml` or environment variables:
+
+- `langchain4j.open-ai.chat-model.api-key`
+- `langchain4j.open-ai.chat-model.base-url`
+- `langchain4j.open-ai.chat-model.model-name`
+
+Do not commit local API keys.
 
 ### Frontend
 

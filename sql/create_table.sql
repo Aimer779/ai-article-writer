@@ -26,6 +26,35 @@ CREATE TABLE IF NOT EXISTS `user` (
   COLLATE=utf8mb4_unicode_ci
   COMMENT='User table';
 
+-- Article table
+CREATE TABLE IF NOT EXISTS article (
+    id BIGINT AUTO_INCREMENT COMMENT 'Primary key' PRIMARY KEY,
+    taskId VARCHAR(64) NOT NULL COMMENT 'Article generation task ID',
+    userId BIGINT NOT NULL COMMENT 'User ID',
+    topic VARCHAR(500) NOT NULL COMMENT 'Article topic',
+    mainTitle VARCHAR(200) DEFAULT NULL COMMENT 'Main title',
+    subTitle VARCHAR(300) DEFAULT NULL COMMENT 'Subtitle',
+    outline JSON DEFAULT NULL COMMENT 'Article outline in JSON format',
+    content MEDIUMTEXT DEFAULT NULL COMMENT 'Article content in Markdown format',
+    fullContent MEDIUMTEXT DEFAULT NULL COMMENT 'Full article content with images in Markdown format',
+    coverImage VARCHAR(512) DEFAULT NULL COMMENT 'Cover image URL',
+    images JSON DEFAULT NULL COMMENT 'Article image list in JSON format',
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING' COMMENT 'Task status: PENDING/PROCESSING/COMPLETED/FAILED',
+    errorMessage TEXT DEFAULT NULL COMMENT 'Error message',
+    createTime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Create time',
+    completedTime DATETIME DEFAULT NULL COMMENT 'Task completion time',
+    updateTime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Update time',
+    isDelete TINYINT NOT NULL DEFAULT 0 COMMENT 'Logic delete flag: 0-normal, 1-deleted',
+    UNIQUE KEY uk_taskId (taskId),
+    KEY idx_userId (userId),
+    KEY idx_status (status),
+    KEY idx_createTime (createTime),
+    KEY idx_userId_status (userId, status)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci
+  COMMENT='Article table';
+
 -- Test data
 -- Default credentials:
 -- admin / admin1234
