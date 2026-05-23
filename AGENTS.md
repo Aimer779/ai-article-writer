@@ -54,7 +54,7 @@ ai-article-writer/
 | `aop` | Aspect interceptors for cross-cutting concerns |
 | `common` | Common utilities including response wrapper, pagination, and helper classes |
 | `config` | Spring configuration classes |
-| `constant` | Shared constants |
+| `constant` | Shared constants, including centralized AI prompt templates |
 | `controller` | REST API endpoints, including health checks and user APIs |
 | `exception` | Exception handling with error codes and custom exceptions |
 | `mapper` | MyBatis-Flex data access mappers |
@@ -93,6 +93,11 @@ When adding AI article generation workflow code:
 3. Do not store LLM call details in `article`; use a dedicated LLM call log table later.
 4. Keep `article` as the current task/result table.
 5. Use `ArticleStatusEnum` and `ArticleStepEnum` for generation status and workflow steps.
+6. Keep article generation prompt templates in `constant/PromptConstant.java`; do not scatter prompt strings across services or controllers.
+7. Current core prompt templates cover title generation, outline generation, content creation, and image requirement analysis.
+8. Generated articles should be written in English unless a future product requirement says otherwise.
+9. Structured prompt outputs must match the existing state models, such as `TitleResult`, `OutlineResult`, and `ImageRequirement`.
+10. Image requirement output should use `type = cover` for `position = 1`, and `type = section` for section images starting at `position = 2`; `sectionTitle` must exactly match the Markdown section heading.
 
 ## Development
 
