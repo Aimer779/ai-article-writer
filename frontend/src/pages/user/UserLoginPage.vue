@@ -40,7 +40,7 @@
 import { reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
-import { userLogin, type UserLoginRequest } from '@/api/user'
+import { userLogin } from '@/api/userController'
 import { useLoginUserStore } from '@/stores'
 
 const router = useRouter()
@@ -49,7 +49,7 @@ const loginUserStore = useLoginUserStore()
 
 const loading = ref(false)
 
-const formState = reactive<UserLoginRequest>({
+const formState = reactive<API.UserLoginRequest>({
   userAccount: '',
   userPassword: '',
 })
@@ -68,7 +68,7 @@ const getRedirectPath = () => {
   return redirect
 }
 
-const handleLogin = async (values: UserLoginRequest) => {
+const handleLogin = async (values: API.UserLoginRequest) => {
   loading.value = true
   try {
     const response = await userLogin(values)

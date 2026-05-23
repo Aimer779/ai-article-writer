@@ -51,13 +51,13 @@
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
-import { userRegister, type UserRegisterRequest } from '@/api/user'
+import { userRegister } from '@/api/userController'
 
 const router = useRouter()
 
 const loading = ref(false)
 
-const formState = reactive<UserRegisterRequest>({
+const formState = reactive<API.UserRegisterRequest>({
   userAccount: '',
   userPassword: '',
   checkPassword: '',
@@ -69,7 +69,7 @@ const validateConfirmPassword = async (_rule: any, value: string) => {
   }
 }
 
-const handleRegister = async (values: UserRegisterRequest) => {
+const handleRegister = async (values: API.UserRegisterRequest) => {
   loading.value = true
   try {
     const response = await userRegister(values)

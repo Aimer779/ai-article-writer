@@ -1,16 +1,16 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { getLoginUser, userLogout, type LoginUserVO } from '@/api/user'
+import { getLoginUser, userLogout } from '@/api/userController'
 import { USER_ROLE } from '@/constants/user'
 
 export const useLoginUserStore = defineStore('loginUser', () => {
-  const loginUser = ref<LoginUserVO>({})
+  const loginUser = ref<API.LoginUserVO>({})
   const loading = ref(false)
 
   const isLoggedIn = computed(() => Boolean(loginUser.value.id))
   const isAdmin = computed(() => loginUser.value.userRole === USER_ROLE.ADMIN)
 
-  function setLoginUser(user: LoginUserVO = {}) {
+  function setLoginUser(user: API.LoginUserVO = {}) {
     loginUser.value = user
   }
 

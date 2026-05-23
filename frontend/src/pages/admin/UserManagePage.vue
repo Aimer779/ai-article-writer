@@ -69,13 +69,13 @@
 import { computed, reactive, ref, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
 import type { TablePaginationConfig } from 'ant-design-vue'
-import { deleteUser, listUserByPage, type LoginUserVO, type UserQueryRequest } from '@/api/user'
+import { deleteUser, listUserByPage } from '@/api/userController'
 import { USER_ROLE, USER_ROLE_TEXT, type UserRole } from '@/constants/user'
 
 const loading = ref(false)
-const data = ref<LoginUserVO[]>([])
+const data = ref<API.LoginUserVO[]>([])
 
-const searchParams = reactive<UserQueryRequest>({
+const searchParams = reactive<API.UserQueryRequest>({
   pageNum: 1,
   pageSize: 10,
   sortField: 'createTime',
@@ -108,7 +108,7 @@ const loadData = async () => {
     const result = response.data
     if (result.code === 0 && result.data) {
       data.value = result.data.records || []
-      total.value = result.data.totalRow ?? result.data.total ?? 0
+      total.value = result.data.totalRow ?? 0
     } else {
       message.error(result.message || 'Failed to load users')
     }
@@ -135,11 +135,11 @@ const handleReset = () => {
   loadData()
 }
 
-const handleDelete = async (record: LoginUserVO) => {
+const handleDelete = async (record: API.LoginUserVO) => {
   if (!record.id) {
     return
   }
-  const response = await deleteUser(record.id)
+  const response = await deleteUser({ id: record.id })
   if (response.data.code === 0 && response.data.data) {
     message.success('User deleted successfully')
     loadData()

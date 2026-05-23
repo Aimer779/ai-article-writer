@@ -22,6 +22,11 @@ frontend/
 │   ├── main.ts                    # Entry file
 │   ├── App.vue                    # Root component
 │   ├── env.d.ts                   # Type declarations
+│   ├── api/                       # OpenAPI generated API clients and types
+│   │   ├── index.ts
+│   │   ├── typings.d.ts
+│   │   ├── healthController.ts
+│   │   └── userController.ts
 │   ├── pages/                     # Page components
 │   │   ├── HomePage.vue
 │   │   ├── user/
@@ -32,6 +37,8 @@ frontend/
 │   ├── components/                # Shared components
 │   │   ├── GlobalHeader.vue
 │   │   └── GlobalFooter.vue
+│   ├── constants/                 # Shared frontend constants
+│   │   └── user.ts
 │   ├── layouts/                   # Layout components
 │   │   └── BasicLayout.vue
 │   ├── router/                    # Router config
@@ -54,12 +61,18 @@ frontend/
 3. **Path Alias**: Use `@/` to point to `src/` directory
 4. **Route Components**: Use lazy loading `() => import(...)`
 5. **Language**: Code comments, variable names, and UI text use English
+6. **Generated Code**: Keep generated code comments and any manual adjustments in English
 
 ## Key Points
 
 1. **API Requests**: Unified in `utils/request.ts` with interceptors configured
 2. **CORS Proxy**: Vite configured `/api` proxy to backend `http://localhost:8567`
 3. **Code Generation**: Run `pnpm openapi2ts` after starting backend to generate API code
+4. **Generated API Clients**: Generated API clients live under `src/api/`; prefer generated controller functions such as `@/api/userController` over handwritten API wrappers
+5. **Generated Types**: OpenAPI types are generated in `src/api/typings.d.ts` under the global `API` namespace, such as `API.LoginUserVO` and `API.UserLoginRequest`
+6. **User Constants**: User roles and user-related constants should be defined in `src/constants/user.ts`
+7. **Login State**: Login state is managed by `useLoginUserStore` in `src/stores/index.ts`
+8. **Route Auth**: Protected routes should use route metadata such as `requiresAuth` and `requiresAdmin`, with access enforced by the router guard
 
 
 ## Development Commands
@@ -70,6 +83,9 @@ pnpm dev
 
 # Build for production
 pnpm build
+
+# Type check
+pnpm exec vue-tsc --noEmit
 
 # Preview production build
 pnpm preview
