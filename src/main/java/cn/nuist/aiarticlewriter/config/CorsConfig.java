@@ -13,7 +13,7 @@ public class CorsConfig implements WebMvcConfigurer {
         registry.addMapping("/**")
                 // Allow sending cookies
                 .allowCredentials(true)
-                // Allow which domains (must use patterns, otherwise * conflicts with allowCredentials)
+                // Allow all origins by pattern to avoid conflict with allowCredentials
                 .allowedOriginPatterns("*")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")

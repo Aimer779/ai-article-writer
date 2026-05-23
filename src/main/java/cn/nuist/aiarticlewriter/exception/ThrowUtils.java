@@ -3,10 +3,10 @@ package cn.nuist.aiarticlewriter.exception;
 public class ThrowUtils {
 
     /**
-     * Throw exception if condition is true
+     * Throw exception if condition is true.
      *
-     * @param condition
-     * @param runtimeException
+     * @param condition        condition
+     * @param runtimeException runtime exception
      */
     public static void throwIf(boolean condition, RuntimeException runtimeException) {
         if (condition) {
@@ -15,7 +15,7 @@ public class ThrowUtils {
     }
 
     /**
-     * Throw exception if condition is true
+     * Throw exception if condition is true.
      *
      * @param condition condition
      * @param errorCode error code
@@ -25,7 +25,7 @@ public class ThrowUtils {
     }
 
     /**
-     * Throw exception if condition is true
+     * Throw exception if condition is true.
      *
      * @param condition condition
      * @param errorCode error code

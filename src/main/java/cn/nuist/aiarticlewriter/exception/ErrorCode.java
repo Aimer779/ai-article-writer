@@ -16,12 +16,12 @@ public enum ErrorCode {
     OPERATION_ERROR(50001, "Operation failed");
 
     /**
-     * Status code
+     * Status code.
      */
     private final int code;
 
     /**
-     * Message
+     * Message.
      */
     private final String message;
 
