@@ -93,3 +93,6 @@ frontend/.pnpm-store/
 # Spring Boot
 application-local.yml
 application-local.properties
+
+# AI Agents
+.agents/
