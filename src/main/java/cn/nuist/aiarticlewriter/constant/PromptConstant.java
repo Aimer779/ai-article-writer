@@ -25,6 +25,7 @@ public final class PromptConstant {
 
             Input:
             topic: {{topic}}
+            userRequirement: {{userRequirement}}
 
             Output JSON schema:
             {
@@ -53,6 +54,7 @@ public final class PromptConstant {
             topic: {{topic}}
             mainTitle: {{mainTitle}}
             subTitle: {{subTitle}}
+            userRequirement: {{userRequirement}}
 
             Output JSON schema:
             {
@@ -90,6 +92,7 @@ public final class PromptConstant {
             topic: {{topic}}
             mainTitle: {{mainTitle}}
             subTitle: {{subTitle}}
+            userRequirement: {{userRequirement}}
             outlineJson: {{outlineJson}}
             """;
 

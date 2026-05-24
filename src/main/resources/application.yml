@@ -56,5 +56,9 @@ langchain4j:
       timeout: 60s
       max-retries: 2
 
+# Image search configuration
+image-search:
+  pexels:
+    api-key: ${PEXELS_API_KEY:}
 
 
