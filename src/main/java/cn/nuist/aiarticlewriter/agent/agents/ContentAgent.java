@@ -5,6 +5,7 @@ import cn.nuist.aiarticlewriter.constant.PromptConstant;
 import cn.nuist.aiarticlewriter.model.enums.SseMessageTypeEnum;
 import cn.nuist.aiarticlewriter.model.state.article.TitleResult;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -15,6 +16,7 @@ import java.util.function.Consumer;
  */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class ContentAgent {
 
     private final ArticleLlmClient articleLlmClient;
@@ -37,6 +39,9 @@ public class ContentAgent {
                 "subTitle", selectedTitle.getSubTitle(),
                 "outlineMarkdown", outlineMarkdown,
                 "userRequirement", userRequirement));
-        return articleLlmClient.callLlmWithStreaming(prompt, streamHandler, SseMessageTypeEnum.CONTENT);
+        String content = articleLlmClient.callLlmWithStreaming(prompt, streamHandler, SseMessageTypeEnum.CONTENT);
+        log.info("ContentAgent generated content, mainTitle={}, length={}", selectedTitle.getMainTitle(),
+                content.length());
+        return content;
     }
 }

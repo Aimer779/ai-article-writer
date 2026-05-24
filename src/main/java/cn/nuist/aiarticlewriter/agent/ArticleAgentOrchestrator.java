@@ -13,6 +13,7 @@ import cn.nuist.aiarticlewriter.model.state.article.ImageRequirement;
 import cn.nuist.aiarticlewriter.model.state.article.ImageResult;
 import cn.nuist.aiarticlewriter.model.state.article.TitleResult;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -23,6 +24,7 @@ import java.util.function.Consumer;
  */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class ArticleAgentOrchestrator {
 
     private final TitleAgent titleAgent;
@@ -70,12 +72,14 @@ public class ArticleAgentOrchestrator {
      */
     public ArticleState generateTitleOptions(ArticleState state, String userRequirement) {
         return runStage(state, ArticleStepEnum.TITLE, () -> {
+            log.info("Starting title option generation, taskId={}, topic={}", state.getTaskId(), state.getTopic());
             String normalizedRequirement = contextFactory.normalizeUserRequirement(userRequirement);
             List<TitleResult> titleOptions = titleAgent.generateTitleOptions(state.getTopic(), normalizedRequirement);
             resultValidator.validateTitleOptions(titleOptions);
             state.setTitleOptions(titleOptions);
             state.setCurrentStep(ArticleStepEnum.TITLE);
             state.setStatus(ArticleStatusEnum.PENDING);
+            log.info("Title option generation completed, taskId={}, count={}", state.getTaskId(), titleOptions.size());
         });
     }
 
@@ -93,6 +97,7 @@ public class ArticleAgentOrchestrator {
         state.setCurrentStep(ArticleStepEnum.OUTLINE);
         state.setStatus(ArticleStatusEnum.PENDING);
         state.setErrorMessage(null);
+        log.info("Article title selected, taskId={}, mainTitle={}", state.getTaskId(), selectedTitle.getMainTitle());
         return state;
     }
 
@@ -107,11 +112,14 @@ public class ArticleAgentOrchestrator {
     public ArticleState generateOutline(ArticleState state, String userRequirement, Consumer<String> streamHandler) {
         return runStage(state, ArticleStepEnum.OUTLINE, () -> {
             TitleResult selectedTitle = requireSelectedTitle(state);
+            log.info("Starting outline generation, taskId={}, mainTitle={}", state.getTaskId(),
+                    selectedTitle.getMainTitle());
             String normalizedRequirement = contextFactory.normalizeUserRequirement(userRequirement);
             String outlineMarkdown = outlineAgent.generateOutline(state.getTopic(), selectedTitle, normalizedRequirement,
                     streamHandler);
             resultValidator.validateMarkdown("Outline", outlineMarkdown);
             state.setOutlineMarkdown(outlineMarkdown);
+            log.info("Outline generation completed, taskId={}, length={}", state.getTaskId(), outlineMarkdown.length());
         });
     }
 
@@ -126,12 +134,15 @@ public class ArticleAgentOrchestrator {
     public ArticleState generateContent(ArticleState state, String userRequirement, Consumer<String> streamHandler) {
         return runStage(state, ArticleStepEnum.CONTENT, () -> {
             TitleResult selectedTitle = requireSelectedTitle(state);
+            log.info("Starting content generation, taskId={}, mainTitle={}", state.getTaskId(),
+                    selectedTitle.getMainTitle());
             resultValidator.validateMarkdown("Outline", state.getOutlineMarkdown());
             String normalizedRequirement = contextFactory.normalizeUserRequirement(userRequirement);
             String content = contentAgent.generateContent(state.getTopic(), selectedTitle, state.getOutlineMarkdown(),
                     normalizedRequirement, streamHandler);
             resultValidator.validateMarkdown("Article content", content);
             state.setContent(content);
+            log.info("Content generation completed, taskId={}, length={}", state.getTaskId(), content.length());
         });
     }
 
@@ -144,12 +155,15 @@ public class ArticleAgentOrchestrator {
     public ArticleState analyzeImageRequirements(ArticleState state) {
         return runStage(state, ArticleStepEnum.IMAGE_REQUIREMENT, () -> {
             TitleResult selectedTitle = requireSelectedTitle(state);
+            log.info("Starting image requirement analysis, taskId={}", state.getTaskId());
             resultValidator.validateMarkdown("Outline", state.getOutlineMarkdown());
             resultValidator.validateMarkdown("Article content", state.getContent());
             List<ImageRequirement> imageRequirements = imageRequirementAgent.analyzeImageRequirements(selectedTitle,
                     state.getOutlineMarkdown(), state.getContent());
             resultValidator.validateImageRequirements(imageRequirements, selectedTitle, state.getContent());
             state.setImageRequirements(imageRequirements);
+            log.info("Image requirement analysis completed, taskId={}, count={}", state.getTaskId(),
+                    imageRequirements.size());
         });
     }
 
@@ -161,6 +175,7 @@ public class ArticleAgentOrchestrator {
      */
     public ArticleState generateImages(ArticleState state) {
         return runStage(state, ArticleStepEnum.IMAGE_GENERATION, () -> {
+            log.info("Starting image generation, taskId={}", state.getTaskId());
             resultValidator.validateImageRequirementsExist(state.getImageRequirements());
             List<ImageResult> images = imageGenerationAgent.generateImages(state.getImageRequirements());
             resultValidator.validateImageResults(images);
@@ -169,6 +184,7 @@ public class ArticleAgentOrchestrator {
                     .filter(image -> image.getPosition() != null && image.getPosition() == 1)
                     .findFirst()
                     .ifPresent(image -> state.setCoverImage(image.getUrl()));
+            log.info("Image generation completed, taskId={}, count={}", state.getTaskId(), images.size());
         });
     }
 
@@ -180,12 +196,15 @@ public class ArticleAgentOrchestrator {
      */
     public ArticleState assembleFullContent(ArticleState state) {
         return runStage(state, ArticleStepEnum.ASSEMBLE, () -> {
+            log.info("Starting article content assembly, taskId={}", state.getTaskId());
             resultValidator.validateMarkdown("Article content", state.getContent());
             resultValidator.validateImageResults(state.getImages());
             String fullContent = articleContentAssembler.assemble(state.getContent(), state.getImages());
             state.setFullContent(fullContent);
             state.setCurrentStep(ArticleStepEnum.COMPLETED);
             state.setStatus(ArticleStatusEnum.COMPLETED);
+            log.info("Article content assembly completed, taskId={}, length={}", state.getTaskId(),
+                    fullContent.length());
         });
     }
 
@@ -225,5 +244,7 @@ public class ArticleAgentOrchestrator {
     private void markFailed(ArticleState state, ArticleAgentException e) {
         state.setStatus(ArticleStatusEnum.FAILED);
         state.setErrorMessage(e.getMessage());
+        log.info("Article agent stage failed, taskId={}, step={}, error={}", state.getTaskId(), state.getCurrentStep(),
+                e.getMessage());
     }
 }

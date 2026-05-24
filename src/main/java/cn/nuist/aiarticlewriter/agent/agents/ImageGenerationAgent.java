@@ -6,6 +6,7 @@ import cn.nuist.aiarticlewriter.model.state.article.ImageResult;
 import cn.nuist.aiarticlewriter.service.ImageSearchService;
 import cn.nuist.aiarticlewriter.service.ImageStorageService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ import java.util.List;
  */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class ImageGenerationAgent {
 
     private final List<ImageSearchService> imageSearchServices;
@@ -47,7 +49,10 @@ public class ImageGenerationAgent {
             }
             String storedUrl = imageStorageService.uploadImageFromUrl(imageUrl, buildObjectKey(requirement, method));
             imageResults.add(buildImageResult(requirement, storedUrl, method));
+            log.info("ImageGenerationAgent generated image, position={}, method={}, sectionTitle={}",
+                    requirement.getPosition(), method.getValue(), requirement.getSectionTitle());
         }
+        log.info("ImageGenerationAgent completed image generation, count={}", imageResults.size());
         return imageResults;
     }
 

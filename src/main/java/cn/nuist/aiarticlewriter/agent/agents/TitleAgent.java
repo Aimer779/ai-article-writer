@@ -5,6 +5,7 @@ import cn.nuist.aiarticlewriter.constant.PromptConstant;
 import cn.nuist.aiarticlewriter.model.state.article.TitleResult;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.Map;
  */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class TitleAgent {
 
     private final ArticleLlmClient articleLlmClient;
@@ -31,7 +33,9 @@ public class TitleAgent {
                 "topic", topic,
                 "userRequirement", userRequirement));
         String content = articleLlmClient.callLlm(prompt);
-        return articleLlmClient.parseJsonListResponse(content, new TypeReference<>() {
+        List<TitleResult> titleOptions = articleLlmClient.parseJsonListResponse(content, new TypeReference<>() {
         }, "Title options");
+        log.info("TitleAgent generated title options, topic={}, count={}", topic, titleOptions.size());
+        return titleOptions;
     }
 }

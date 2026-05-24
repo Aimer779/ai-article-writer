@@ -5,6 +5,7 @@ import cn.nuist.aiarticlewriter.constant.PromptConstant;
 import cn.nuist.aiarticlewriter.model.enums.SseMessageTypeEnum;
 import cn.nuist.aiarticlewriter.model.state.article.TitleResult;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -15,6 +16,7 @@ import java.util.function.Consumer;
  */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class OutlineAgent {
 
     private final ArticleLlmClient articleLlmClient;
@@ -35,6 +37,9 @@ public class OutlineAgent {
                 "mainTitle", selectedTitle.getMainTitle(),
                 "subTitle", selectedTitle.getSubTitle(),
                 "userRequirement", userRequirement));
-        return articleLlmClient.callLlmWithStreaming(prompt, streamHandler, SseMessageTypeEnum.OUTLINE);
+        String outlineMarkdown = articleLlmClient.callLlmWithStreaming(prompt, streamHandler, SseMessageTypeEnum.OUTLINE);
+        log.info("OutlineAgent generated outline, mainTitle={}, length={}", selectedTitle.getMainTitle(),
+                outlineMarkdown.length());
+        return outlineMarkdown;
     }
 }

@@ -12,6 +12,7 @@ import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -29,7 +30,7 @@ public class ArticleLlmClient {
 
     private final ChatModel chatModel;
 
-    private final StreamingChatModel streamingChatModel;
+    private final ObjectProvider<StreamingChatModel> streamingChatModelProvider;
 
     private final ObjectMapper objectMapper;
 
@@ -52,6 +53,10 @@ public class ArticleLlmClient {
      * @return full model output
      */
     public String callLlmWithStreaming(String prompt, Consumer<String> streamHandler, SseMessageTypeEnum messageType) {
+        StreamingChatModel streamingChatModel = streamingChatModelProvider.getIfAvailable();
+        if (streamingChatModel == null) {
+            throw new ArticleAgentException("StreamingChatModel bean is not configured");
+        }
         StringBuilder contentBuilder = new StringBuilder();
         CountDownLatch latch = new CountDownLatch(1);
         AtomicReference<Throwable> errorRef = new AtomicReference<>();

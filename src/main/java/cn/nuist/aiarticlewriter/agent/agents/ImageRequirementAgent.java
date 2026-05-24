@@ -6,6 +6,7 @@ import cn.nuist.aiarticlewriter.model.state.article.ImageRequirement;
 import cn.nuist.aiarticlewriter.model.state.article.TitleResult;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.Map;
  */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class ImageRequirementAgent {
 
     private final ArticleLlmClient articleLlmClient;
@@ -36,7 +38,10 @@ public class ImageRequirementAgent {
                 "outlineMarkdown", outlineMarkdown,
                 "contentMarkdown", contentMarkdown));
         String content = articleLlmClient.callLlm(prompt);
-        return articleLlmClient.parseJsonListResponse(content, new TypeReference<>() {
+        List<ImageRequirement> imageRequirements = articleLlmClient.parseJsonListResponse(content, new TypeReference<>() {
         }, "Image requirements");
+        log.info("ImageRequirementAgent generated requirements, mainTitle={}, count={}",
+                selectedTitle.getMainTitle(), imageRequirements.size());
+        return imageRequirements;
     }
 }
