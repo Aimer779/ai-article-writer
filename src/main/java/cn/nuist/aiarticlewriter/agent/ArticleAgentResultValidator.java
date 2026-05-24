@@ -1,6 +1,7 @@
 package cn.nuist.aiarticlewriter.agent;
 
 import cn.nuist.aiarticlewriter.model.state.article.ImageRequirement;
+import cn.nuist.aiarticlewriter.model.state.article.ImageResult;
 import cn.nuist.aiarticlewriter.model.state.article.OutlineResult;
 import cn.nuist.aiarticlewriter.model.state.article.OutlineSection;
 import cn.nuist.aiarticlewriter.model.state.article.TitleResult;
@@ -54,6 +55,24 @@ public class ArticleAgentResultValidator {
     }
 
     /**
+     * Validate candidate title generation result.
+     *
+     * @param titleOptions title options
+     */
+    public void validateTitleOptions(List<TitleResult> titleOptions) {
+        if (titleOptions == null || titleOptions.size() < 3 || titleOptions.size() > 5) {
+            throw new ArticleAgentException("Title options must contain 3 to 5 titles");
+        }
+        Set<String> mainTitles = new HashSet<>();
+        for (TitleResult titleOption : titleOptions) {
+            validateTitle(titleOption);
+            if (!mainTitles.add(titleOption.getMainTitle().trim())) {
+                throw new ArticleAgentException("Title option mainTitle cannot be duplicated");
+            }
+        }
+    }
+
+    /**
      * Validate outline generation result.
      *
      * @param outline outline result
@@ -103,6 +122,18 @@ public class ArticleAgentResultValidator {
     }
 
     /**
+     * Validate a required Markdown output.
+     *
+     * @param name output name
+     * @param markdownContent Markdown content
+     */
+    public void validateMarkdown(String name, String markdownContent) {
+        if (isBlank(markdownContent)) {
+            throw new ArticleAgentException(name + " cannot be blank");
+        }
+    }
+
+    /**
      * Validate image requirements against title, outline, and generated content.
      *
      * @param requirements image requirements
@@ -135,6 +166,76 @@ public class ArticleAgentResultValidator {
             validateImageRequirementType(requirement, title, markdownHeadings);
         }
         ensureOutlineSupportsSectionImages(requirements, outline);
+    }
+
+    /**
+     * Validate image requirements against selected title and Markdown content.
+     *
+     * @param requirements image requirements
+     * @param title selected title
+     * @param markdownContent article body
+     */
+    public void validateImageRequirements(List<ImageRequirement> requirements, TitleResult title, String markdownContent) {
+        validateImageRequirementsExist(requirements);
+        Set<String> markdownHeadings = extractMarkdownHeadings(markdownContent);
+        Set<Integer> positions = new HashSet<>();
+        for (int i = 0; i < requirements.size(); i++) {
+            ImageRequirement requirement = requirements.get(i);
+            if (requirement == null) {
+                throw new ArticleAgentException("Image requirement cannot be null");
+            }
+            int expectedPosition = i + 1;
+            if (requirement.getPosition() == null || requirement.getPosition() != expectedPosition) {
+                throw new ArticleAgentException("Image requirement positions must start from 1 and increase by 1");
+            }
+            if (!positions.add(requirement.getPosition())) {
+                throw new ArticleAgentException("Image requirement position cannot be duplicated");
+            }
+            if (isBlank(requirement.getKeywords())) {
+                throw new ArticleAgentException("Image requirement keywords cannot be blank");
+            }
+            validateImageRequirementType(requirement, title, markdownHeadings);
+        }
+    }
+
+    /**
+     * Validate image requirement list exists.
+     *
+     * @param requirements image requirements
+     */
+    public void validateImageRequirementsExist(List<ImageRequirement> requirements) {
+        if (requirements == null || requirements.isEmpty()) {
+            throw new ArticleAgentException("Image requirements cannot be empty");
+        }
+    }
+
+    /**
+     * Validate generated image results.
+     *
+     * @param images image results
+     */
+    public void validateImageResults(List<ImageResult> images) {
+        if (images == null || images.isEmpty()) {
+            throw new ArticleAgentException("Image results cannot be empty");
+        }
+        Set<Integer> positions = new HashSet<>();
+        for (ImageResult image : images) {
+            if (image == null) {
+                throw new ArticleAgentException("Image result cannot be null");
+            }
+            if (image.getPosition() == null || image.getPosition() <= 0) {
+                throw new ArticleAgentException("Image result position is invalid");
+            }
+            if (!positions.add(image.getPosition())) {
+                throw new ArticleAgentException("Image result position cannot be duplicated");
+            }
+            if (isBlank(image.getUrl())) {
+                throw new ArticleAgentException("Image result URL cannot be blank");
+            }
+            if (isBlank(image.getMethod())) {
+                throw new ArticleAgentException("Image result method cannot be blank");
+            }
+        }
     }
 
     private void validateImageRequirementType(ImageRequirement requirement, TitleResult title, Set<String> markdownHeadings) {

@@ -39,7 +39,17 @@ public class ArticleState implements Serializable {
     private String topic;
 
     /**
-     * Title result from the title agent.
+     * Candidate title results from the title agent.
+     */
+    private List<TitleResult> titleOptions;
+
+    /**
+     * Selected title result from user choice.
+     */
+    private TitleResult selectedTitle;
+
+    /**
+     * Legacy title field. Prefer selectedTitle for new workflow code.
      */
     private TitleResult title;
 
@@ -47,6 +57,11 @@ public class ArticleState implements Serializable {
      * Outline result from the outline agent.
      */
     private OutlineResult outline;
+
+    /**
+     * Article outline in Markdown format.
+     */
+    private String outlineMarkdown;
 
     /**
      * Article content in Markdown format.

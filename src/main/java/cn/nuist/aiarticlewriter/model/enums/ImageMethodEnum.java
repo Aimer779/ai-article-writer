@@ -11,7 +11,8 @@ import java.util.Arrays;
 public enum ImageMethodEnum {
 
     PEXELS("Pexels image search", "PEXELS"),
-    PICSUM("Picsum fallback image", "PICSUM");
+    PICSUM("Picsum fallback image", "PICSUM"),
+    AI_GENERATION("AI image generation", "AI_GENERATION");
 
     private final String text;
 

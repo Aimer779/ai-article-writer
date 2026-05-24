@@ -14,24 +14,26 @@ public final class PromptConstant {
     public static final String TITLE_GENERATION_PROMPT = """
             You are a professional English article title planning agent.
 
-            Generate one main title and one subtitle for the article topic.
+            Generate 3 to 5 candidate titles for the article topic.
 
             Requirements:
-            - The main title must be concise, specific, and attractive.
-            - The subtitle must explain the article value and scope.
+            - Each main title must be concise, specific, and attractive.
+            - Each subtitle must explain the article value and scope.
             - Avoid exaggerated, false, or clickbait wording.
             - Keep the language natural for English readers.
-            - Return only valid JSON. Do not include Markdown code fences or explanations.
+            - Return only a valid JSON array. Do not include Markdown code fences or explanations.
 
             Input:
             topic: {{topic}}
             userRequirement: {{userRequirement}}
 
             Output JSON schema:
-            {
-              "mainTitle": "string",
-              "subTitle": "string"
-            }
+            [
+              {
+                "mainTitle": "string",
+                "subTitle": "string"
+              }
+            ]
             """;
 
     /**
@@ -40,15 +42,15 @@ public final class PromptConstant {
     public static final String OUTLINE_GENERATION_PROMPT = """
             You are a professional English article outline planning agent.
 
-            Create a structured outline based on the topic and title.
+            Create a structured Markdown outline based on the topic and title.
 
             Requirements:
             - The outline must be logically ordered and suitable for a complete article.
             - Generate 4 to 6 sections.
             - Each section must include 3 to 5 concrete key points.
-            - Section numbers must start from 1 and increase by 1.
+            - Use Markdown headings and bullet lists.
             - Do not write full paragraphs.
-            - Return only valid JSON. Do not include Markdown code fences or explanations.
+            - Return only Markdown content. Do not include explanations outside the outline.
 
             Input:
             topic: {{topic}}
@@ -56,18 +58,10 @@ public final class PromptConstant {
             subTitle: {{subTitle}}
             userRequirement: {{userRequirement}}
 
-            Output JSON schema:
-            {
-              "sections": [
-                {
-                  "section": 1,
-                  "title": "string",
-                  "points": [
-                    "string"
-                  ]
-                }
-              ]
-            }
+            Output format:
+            ## Section Title
+            - Key point
+            - Key point
             """;
 
     /**
@@ -93,7 +87,7 @@ public final class PromptConstant {
             mainTitle: {{mainTitle}}
             subTitle: {{subTitle}}
             userRequirement: {{userRequirement}}
-            outlineJson: {{outlineJson}}
+            outlineMarkdown: {{outlineMarkdown}}
             """;
 
     /**
@@ -117,7 +111,7 @@ public final class PromptConstant {
             Input:
             mainTitle: {{mainTitle}}
             subTitle: {{subTitle}}
-            outlineJson: {{outlineJson}}
+            outlineMarkdown: {{outlineMarkdown}}
             contentMarkdown: {{contentMarkdown}}
 
             Output JSON schema:
