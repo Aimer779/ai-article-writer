@@ -59,7 +59,7 @@ class ContentAgentTest {
                     log.info("Generated content stream chunk {}: {}", chunkIndex.incrementAndGet(), chunk);
                 });
 
-        String streamingPrefix = SseMessageTypeEnum.CONTENT.getStreamingPrefix();
+        String streamingPrefix = SseMessageTypeEnum.AGENT3_STREAMING.getStreamingPrefix();
         String streamedContent = streamChunks.stream()
                 .map(chunk -> chunk.substring(streamingPrefix.length()))
                 .reduce("", String::concat);

@@ -37,7 +37,8 @@ public class OutlineAgent {
                 "mainTitle", selectedTitle.getMainTitle(),
                 "subTitle", selectedTitle.getSubTitle(),
                 "userRequirement", userRequirement));
-        String outlineMarkdown = articleLlmClient.callLlmWithStreaming(prompt, streamHandler, SseMessageTypeEnum.OUTLINE);
+        String outlineMarkdown = articleLlmClient.callLlmWithStreaming(prompt, streamHandler,
+                SseMessageTypeEnum.AGENT2_STREAMING);
         log.info("OutlineAgent generated outline, mainTitle={}, length={}", selectedTitle.getMainTitle(),
                 outlineMarkdown.length());
         return outlineMarkdown;

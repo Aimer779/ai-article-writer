@@ -39,7 +39,8 @@ public class ContentAgent {
                 "subTitle", selectedTitle.getSubTitle(),
                 "outlineMarkdown", outlineMarkdown,
                 "userRequirement", userRequirement));
-        String content = articleLlmClient.callLlmWithStreaming(prompt, streamHandler, SseMessageTypeEnum.CONTENT);
+        String content = articleLlmClient.callLlmWithStreaming(prompt, streamHandler,
+                SseMessageTypeEnum.AGENT3_STREAMING);
         log.info("ContentAgent generated content, mainTitle={}, length={}", selectedTitle.getMainTitle(),
                 content.length());
         return content;

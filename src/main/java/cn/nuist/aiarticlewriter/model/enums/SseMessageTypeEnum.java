@@ -5,28 +5,45 @@ import lombok.Getter;
 import java.util.Arrays;
 
 /**
- * SSE message type enum for streaming article generation.
+ * SSE message type enum for article generation.
  */
 @Getter
 public enum SseMessageTypeEnum {
 
-    TITLE("Title generation message", "TITLE", "[TITLE]"),
-    OUTLINE("Outline generation message", "OUTLINE", "[OUTLINE]"),
-    CONTENT("Content generation message", "CONTENT", "[CONTENT]"),
-    IMAGE("Image generation message", "IMAGE", "[IMAGE]"),
-    DONE("Workflow done message", "DONE", "[DONE]"),
-    ERROR("Workflow error message", "ERROR", "[ERROR]");
+    AGENT1_COMPLETE("AGENT1_COMPLETE", "Title generation completed"),
+    AGENT2_STREAMING("AGENT2_STREAMING", "Outline streaming output"),
+    AGENT2_COMPLETE("AGENT2_COMPLETE", "Outline generation completed"),
+    AGENT3_STREAMING("AGENT3_STREAMING", "Content streaming output"),
+    AGENT3_COMPLETE("AGENT3_COMPLETE", "Content generation completed"),
+    AGENT4_COMPLETE("AGENT4_COMPLETE", "Image requirement analysis completed"),
+    IMAGE_COMPLETE("IMAGE_COMPLETE", "Single image completed"),
+    AGENT5_COMPLETE("AGENT5_COMPLETE", "Image generation completed"),
+    MERGE_COMPLETE("MERGE_COMPLETE", "Article image merge completed"),
+    ALL_COMPLETE("ALL_COMPLETE", "All article generation steps completed"),
+    ERROR("ERROR", "Error");
 
-    private final String text;
-
+    /**
+     * Message type value.
+     */
     private final String value;
 
-    private final String streamingPrefix;
+    /**
+     * Message type description.
+     */
+    private final String description;
 
-    SseMessageTypeEnum(String text, String value, String streamingPrefix) {
-        this.text = text;
+    SseMessageTypeEnum(String value, String description) {
         this.value = value;
-        this.streamingPrefix = streamingPrefix;
+        this.description = description;
+    }
+
+    /**
+     * Get streaming output message prefix.
+     *
+     * @return message prefix with colon
+     */
+    public String getStreamingPrefix() {
+        return this.value + ":";
     }
 
     /**

@@ -49,7 +49,7 @@ class OutlineAgentTest {
                     log.info("Generated outline stream chunk {}: {}", chunkIndex.incrementAndGet(), chunk);
                 });
 
-        String streamingPrefix = SseMessageTypeEnum.OUTLINE.getStreamingPrefix();
+        String streamingPrefix = SseMessageTypeEnum.AGENT2_STREAMING.getStreamingPrefix();
         String streamedOutline = streamChunks.stream()
                 .map(chunk -> chunk.substring(streamingPrefix.length()))
                 .reduce("", String::concat);
