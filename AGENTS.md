@@ -30,6 +30,7 @@ See [frontend/AGENTS.md](./frontend/AGENTS.md)
 ai-article-writer/
 ├── src/main/java/cn/nuist/aiarticlewriter/
 │   ├── annotation/        # Custom annotations
+│   ├── agent/             # Article generation agents and orchestration support
 │   ├── aop/               # Aspect interceptors
 │   ├── common/            # Common response and request helpers
 │   ├── config/            # Spring configuration
@@ -40,6 +41,7 @@ ai-article-writer/
 │   ├── model/             # Entity, DTO, VO, enum, and workflow state models
 │   └── service/           # Business services
 ├── src/main/resources/    # Application resources
+├── doc/                   # On-demand development reference docs
 ├── frontend/              # Vue 3 frontend project
 ├── sql/                   # Database schema scripts
 ├── pom.xml                # Maven dependencies
@@ -51,6 +53,7 @@ ai-article-writer/
 | Package | Description |
 |---------|-------------|
 | `annotation` | Custom annotations, such as permission checks |
+| `agent` | Article generation agents, orchestration, LLM helpers, content assembly, and SSE support |
 | `aop` | Aspect interceptors for cross-cutting concerns |
 | `common` | Common utilities including response wrapper, pagination, and helper classes |
 | `config` | Spring configuration classes |
@@ -64,6 +67,7 @@ ai-article-writer/
 ## Code Style
 
 - Comments should be written in English.
+- Log messages should be written in English.
 - Java fields and methods use camelCase.
 - API responses should use `BaseResponse` and `ResultUtils`.
 - Business errors should use `BusinessException` with `ErrorCode`.
@@ -71,6 +75,13 @@ ai-article-writer/
 - Do not expose entity objects directly when sensitive fields may be included; return VO objects instead.
 
 ## Key Points
+
+Read these reference docs only when the task is related:
+
+- Article generation workflow: `doc/article-workflow.md`
+- SSE message protocol: `doc/sse-protocol.md`
+- Image search and storage: `doc/image-service.md`
+- Runtime configuration and tests: `doc/runtime-config-and-tests.md`
 
 When adding a new business entity, follow this core path:
 
@@ -94,10 +105,8 @@ When adding AI article generation workflow code:
 4. Keep `article` as the current task/result table.
 5. Use `ArticleStatusEnum` and `ArticleStepEnum` for generation status and workflow steps.
 6. Keep article generation prompt templates in `constant/PromptConstant.java`; do not scatter prompt strings across services or controllers.
-7. Current core prompt templates cover title generation, outline generation, content creation, and image requirement analysis.
-8. Generated articles should be written in English unless a future product requirement says otherwise.
-9. Structured prompt outputs must match the existing state models, such as `TitleResult`, `OutlineResult`, and `ImageRequirement`.
-10. Image requirement output should use `type = cover` for `position = 1`, and `type = section` for section images starting at `position = 2`; `sectionTitle` must exactly match the Markdown section heading.
+7. Generated articles should be written in English unless a future product requirement says otherwise.
+8. Structured prompt outputs must match the existing state models, such as `TitleResult`, `OutlineResult`, and `ImageRequirement`.
 
 ## Development
 
