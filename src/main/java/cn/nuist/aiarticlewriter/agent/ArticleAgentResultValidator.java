@@ -1,5 +1,6 @@
 package cn.nuist.aiarticlewriter.agent;
 
+import cn.nuist.aiarticlewriter.model.enums.ImageMethodEnum;
 import cn.nuist.aiarticlewriter.model.state.article.Agent4Result;
 import cn.nuist.aiarticlewriter.model.state.article.ImageRequirement;
 import cn.nuist.aiarticlewriter.model.state.article.ImageResult;
@@ -163,9 +164,7 @@ public class ArticleAgentResultValidator {
             if (!positions.add(requirement.getPosition())) {
                 throw new ArticleAgentException("Image requirement position cannot be duplicated");
             }
-            if (isBlank(requirement.getKeywords())) {
-                throw new ArticleAgentException("Image requirement keywords cannot be blank");
-            }
+            validateImageRequirementText(requirement);
             validateImageRequirementType(requirement, title, markdownHeadings);
         }
         ensureOutlineSupportsSectionImages(requirements, outline);
@@ -194,9 +193,7 @@ public class ArticleAgentResultValidator {
             if (!positions.add(requirement.getPosition())) {
                 throw new ArticleAgentException("Image requirement position cannot be duplicated");
             }
-            if (isBlank(requirement.getKeywords())) {
-                throw new ArticleAgentException("Image requirement keywords cannot be blank");
-            }
+            validateImageRequirementText(requirement);
             validateImageRequirementPlaceholder(requirement, null);
             validateImageRequirementType(requirement, title, markdownHeadings);
         }
@@ -281,6 +278,33 @@ public class ArticleAgentResultValidator {
         if (contentWithPlaceholders != null && !contentWithPlaceholders.contains(requirement.getPlaceholderId())) {
             throw new ArticleAgentException("Image requirement placeholderId must exist in contentWithPlaceholders");
         }
+    }
+
+    private void validateImageRequirementText(ImageRequirement requirement) {
+        ImageMethodEnum imageMethod = resolveImageMethod(requirement);
+        if (ImageMethodEnum.PEXELS.equals(imageMethod)) {
+            if (isBlank(requirement.getKeywords())) {
+                throw new ArticleAgentException("Pexels image requirement keywords cannot be blank");
+            }
+            return;
+        }
+        if (ImageMethodEnum.AI_GENERATION.equals(imageMethod) || ImageMethodEnum.SVG_DIAGRAM.equals(imageMethod)) {
+            if (isBlank(requirement.getPrompt())) {
+                throw new ArticleAgentException("Generated image requirement prompt cannot be blank");
+            }
+            return;
+        }
+        if (isBlank(requirement.getKeywords()) && isBlank(requirement.getPrompt())) {
+            throw new ArticleAgentException("Image requirement keywords or prompt cannot be blank");
+        }
+    }
+
+    private ImageMethodEnum resolveImageMethod(ImageRequirement requirement) {
+        ImageMethodEnum imageSource = ImageMethodEnum.getEnumByValue(requirement.getImageSource());
+        if (imageSource != null) {
+            return imageSource;
+        }
+        return ImageMethodEnum.getEnumByValue(requirement.getPreferredMethod());
     }
 
     private boolean isCoverImageRequirement(ImageRequirement requirement) {

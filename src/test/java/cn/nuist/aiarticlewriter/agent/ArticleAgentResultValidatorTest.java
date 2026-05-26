@@ -110,14 +110,17 @@ class ArticleAgentResultValidatorTest {
                                 .position(1)
                                 .type("cover")
                                 .sectionTitle(title.getMainTitle())
-                                .keywords("cover")
+                                .imageSource("AI_GENERATION")
+                                .prompt("Create a clean editorial cover illustration.")
                                 .placeholderId("")
                                 .build(),
                         ImageRequirement.builder()
                                 .position(2)
                                 .type("section")
                                 .sectionTitle("Planning the Article")
-                                .keywords("planning")
+                                .imageSource("SVG_DIAGRAM")
+                                .keywords("")
+                                .prompt("Draw a clean concept diagram about article planning.")
                                 .placeholderId("{{IMAGE_PLACEHOLDER_2}}")
                                 .build()))
                 .build();
@@ -136,14 +139,16 @@ class ArticleAgentResultValidatorTest {
                                 .position(1)
                                 .type("cover")
                                 .sectionTitle(title.getMainTitle())
-                                .keywords("cover")
+                                .imageSource("AI_GENERATION")
+                                .prompt("Create a clean editorial cover illustration.")
                                 .placeholderId("")
                                 .build(),
                         ImageRequirement.builder()
                                 .position(2)
                                 .type("section")
                                 .sectionTitle("Planning the Article")
-                                .keywords("planning")
+                                .imageSource("SVG_DIAGRAM")
+                                .prompt("Draw a clean concept diagram about article planning.")
                                 .placeholderId("{{IMAGE_PLACEHOLDER_2}}")
                                 .build()))
                 .build();
@@ -151,6 +156,39 @@ class ArticleAgentResultValidatorTest {
         assertThatThrownBy(() -> validator.validateAgent4Result(result, title, content()))
                 .isInstanceOf(ArticleAgentException.class)
                 .hasMessageContaining("contentWithPlaceholders");
+    }
+
+    @Test
+    void shouldRejectPexelsImageRequirementWhenKeywordsAreBlank() {
+        TitleResult title = title();
+        Agent4Result result = Agent4Result.builder()
+                .contentWithPlaceholders("""
+                        ## Planning the Article
+                        Useful content.
+                        {{IMAGE_PLACEHOLDER_2}}
+                        """)
+                .imageRequirements(List.of(
+                        ImageRequirement.builder()
+                                .position(1)
+                                .type("cover")
+                                .sectionTitle(title.getMainTitle())
+                                .imageSource("AI_GENERATION")
+                                .prompt("Create a clean editorial cover illustration.")
+                                .placeholderId("")
+                                .build(),
+                        ImageRequirement.builder()
+                                .position(2)
+                                .type("section")
+                                .sectionTitle("Planning the Article")
+                                .imageSource("PEXELS")
+                                .keywords("")
+                                .placeholderId("{{IMAGE_PLACEHOLDER_2}}")
+                                .build()))
+                .build();
+
+        assertThatThrownBy(() -> validator.validateAgent4Result(result, title, content()))
+                .isInstanceOf(ArticleAgentException.class)
+                .hasMessageContaining("Pexels");
     }
 
     private TitleResult title() {
