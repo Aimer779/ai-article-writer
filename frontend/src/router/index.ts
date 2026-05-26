@@ -15,6 +15,30 @@ const router = createRouter({
       component: HomePage,
     },
     {
+      path: '/create',
+      name: 'Create Article',
+      component: () => import('@/pages/article/ArticleCreatePage.vue'),
+      meta: {
+        requiresAuth: true,
+      },
+    },
+    {
+      path: '/articles',
+      name: 'My Articles',
+      component: () => import('@/pages/article/ArticleListPage.vue'),
+      meta: {
+        requiresAuth: true,
+      },
+    },
+    {
+      path: '/article/:id',
+      name: 'Article Detail',
+      component: () => import('@/pages/article/ArticleDetailPage.vue'),
+      meta: {
+        requiresAuth: true,
+      },
+    },
+    {
       path: '/user/login',
       name: 'Login',
       component: UserLoginPage,

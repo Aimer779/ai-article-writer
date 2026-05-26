@@ -46,20 +46,36 @@ const loginUserStore = useLoginUserStore()
 
 const selectedKeys = ref<string[]>([route.path])
 
-const menuItems = computed<MenuProps['items']>(() => [
-  {
-    key: '/',
-    label: 'Home',
-  },
-  ...(loginUserStore.isAdmin
-    ? [
-        {
-          key: '/admin/userManage',
-          label: 'User Management',
-        },
-      ]
-    : []),
-])
+const menuItems = computed<MenuProps['items']>(() => {
+  const items: MenuProps['items'] = [
+    {
+      key: '/',
+      label: 'Home',
+    },
+  ]
+
+  if (loginUserStore.isLoggedIn) {
+    items.push(
+      {
+        key: '/create',
+        label: 'Create',
+      },
+      {
+        key: '/articles',
+        label: 'My Articles',
+      },
+    )
+  }
+
+  if (loginUserStore.isAdmin) {
+    items.push({
+      key: '/admin/userManage',
+      label: 'User Management',
+    })
+  }
+
+  return items
+})
 
 const displayName = computed(() => {
   return loginUserStore.loginUser.userName || loginUserStore.loginUser.userAccount || 'User'
@@ -96,6 +112,9 @@ const handleUserMenuClick: MenuProps['onClick'] = async ({ key }) => {
   background: #fff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .header-content {
