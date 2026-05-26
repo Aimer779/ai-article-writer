@@ -3,6 +3,7 @@ package cn.nuist.aiarticlewriter.service;
 import cn.nuist.aiarticlewriter.model.enums.ArticleStatusEnum;
 import cn.nuist.aiarticlewriter.model.entity.Article;
 import cn.nuist.aiarticlewriter.model.entity.User;
+import cn.nuist.aiarticlewriter.model.dto.article.ArticleQueryRequest;
 import cn.nuist.aiarticlewriter.model.state.article.ArticleState;
 import cn.nuist.aiarticlewriter.model.vo.ArticleVO;
 import com.mybatisflex.core.paginate.Page;
@@ -54,6 +55,15 @@ public interface ArticleService {
      * @return article entity
      */
     Article getByTaskId(String taskId);
+
+    /**
+     * Page article view objects by request.
+     *
+     * @param request article query request
+     * @param loginUser current login user
+     * @return article view object page
+     */
+    Page<ArticleVO> listArticleByPage(ArticleQueryRequest request, User loginUser);
 
     /**
      * Page article view objects.

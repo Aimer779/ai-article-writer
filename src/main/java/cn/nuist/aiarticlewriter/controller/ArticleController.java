@@ -1,16 +1,19 @@
 package cn.nuist.aiarticlewriter.controller;
 
+import cn.nuist.aiarticlewriter.agent.support.SseEmitterManager;
 import cn.nuist.aiarticlewriter.common.BaseResponse;
 import cn.nuist.aiarticlewriter.common.DeleteRequest;
 import cn.nuist.aiarticlewriter.common.ResultUtils;
 import cn.nuist.aiarticlewriter.exception.BusinessException;
 import cn.nuist.aiarticlewriter.exception.ErrorCode;
+import cn.nuist.aiarticlewriter.exception.ThrowUtils;
 import cn.nuist.aiarticlewriter.model.dto.article.ArticleCreateRequest;
 import cn.nuist.aiarticlewriter.model.dto.article.ArticleQueryRequest;
 import cn.nuist.aiarticlewriter.model.dto.article.ArticleUpdateRequest;
 import cn.nuist.aiarticlewriter.model.entity.Article;
 import cn.nuist.aiarticlewriter.model.entity.User;
 import cn.nuist.aiarticlewriter.model.vo.ArticleVO;
+import cn.nuist.aiarticlewriter.service.ArticleAsyncService;
 import cn.nuist.aiarticlewriter.service.ArticleService;
 import cn.nuist.aiarticlewriter.service.UserService;
 import com.mybatisflex.core.paginate.Page;
@@ -18,13 +21,16 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 /**
  * Article controller.
@@ -32,10 +38,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/article")
 @Tag(name = "Article Controller")
+@Slf4j
 public class ArticleController {
 
     @Resource
     private ArticleService articleService;
+
+    @Resource
+    private ArticleAsyncService articleAsyncService;
+
+    @Resource
+    private SseEmitterManager sseEmitterManager;
 
     @Resource
     private UserService userService;
@@ -56,7 +69,28 @@ public class ArticleController {
         }
         User loginUser = userService.getLoginUser(request);
         String taskId = articleService.createArticleTask(articleCreateRequest.getTopic(), loginUser);
+        articleAsyncService.executeArticleGeneration(taskId, loginUser.getId(), articleCreateRequest.getTopic(), null);
         return ResultUtils.success(taskId);
+    }
+
+    /**
+     * Get article generation progress by SSE.
+     *
+     * @param taskId article generation task id
+     * @param request HTTP request
+     * @return SSE emitter
+     */
+    @GetMapping("/progress/{taskId}")
+    @Operation(summary = "Get article generation progress")
+    public SseEmitter getProgress(@PathVariable String taskId, HttpServletRequest request) {
+        ThrowUtils.throwIf(taskId == null || taskId.trim().isEmpty(), ErrorCode.PARAMS_ERROR,
+                "Task id cannot be blank");
+        User loginUser = userService.getLoginUser(request);
+        articleService.getArticleVOByTaskId(taskId, loginUser);
+
+        SseEmitter emitter = sseEmitterManager.createEmitter(taskId);
+        log.info("SSE connection established, taskId={}", taskId);
+        return emitter;
     }
 
     /**
@@ -93,6 +127,23 @@ public class ArticleController {
     }
 
     /**
+     * Get article by task id.
+     *
+     * @param taskId article generation task id
+     * @param request HTTP request
+     * @return article view object
+     */
+    @GetMapping("/{taskId}")
+    @Operation(summary = "Get article by task id")
+    public BaseResponse<ArticleVO> getArticleByTaskIdPath(@PathVariable String taskId, HttpServletRequest request) {
+        ThrowUtils.throwIf(taskId == null || taskId.trim().isEmpty(), ErrorCode.PARAMS_ERROR,
+                "Task id cannot be blank");
+        User loginUser = userService.getLoginUser(request);
+        ArticleVO articleVO = articleService.getArticleVOByTaskId(taskId, loginUser);
+        return ResultUtils.success(articleVO);
+    }
+
+    /**
      * Page articles.
      *
      * @param articleQueryRequest article query request
@@ -107,17 +158,22 @@ public class ArticleController {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         User loginUser = userService.getLoginUser(request);
-        Article articleQuery = new Article();
-        BeanUtils.copyProperties(articleQueryRequest, articleQuery);
-        Page<ArticleVO> articlePage = articleService.pageArticleVO(
-                articleQueryRequest.getPageNum(),
-                articleQueryRequest.getPageSize(),
-                articleQuery,
-                articleQueryRequest.getSortField(),
-                articleQueryRequest.getSortOrder(),
-                loginUser
-        );
+        Page<ArticleVO> articlePage = articleService.listArticleByPage(articleQueryRequest, loginUser);
         return ResultUtils.success(articlePage);
+    }
+
+    /**
+     * Page articles.
+     *
+     * @param articleQueryRequest article query request
+     * @param request HTTP request
+     * @return article page
+     */
+    @PostMapping("/list")
+    @Operation(summary = "Page articles")
+    public BaseResponse<Page<ArticleVO>> listArticle(@RequestBody ArticleQueryRequest articleQueryRequest,
+            HttpServletRequest request) {
+        return listArticleByPage(articleQueryRequest, request);
     }
 
     /**

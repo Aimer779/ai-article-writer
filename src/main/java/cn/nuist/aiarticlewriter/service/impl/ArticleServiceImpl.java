@@ -7,6 +7,7 @@ import cn.nuist.aiarticlewriter.exception.BusinessException;
 import cn.nuist.aiarticlewriter.exception.ErrorCode;
 import cn.nuist.aiarticlewriter.exception.ThrowUtils;
 import cn.nuist.aiarticlewriter.mapper.ArticleMapper;
+import cn.nuist.aiarticlewriter.model.dto.article.ArticleQueryRequest;
 import cn.nuist.aiarticlewriter.model.entity.Article;
 import cn.nuist.aiarticlewriter.model.entity.User;
 import cn.nuist.aiarticlewriter.model.enums.ArticleStatusEnum;
@@ -110,6 +111,15 @@ public class ArticleServiceImpl implements ArticleService {
         QueryWrapper queryWrapper = QueryWrapper.create()
                 .eq("taskId", taskId);
         return articleMapper.selectOneByQuery(queryWrapper);
+    }
+
+    @Override
+    public Page<ArticleVO> listArticleByPage(ArticleQueryRequest request, User loginUser) {
+        ThrowUtils.throwIf(request == null, ErrorCode.PARAMS_ERROR);
+        Article article = new Article();
+        BeanUtils.copyProperties(request, article);
+        return pageArticleVO(request.getPageNum(), request.getPageSize(), article, request.getSortField(),
+                request.getSortOrder(), loginUser);
     }
 
     @Override
