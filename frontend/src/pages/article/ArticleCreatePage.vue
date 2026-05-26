@@ -289,6 +289,10 @@ const writingTips = [
   { name: 'Hit the Pain Point', desc: 'Address what users care about most' },
   { name: 'Create Suspense', desc: 'Spark curiosity in readers' },
   { name: 'Use Numbers', desc: 'Concrete data adds persuasion' },
+  { name: 'Tell a Story', desc: 'Narratives make content memorable' },
+  { name: 'Keep It Concise', desc: 'Short paragraphs improve readability' },
+  { name: 'Use Active Voice', desc: 'Direct sentences feel more energetic' },
+  { name: 'Add a Call to Action', desc: 'Guide readers on what to do next' },
 ]
 
 function selectTopic(topic: string) {
@@ -333,7 +337,6 @@ onUnmounted(() => {
 }
 
 .main-row {
-  max-width: 1400px;
   margin: 0 auto;
   align-items: flex-start;
 }
@@ -495,7 +498,7 @@ onUnmounted(() => {
 .tips-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 20px;
 }
 
 .tip-item {
