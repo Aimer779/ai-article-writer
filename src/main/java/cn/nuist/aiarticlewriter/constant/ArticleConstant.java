@@ -49,4 +49,14 @@ public interface ArticleConstant {
      * Maximum Bing image search result count.
      */
     int BING_MAX_IMAGES = 30;
+
+    /**
+     * Default SVG diagram width.
+     */
+    int SVG_DEFAULT_WIDTH = 1200;
+
+    /**
+     * Default SVG diagram height.
+     */
+    int SVG_DEFAULT_HEIGHT = 675;
 }

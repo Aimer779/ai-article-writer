@@ -99,3 +99,9 @@ emoji-pack:
     - instagram.com
     - twitter.com
     - x.com
+
+# SVG conceptual diagram generation configuration
+svg-diagram:
+  default-width: ${SVG_DIAGRAM_DEFAULT_WIDTH:1200}
+  default-height: ${SVG_DIAGRAM_DEFAULT_HEIGHT:675}
+  folder: ${SVG_DIAGRAM_FOLDER:svg-diagrams}

@@ -143,7 +143,12 @@ public class ImageGenerationAgent {
 
     private String buildObjectKey(ImageRequirement requirement, ImageMethodEnum method, ImageAsset asset) {
         String extension = resolveExtension(asset);
-        return "article-images/" + method.getValue().toLowerCase() + "/" + requirement.getPosition() + extension;
+        String folder = asset.getStorageFolder();
+        if (folder == null || folder.isBlank()) {
+            folder = method.getValue().toLowerCase();
+        }
+        folder = folder.replace('\\', '/').replaceAll("^/+", "").replaceAll("/+$", "");
+        return "article-images/" + folder + "/" + requirement.getPosition() + extension;
     }
 
     private String resolveExtension(ImageAsset asset) {

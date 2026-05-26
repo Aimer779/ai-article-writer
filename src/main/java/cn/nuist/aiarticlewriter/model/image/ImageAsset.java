@@ -53,6 +53,11 @@ public class ImageAsset implements Serializable {
     private String fileName;
 
     /**
+     * Suggested storage folder.
+     */
+    private String storageFolder;
+
+    /**
      * MIME content type.
      */
     private String contentType;

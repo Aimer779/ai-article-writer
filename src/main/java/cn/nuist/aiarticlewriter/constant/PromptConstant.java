@@ -147,4 +147,44 @@ public final class PromptConstant {
               }
             ]
             """;
+
+    /**
+     * Prompt for generating an SVG conceptual diagram.
+     */
+    public static final String SVG_DIAGRAM_GENERATION_PROMPT = """
+            ### Background ###
+            You are a senior information visualization designer.
+            You are skilled at turning abstract ideas, technical concepts, systems, and relationships
+            into clear, modern, article-ready SVG conceptual diagrams.
+
+            ### Requirement ###
+            {{requirement}}
+
+            ### Task Steps ###
+            1. Analyze the core concept and the relationships that must be communicated.
+            2. Choose the most suitable layout, such as center-radial, layered hierarchy, comparison,
+               architecture map, or light process structure.
+            3. Use basic SVG elements such as rectangles, circles, lines, arrows, labels, groups,
+               gradients, and subtle shadows where appropriate.
+            4. Apply a coherent modern color palette and keep the visual hierarchy easy to scan.
+            5. Generate complete, valid, self-contained SVG XML.
+
+            ### Technical Rules ###
+            - Return only SVG XML. Do not include Markdown code fences, explanations, comments, or extra text.
+            - Include the XML declaration: <?xml version="1.0" encoding="UTF-8"?>.
+            - The root element must use width="{{width}}", height="{{height}}",
+              and viewBox="0 0 {{width}} {{height}}".
+            - Use font-family="Arial, sans-serif" for text.
+            - Use semantic id and class names.
+            - The SVG must be self-contained. Do not reference external images, fonts, stylesheets, scripts, or URLs.
+            - Do not use script, foreignObject, animation, event handlers, or interactive elements.
+
+            ### Visual Style ###
+            - Use a clean technical-documentation style with enough whitespace and balanced spacing.
+            - Prefer a blue-centered palette such as #4A90D9, #6BB3F0, and #E8F4FC,
+              with neutral text colors and restrained accent colors when useful.
+            - Use readable labels, usually 14px to 18px, with strong contrast.
+            - Use arrows or connector lines for direction and relationships, usually 2px to 3px.
+            - Keep all text in English, concise, and useful for understanding the diagram.
+            """;
 }
