@@ -83,30 +83,7 @@ Read these reference docs only when the task is related:
 - Image search and storage: `doc/image-service.md`
 - Runtime configuration and tests: `doc/runtime-config-and-tests.md`
 
-When adding a new business entity, follow this core path:
-
-1. Add database schema in `sql/` if a new table is needed.
-2. Add entity class under `model/entity`.
-3. Add request DTOs under `model/dto/{module}`.
-4. Add response VOs under `model/vo` when entity data needs to be desensitized or reshaped.
-5. Add enums under `model/enums` when fixed business states or roles are needed.
-6. Add mapper under `mapper`.
-7. Add service interface under `service` and implementation under `service/impl`.
-8. Add controller under `controller`.
-9. Use `BusinessException` and `ErrorCode` for validation and business failures.
-10. Use `@AuthCheck` for endpoints that require role-based access control.
-11. For MyBatis-Flex entities, use `@Table(..., camelToUnderline = false)` when table columns use camelCase.
-
-When adding AI article generation workflow code:
-
-1. Use `model/state/article` for runtime state shared between serial agents.
-2. Keep agent outputs as typed serializable state classes.
-3. Do not store LLM call details in `article`; use a dedicated LLM call log table later.
-4. Keep `article` as the current task/result table.
-5. Use `ArticleStatusEnum` and `ArticleStepEnum` for generation status and workflow steps.
-6. Keep article generation prompt templates in `constant/PromptConstant.java`; do not scatter prompt strings across services or controllers.
-7. Generated articles should be written in English unless a future product requirement says otherwise.
-8. Structured prompt outputs must match the existing state models, such as `TitleResult`, `OutlineResult`, and `ImageRequirement`.
+When adding backend business modules, follow the existing entity -> DTO -> VO -> mapper -> service -> controller structure. Use `BaseResponse` / `ResultUtils`, `BusinessException` / `ErrorCode`, and return VO objects instead of exposing entities directly. For MyBatis-Flex entities, use `@Table(..., camelToUnderline = false)` when table columns use camelCase.
 
 ## Development
 
@@ -119,14 +96,6 @@ mvn spring-boot:run
 # Build project
 mvn package
 ```
-
-AI model configuration should be placed in `application-local.yml` or environment variables:
-
-- `langchain4j.open-ai.chat-model.api-key`
-- `langchain4j.open-ai.chat-model.base-url`
-- `langchain4j.open-ai.chat-model.model-name`
-
-Do not commit local API keys.
 
 ### Frontend
 
