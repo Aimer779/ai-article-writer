@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.ByteArrayInputStream;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
@@ -39,7 +40,8 @@ public class CosImageStorageServiceImpl implements ImageStorageService {
             return null;
         }
         if (asset.getMediaType() == ImageMediaTypeEnum.IMAGE_URL) {
-            return uploadFromUrl(asset.getUrl(), objectKey);
+            byte[] bytes = restTemplate.getForObject(URI.create(asset.getUrl()), byte[].class);
+            return uploadBytes(bytes, objectKey, asset.getContentType());
         }
         if (asset.getBytes() != null && asset.getBytes().length > 0) {
             return uploadBytes(asset.getBytes(), objectKey, asset.getContentType());
@@ -55,7 +57,7 @@ public class CosImageStorageServiceImpl implements ImageStorageService {
 
     @Override
     public String uploadFromUrl(String imageUrl, String objectKey) {
-        byte[] bytes = restTemplate.getForObject(imageUrl, byte[].class);
+        byte[] bytes = restTemplate.getForObject(URI.create(imageUrl), byte[].class);
         return uploadBytes(bytes, objectKey, ImageMediaTypeEnum.IMAGE_URL.getContentType());
     }
 
@@ -105,7 +107,11 @@ public class CosImageStorageServiceImpl implements ImageStorageService {
 
     private String buildPublicUrl(String objectKey) {
         if (StrUtil.isNotBlank(cosProperties.getDomain())) {
-            return cosProperties.getDomain().replaceAll("/+$", "") + "/" + objectKey;
+            String domain = cosProperties.getDomain().replaceAll("/+$", "");
+            if (!domain.matches("(?i)^https?://.*")) {
+                domain = "https://" + domain;
+            }
+            return domain + "/" + objectKey;
         }
         return "https://" + cosProperties.getBucketName() + ".cos." + cosProperties.getRegion()
                 + ".myqcloud.com/" + objectKey;

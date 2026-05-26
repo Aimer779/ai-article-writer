@@ -105,3 +105,15 @@ svg-diagram:
   default-width: ${SVG_DIAGRAM_DEFAULT_WIDTH:1200}
   default-height: ${SVG_DIAGRAM_DEFAULT_HEIGHT:675}
   folder: ${SVG_DIAGRAM_FOLDER:svg-diagrams}
+
+# AI image generation configuration
+ai-image:
+  api-key: ${DASHSCOPE_API_KEY:}
+  base-url: ${DASHSCOPE_IMAGE_BASE_URL:https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation}
+  model: ${DASHSCOPE_IMAGE_MODEL:qwen-image-2.0}
+  size: ${DASHSCOPE_IMAGE_SIZE:1664*928}
+  negative-prompt: ${DASHSCOPE_IMAGE_NEGATIVE_PROMPT:low quality, blurry, distorted, bad anatomy, messy composition, watermark}
+  prompt-extend: ${DASHSCOPE_IMAGE_PROMPT_EXTEND:true}
+  watermark: ${DASHSCOPE_IMAGE_WATERMARK:false}
+  timeout: ${DASHSCOPE_IMAGE_TIMEOUT:60000}
+  folder: ${DASHSCOPE_IMAGE_FOLDER:ai-generated}
