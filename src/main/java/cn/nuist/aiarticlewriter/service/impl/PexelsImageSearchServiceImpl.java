@@ -1,5 +1,6 @@
 package cn.nuist.aiarticlewriter.service.impl;
 
+import cn.nuist.aiarticlewriter.constant.ArticleConstant;
 import cn.nuist.aiarticlewriter.model.enums.ImageMethodEnum;
 import cn.nuist.aiarticlewriter.service.ImageSearchService;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -26,14 +27,6 @@ import java.nio.charset.StandardCharsets;
 @RequiredArgsConstructor
 public class PexelsImageSearchServiceImpl implements ImageSearchService {
 
-    private static final String PEXELS_SEARCH_URL = "https://api.pexels.com/v1/search";
-
-    private static final int DEFAULT_PER_PAGE = 1;
-
-    private static final int FALLBACK_WIDTH = 1200;
-
-    private static final int FALLBACK_HEIGHT = 800;
-
     private final ObjectMapper objectMapper;
 
     @Value("${image-search.pexels.api-key:}")
@@ -51,10 +44,10 @@ public class PexelsImageSearchServiceImpl implements ImageSearchService {
             return null;
         }
 
-        String requestUrl = UriComponentsBuilder.fromUriString(PEXELS_SEARCH_URL)
+        String requestUrl = UriComponentsBuilder.fromUriString(ArticleConstant.PEXELS_API_URL)
                 .queryParam("query", keywords.trim())
-                .queryParam("per_page", DEFAULT_PER_PAGE)
-                .queryParam("orientation", "landscape")
+                .queryParam("per_page", ArticleConstant.PEXELS_PER_PAGE)
+                .queryParam("orientation", ArticleConstant.PEXELS_ORIENTATION_LANDSCAPE)
                 .encode(StandardCharsets.UTF_8)
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
@@ -79,7 +72,7 @@ public class PexelsImageSearchServiceImpl implements ImageSearchService {
     @Override
     public String getFallbackImage(int position) {
         int safePosition = Math.max(position, 1);
-        return "https://picsum.photos/seed/ai-article-" + safePosition + "/" + FALLBACK_WIDTH + "/" + FALLBACK_HEIGHT;
+        return String.format(ArticleConstant.PICSUM_URL_TEMPLATE, safePosition);
     }
 
     private String parseFirstImageUrl(String responseBody) {

@@ -34,13 +34,13 @@ class PexelsImageSearchServiceImplTest {
     @Test
     void shouldReturnStablePicsumFallbackImage() {
         assertThat(imageSearchService.getFallbackImage(2))
-                .isEqualTo("https://picsum.photos/seed/ai-article-2/1200/800");
+                .isEqualTo("https://picsum.photos/800/600?random=2");
     }
 
     @Test
     void shouldNormalizeInvalidFallbackPosition() {
         assertThat(imageSearchService.getFallbackImage(0))
-                .isEqualTo("https://picsum.photos/seed/ai-article-1/1200/800");
+                .isEqualTo("https://picsum.photos/800/600?random=1");
     }
 
     @Test
