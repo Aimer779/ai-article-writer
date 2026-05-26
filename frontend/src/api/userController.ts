@@ -19,7 +19,7 @@ export async function deleteUser(
 
 /** Get user by id GET /user/get */
 export async function getUserById(
-  // Generated parameter type for non-body request parameters.
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
   params: API.getUserByIdParams,
   options?: { [key: string]: any }
 ) {

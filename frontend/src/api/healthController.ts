@@ -2,7 +2,7 @@
 /* eslint-disable */
 import request from "@/utils/request";
 
-/** Health check GET /health/ */
+/** 此处后端没有提供注释 GET /health/ */
 export async function healthCheck(options?: { [key: string]: any }) {
   return request<string>("/health/", {
     method: "GET",
