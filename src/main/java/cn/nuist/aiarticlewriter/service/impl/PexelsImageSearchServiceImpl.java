@@ -1,8 +1,11 @@
 package cn.nuist.aiarticlewriter.service.impl;
 
 import cn.nuist.aiarticlewriter.constant.ArticleConstant;
+import cn.nuist.aiarticlewriter.model.enums.ImageMediaTypeEnum;
 import cn.nuist.aiarticlewriter.model.enums.ImageMethodEnum;
-import cn.nuist.aiarticlewriter.service.ImageSearchService;
+import cn.nuist.aiarticlewriter.model.image.ImageAsset;
+import cn.nuist.aiarticlewriter.model.image.ImageRequest;
+import cn.nuist.aiarticlewriter.service.ImageService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +28,7 @@ import java.nio.charset.StandardCharsets;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class PexelsImageSearchServiceImpl implements ImageSearchService {
+public class PexelsImageSearchServiceImpl implements ImageService {
 
     private final ObjectMapper objectMapper;
 
@@ -35,7 +38,33 @@ public class PexelsImageSearchServiceImpl implements ImageSearchService {
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Override
-    public String searchImage(String keywords) {
+    public ImageMethodEnum getMethod() {
+        return ImageMethodEnum.PEXELS;
+    }
+
+    @Override
+    public boolean supports(ImageRequest request) {
+        return request != null && request.getKeywords() != null && !request.getKeywords().isBlank();
+    }
+
+    @Override
+    public ImageAsset acquire(ImageRequest request) {
+        String imageUrl = searchImage(request.getKeywords());
+        if (imageUrl == null || imageUrl.isBlank()) {
+            return null;
+        }
+        return ImageAsset.builder()
+                .method(getMethod())
+                .mediaType(ImageMediaTypeEnum.IMAGE_URL)
+                .url(imageUrl)
+                .contentType(ImageMediaTypeEnum.IMAGE_URL.getContentType())
+                .fileName("pexels-" + request.getPosition() + ".jpg")
+                .altText(request.getSectionTitle())
+                .description(request.getType())
+                .build();
+    }
+
+    private String searchImage(String keywords) {
         if (keywords == null || keywords.isBlank()) {
             return null;
         }
@@ -62,17 +91,6 @@ public class PexelsImageSearchServiceImpl implements ImageSearchService {
             log.warn("Failed to search image from Pexels, keywords={}", keywords, e);
             return null;
         }
-    }
-
-    @Override
-    public ImageMethodEnum getMethod() {
-        return ImageMethodEnum.PEXELS;
-    }
-
-    @Override
-    public String getFallbackImage(int position) {
-        int safePosition = Math.max(position, 1);
-        return String.format(ArticleConstant.PICSUM_URL_TEMPLATE, safePosition);
     }
 
     private String parseFirstImageUrl(String responseBody) {

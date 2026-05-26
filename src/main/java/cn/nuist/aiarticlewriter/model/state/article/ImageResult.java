@@ -36,6 +36,11 @@ public class ImageResult implements Serializable {
     private String method;
 
     /**
+     * Image media type, such as IMAGE_URL, SVG, or MERMAID.
+     */
+    private String mediaType;
+
+    /**
      * Image search or generation keywords.
      */
     private String keywords;

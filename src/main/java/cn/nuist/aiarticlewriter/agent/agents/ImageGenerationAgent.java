@@ -1,10 +1,13 @@
 package cn.nuist.aiarticlewriter.agent.agents;
 
 import cn.nuist.aiarticlewriter.model.enums.ImageMethodEnum;
+import cn.nuist.aiarticlewriter.model.image.ImageAsset;
+import cn.nuist.aiarticlewriter.model.image.ImageRequest;
 import cn.nuist.aiarticlewriter.model.state.article.ImageRequirement;
 import cn.nuist.aiarticlewriter.model.state.article.ImageResult;
-import cn.nuist.aiarticlewriter.service.ImageSearchService;
+import cn.nuist.aiarticlewriter.service.ImageService;
 import cn.nuist.aiarticlewriter.service.ImageStorageService;
+import cn.nuist.aiarticlewriter.service.ImageStrategySelector;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,7 +24,9 @@ import java.util.List;
 @Slf4j
 public class ImageGenerationAgent {
 
-    private final List<ImageSearchService> imageSearchServices;
+    private final ImageStrategySelector imageStrategySelector;
+
+    private final List<ImageService> imageServices;
 
     private final ImageStorageService imageStorageService;
 
@@ -36,45 +41,120 @@ public class ImageGenerationAgent {
         if (requirements == null || requirements.isEmpty()) {
             return imageResults;
         }
-        ImageSearchService searchService = getPrimarySearchService();
         List<ImageRequirement> sortedRequirements = requirements.stream()
                 .sorted(Comparator.comparing(ImageRequirement::getPosition))
                 .toList();
         for (ImageRequirement requirement : sortedRequirements) {
-            ImageMethodEnum method = ImageMethodEnum.PEXELS;
-            String imageUrl = searchService.searchImage(requirement.getKeywords());
-            if (imageUrl == null || imageUrl.isBlank()) {
-                imageUrl = searchService.getFallbackImage(requirement.getPosition());
-                method = ImageMethodEnum.PICSUM;
-            }
-            String storedUrl = imageStorageService.uploadImageFromUrl(imageUrl, buildObjectKey(requirement, method));
-            imageResults.add(buildImageResult(requirement, storedUrl, method));
-            log.info("ImageGenerationAgent generated image, position={}, method={}, sectionTitle={}",
-                    requirement.getPosition(), method.getValue(), requirement.getSectionTitle());
+            imageResults.add(generateImage(requirement));
         }
         log.info("ImageGenerationAgent completed image generation, count={}", imageResults.size());
         return imageResults;
     }
 
-    private ImageSearchService getPrimarySearchService() {
-        return imageSearchServices.stream()
-                .filter(imageSearchService -> ImageMethodEnum.PEXELS.equals(imageSearchService.getMethod()))
-                .findFirst()
-                .orElse(imageSearchServices.getFirst());
+    private ImageResult generateImage(ImageRequirement requirement) {
+        ImageRequest request = buildImageRequest(requirement);
+        try {
+            ImageService imageService = imageStrategySelector.select(request);
+            if (imageService == null) {
+                throw new IllegalStateException("No image service available");
+            }
+            ImageAsset asset = imageService.acquire(request);
+            validateAsset(asset);
+            String storedUrl = imageStorageService.upload(asset, buildObjectKey(requirement, asset.getMethod(), asset));
+            if (storedUrl == null || storedUrl.isBlank()) {
+                throw new IllegalStateException("Image storage returned blank URL");
+            }
+            ImageResult imageResult = buildImageResult(requirement, storedUrl, asset);
+            log.info("ImageGenerationAgent generated image, position={}, method={}, sectionTitle={}",
+                    requirement.getPosition(), asset.getMethod().getValue(), requirement.getSectionTitle());
+            return imageResult;
+        } catch (Exception e) {
+            log.warn("Image generation failed, fallback to Picsum, position={}, sectionTitle={}",
+                    requirement.getPosition(), requirement.getSectionTitle(), e);
+            return fallbackToPicsum(requirement, request);
+        }
     }
 
-    private ImageResult buildImageResult(ImageRequirement requirement, String imageUrl, ImageMethodEnum method) {
-        return ImageResult.builder()
+    private ImageResult fallbackToPicsum(ImageRequirement requirement, ImageRequest request) {
+        ImageRequest fallbackRequest = ImageRequest.builder()
+                .position(request.getPosition())
+                .type(request.getType())
+                .sectionTitle(request.getSectionTitle())
+                .keywords(request.getKeywords())
+                .prompt(request.getPrompt())
+                .visualType(request.getVisualType())
+                .aspectRatio(request.getAspectRatio())
+                .style(request.getStyle())
+                .preferredMethod(ImageMethodEnum.PICSUM)
+                .build();
+        ImageAsset fallbackAsset = getPicsumImageService().acquire(fallbackRequest);
+        return buildImageResult(requirement, fallbackAsset.getUrl(), fallbackAsset);
+    }
+
+    private ImageService getPicsumImageService() {
+        return imageServices.stream()
+                .filter(imageService -> ImageMethodEnum.PICSUM.equals(imageService.getMethod()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Picsum image service is not available"));
+    }
+
+    private ImageRequest buildImageRequest(ImageRequirement requirement) {
+        return ImageRequest.builder()
                 .position(requirement.getPosition())
-                .url(imageUrl)
-                .method(method.getValue())
-                .keywords(requirement.getKeywords())
+                .type(requirement.getType())
                 .sectionTitle(requirement.getSectionTitle())
-                .description(requirement.getType())
+                .keywords(requirement.getKeywords())
+                .prompt(requirement.getPrompt() == null ? requirement.getKeywords() : requirement.getPrompt())
+                .visualType(requirement.getVisualType())
+                .aspectRatio(requirement.getAspectRatio())
+                .style(requirement.getStyle())
+                .preferredMethod(ImageMethodEnum.getEnumByValue(requirement.getPreferredMethod()))
                 .build();
     }
 
-    private String buildObjectKey(ImageRequirement requirement, ImageMethodEnum method) {
-        return "article-images/" + method.getValue().toLowerCase() + "/" + requirement.getPosition() + ".jpg";
+    private void validateAsset(ImageAsset asset) {
+        if (asset == null) {
+            throw new IllegalStateException("Image asset cannot be null");
+        }
+        if (asset.getMethod() == null) {
+            throw new IllegalStateException("Image asset method cannot be null");
+        }
+        if (asset.getMediaType() == null) {
+            throw new IllegalStateException("Image asset media type cannot be null");
+        }
+        if ((asset.getUrl() == null || asset.getUrl().isBlank())
+                && (asset.getContent() == null || asset.getContent().isBlank())) {
+            throw new IllegalStateException("Image asset must contain URL or content");
+        }
+    }
+
+    private ImageResult buildImageResult(ImageRequirement requirement, String imageUrl, ImageAsset asset) {
+        return ImageResult.builder()
+                .position(requirement.getPosition())
+                .url(imageUrl)
+                .method(asset.getMethod().getValue())
+                .mediaType(asset.getMediaType().getValue())
+                .keywords(requirement.getKeywords())
+                .sectionTitle(requirement.getSectionTitle())
+                .description(asset.getDescription() == null ? requirement.getType() : asset.getDescription())
+                .build();
+    }
+
+    private String buildObjectKey(ImageRequirement requirement, ImageMethodEnum method, ImageAsset asset) {
+        String extension = resolveExtension(asset);
+        return "article-images/" + method.getValue().toLowerCase() + "/" + requirement.getPosition() + extension;
+    }
+
+    private String resolveExtension(ImageAsset asset) {
+        if (asset.getFileName() != null && asset.getFileName().contains(".")) {
+            return asset.getFileName().substring(asset.getFileName().lastIndexOf('.'));
+        }
+        if (asset.getContentType() != null && asset.getContentType().contains("svg")) {
+            return ".svg";
+        }
+        if (asset.getContentType() != null && asset.getContentType().contains("png")) {
+            return ".png";
+        }
+        return ".jpg";
     }
 }

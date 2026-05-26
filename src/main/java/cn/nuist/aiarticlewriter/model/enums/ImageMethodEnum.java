@@ -11,8 +11,12 @@ import java.util.Arrays;
 public enum ImageMethodEnum {
 
     PEXELS("Pexels image search", "PEXELS"),
+    AI_GENERATION("AI image generation", "AI_GENERATION"),
+    MERMAID("Mermaid diagram generation", "MERMAID"),
+    MEME("Meme image generation", "MEME"),
+    SVG_DIAGRAM("SVG diagram generation", "SVG_DIAGRAM"),
     PICSUM("Picsum fallback image", "PICSUM"),
-    AI_GENERATION("AI image generation", "AI_GENERATION");
+    UNKNOWN("Unknown image method", "UNKNOWN");
 
     private final String text;
 

@@ -1,6 +1,8 @@
 package cn.nuist.aiarticlewriter.service.impl;
 
 import cn.nuist.aiarticlewriter.model.enums.ImageMethodEnum;
+import cn.nuist.aiarticlewriter.model.image.ImageAsset;
+import cn.nuist.aiarticlewriter.model.image.ImageRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
@@ -18,6 +20,9 @@ class PexelsImageSearchServiceImplTest {
     @Autowired
     private PexelsImageSearchServiceImpl imageSearchService;
 
+    @Autowired
+    private PicsumImageServiceImpl picsumImageService;
+
     @Value("${image-search.pexels.api-key:}")
     private String pexelsApiKey;
 
@@ -27,19 +32,31 @@ class PexelsImageSearchServiceImplTest {
     }
 
     @Test
-    void shouldReturnNullWhenKeywordsAreBlank() {
-        assertThat(imageSearchService.searchImage(" ")).isNull();
+    void shouldNotSupportBlankKeywords() {
+        ImageRequest request = ImageRequest.builder()
+                .keywords(" ")
+                .build();
+
+        assertThat(imageSearchService.supports(request)).isFalse();
     }
 
     @Test
     void shouldReturnStablePicsumFallbackImage() {
-        assertThat(imageSearchService.getFallbackImage(2))
+        ImageRequest request = ImageRequest.builder()
+                .position(2)
+                .build();
+
+        assertThat(picsumImageService.acquire(request).getUrl())
                 .isEqualTo("https://picsum.photos/800/600?random=2");
     }
 
     @Test
     void shouldNormalizeInvalidFallbackPosition() {
-        assertThat(imageSearchService.getFallbackImage(0))
+        ImageRequest request = ImageRequest.builder()
+                .position(0)
+                .build();
+
+        assertThat(picsumImageService.acquire(request).getUrl())
                 .isEqualTo("https://picsum.photos/800/600?random=1");
     }
 
@@ -50,11 +67,17 @@ class PexelsImageSearchServiceImplTest {
                 "Pexels API key is not configured");
 
         String keywords = "AI article writing workflow";
-        String imageUrl = imageSearchService.searchImage(keywords);
+        ImageRequest request = ImageRequest.builder()
+                .position(1)
+                .keywords(keywords)
+                .sectionTitle("AI article writing workflow")
+                .type("cover")
+                .build();
+        ImageAsset imageAsset = imageSearchService.acquire(request);
 
-        log.info("Pexels image search result, keywords={}, imageUrl={}", keywords, imageUrl);
+        log.info("Pexels image search result, keywords={}, imageUrl={}", keywords, imageAsset.getUrl());
 
-        assertThat(imageUrl).isNotBlank();
-        assertThat(imageUrl).startsWith("https://");
+        assertThat(imageAsset.getUrl()).isNotBlank();
+        assertThat(imageAsset.getUrl()).startsWith("https://");
     }
 }

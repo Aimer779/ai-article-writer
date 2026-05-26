@@ -1,5 +1,6 @@
-package cn.nuist.aiarticlewriter.model.state.article;
+package cn.nuist.aiarticlewriter.model.image;
 
+import cn.nuist.aiarticlewriter.model.enums.ImageMethodEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,13 +10,13 @@ import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * Image requirement generated from article content.
+ * Unified request for article image acquisition.
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ImageRequirement implements Serializable {
+public class ImageRequest implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -26,7 +27,7 @@ public class ImageRequirement implements Serializable {
     private Integer position;
 
     /**
-     * Image type, such as cover, illustration, or diagram.
+     * Image type, such as cover or section.
      */
     private String type;
 
@@ -36,7 +37,7 @@ public class ImageRequirement implements Serializable {
     private String sectionTitle;
 
     /**
-     * Image search or generation keywords.
+     * Image search keywords.
      */
     private String keywords;
 
@@ -63,5 +64,5 @@ public class ImageRequirement implements Serializable {
     /**
      * Preferred image acquisition method.
      */
-    private String preferredMethod;
+    private ImageMethodEnum preferredMethod;
 }

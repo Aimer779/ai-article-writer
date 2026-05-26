@@ -29,6 +29,7 @@
     <properties>
         <java.version>21</java.version>
         <langchain4j.version>1.15.0-beta25</langchain4j.version>
+        <cos.version>5.6.269</cos.version>
     </properties>
     <dependencies>
         <!-- Spring Boot Web -->
@@ -104,6 +105,13 @@
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-open-ai-spring-boot-starter</artifactId>
             <version>${langchain4j.version}</version>
+        </dependency>
+
+        <!-- Tencent Cloud COS -->
+        <dependency>
+            <groupId>com.qcloud</groupId>
+            <artifactId>cos_api</artifactId>
+            <version>${cos.version}</version>
         </dependency>
 
         <dependency>
