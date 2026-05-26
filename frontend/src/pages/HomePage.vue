@@ -14,7 +14,7 @@
           </a-button>
           <a-button size="large" @click="router.push('/articles')">
             <FileTextOutlined />
-            My Articles
+            History
           </a-button>
         </div>
       </div>

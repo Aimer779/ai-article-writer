@@ -24,7 +24,7 @@ const router = createRouter({
     },
     {
       path: '/articles',
-      name: 'My Articles',
+      name: 'History',
       component: () => import('@/pages/article/ArticleListPage.vue'),
       meta: {
         requiresAuth: true,

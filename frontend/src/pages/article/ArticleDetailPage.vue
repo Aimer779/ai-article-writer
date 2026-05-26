@@ -5,7 +5,7 @@
       <div class="detail-header">
         <a-breadcrumb>
           <a-breadcrumb-item>
-            <router-link to="/articles">My Articles</router-link>
+            <router-link to="/articles">History</router-link>
           </a-breadcrumb-item>
           <a-breadcrumb-item>Article Detail</a-breadcrumb-item>
         </a-breadcrumb>
