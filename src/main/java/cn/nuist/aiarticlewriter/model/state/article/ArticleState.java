@@ -69,6 +69,11 @@ public class ArticleState implements Serializable {
     private String content;
 
     /**
+     * Article content with image placeholders from the image requirement agent.
+     */
+    private String contentWithPlaceholders;
+
+    /**
      * Image requirements from the image requirement agent.
      */
     private List<ImageRequirement> imageRequirements;

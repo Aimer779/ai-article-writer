@@ -94,26 +94,38 @@ public final class PromptConstant {
      * Prompt for analyzing image requirements from article content.
      */
     public static final String IMAGE_REQUIREMENT_ANALYSIS_PROMPT = """
-            You are a professional article visual planning agent.
+            You are a professional article visual editor.
 
-            Analyze the article and produce image requirements for cover and inline illustrations.
+            Analyze the article, plan suitable images, and insert image placeholders into the article body.
 
-            Requirements:
-            - Generate 1 cover image requirement and 2 to 4 section image requirements.
-            - position 1 must be the cover image.
-            - For section images, position must start from 2 and increase by 1.
-            - type must be one of: cover, section.
-            - sectionTitle must exactly match the related heading text in contentMarkdown. Use the main title for the cover image.
-            - keywords must be concise search or generation keywords, separated by commas.
-            - visualType must describe the best visual form: photo, ai_image, flowchart, sequence, architecture_diagram, concept_diagram, meme, or svg_diagram.
-            - preferredMethod must be one of: PEXELS, AI_GENERATION, MERMAID, MEME, SVG_DIAGRAM.
-            - Prefer PEXELS for real-world photos, AI_GENERATION for abstract or hard-to-search scenes, MERMAID for process or sequence diagrams, SVG_DIAGRAM for conceptual diagrams, and MEME only for humorous sections.
-            - prompt must be valid Mermaid source code when preferredMethod is MERMAID. Do not wrap Mermaid code in Markdown fences.
-            - prompt must be a precise generation instruction for other non-Pexels methods, and can reuse keywords for Pexels.
-            - aspectRatio should usually be 16:9.
-            - style should be concise, such as realistic, editorial, minimal, flat, or humorous.
-            - The image plan must support the article content instead of adding unrelated decoration.
-            - Return only valid JSON array. Do not include Markdown code fences or explanations.
+            Available image sources:
+            - PEXELS: Real-world photos, product photos, people, offices, nature, lifestyle, and realistic scenes.
+            - AI_GENERATION: Creative illustrations, abstract concepts, hard-to-search scenes, editorial covers, and stylized visuals.
+            - SVG_DIAGRAM: Concept diagrams, relationship maps, simple logic diagrams, mind-map style explanations, and abstract visual explanations.
+
+            Rules:
+            1. Generate one cover image requirement and a flexible number of section image requirements based on article needs.
+            2. Avoid too many images. Prefer 1 cover image plus 2 to 4 high-value section images for a normal article.
+            3. position must start from 1 and increase by 1. position 1 is always the cover image.
+            4. The cover image does not need a placeholder. Do not insert a cover placeholder into contentWithPlaceholders.
+            5. For every non-cover image, insert one placeholder in contentWithPlaceholders using exactly this format:
+               {{IMAGE_PLACEHOLDER_N}}
+               where N equals the image position. The placeholder must be on its own line.
+            6. placeholderId must exactly match the placeholder inserted into contentWithPlaceholders.
+               For the cover image, placeholderId must be an empty string.
+            7. type must be cover for position 1. Use section for non-cover images.
+            8. For section images, sectionTitle must exactly match the related Markdown heading text in contentMarkdown.
+               For the cover image, sectionTitle must be the main title.
+            9. Only choose imageSource from the available image sources listed above.
+            10. preferredMethod must use the same value as imageSource for backward compatibility.
+            11. For PEXELS, provide accurate and specific English search keywords. prompt can be empty or reuse the keywords.
+            12. For AI_GENERATION, provide a detailed English prompt describing scene, subject, style, composition, and mood. keywords can be concise.
+            13. For SVG_DIAGRAM, provide a clear Chinese or English prompt describing the concept, relationships, nodes, and layout. keywords can be empty.
+            14. visualType should describe the visual form: photo, ai_image, concept_diagram, or svg_diagram.
+            15. aspectRatio should usually be 16:9.
+            16. style should be concise, such as realistic, editorial, minimal, flat, or technical.
+            17. The image plan must support the article content instead of adding unrelated decoration.
+            18. Return only one valid JSON object. Do not include Markdown code fences or explanations.
 
             Input:
             mainTitle: {{mainTitle}}
@@ -122,30 +134,50 @@ public final class PromptConstant {
             contentMarkdown: {{contentMarkdown}}
 
             Output JSON schema:
-            [
-              {
-                "position": 1,
-                "type": "cover",
-                "sectionTitle": "string",
-                "keywords": "string",
-                "prompt": "string",
-                "visualType": "photo",
-                "aspectRatio": "16:9",
-                "style": "realistic",
-                "preferredMethod": "PEXELS"
-              },
-              {
-                "position": 2,
-                "type": "section",
-                "sectionTitle": "string",
-                "keywords": "string",
-                "prompt": "string",
-                "visualType": "flowchart",
-                "aspectRatio": "16:9",
-                "style": "minimal",
-                "preferredMethod": "MERMAID"
-              }
-            ]
+            {
+              "contentWithPlaceholders": "## Section Title\\n\\nParagraph text.\\n\\n{{IMAGE_PLACEHOLDER_2}}\\n\\nMore paragraph text.",
+              "imageRequirements": [
+                {
+                  "position": 1,
+                  "type": "cover",
+                  "sectionTitle": "string",
+                  "keywords": "string",
+                  "imageSource": "AI_GENERATION",
+                  "prompt": "A modern editorial illustration for the article cover, 16:9 aspect ratio, clean composition, no visible text.",
+                  "placeholderId": "",
+                  "visualType": "ai_image",
+                  "aspectRatio": "16:9",
+                  "style": "editorial",
+                  "preferredMethod": "AI_GENERATION"
+                },
+                {
+                  "position": 2,
+                  "type": "section",
+                  "sectionTitle": "string",
+                  "keywords": "business teamwork planning office",
+                  "imageSource": "PEXELS",
+                  "prompt": "",
+                  "placeholderId": "{{IMAGE_PLACEHOLDER_2}}",
+                  "visualType": "photo",
+                  "aspectRatio": "16:9",
+                  "style": "realistic",
+                  "preferredMethod": "PEXELS"
+                },
+                {
+                  "position": 3,
+                  "type": "section",
+                  "sectionTitle": "string",
+                  "keywords": "",
+                  "imageSource": "SVG_DIAGRAM",
+                  "prompt": "Draw a clean concept diagram showing the relationship between the key ideas in this section.",
+                  "placeholderId": "{{IMAGE_PLACEHOLDER_3}}",
+                  "visualType": "svg_diagram",
+                  "aspectRatio": "16:9",
+                  "style": "minimal",
+                  "preferredMethod": "SVG_DIAGRAM"
+                }
+              ]
+            }
             """;
 
     /**

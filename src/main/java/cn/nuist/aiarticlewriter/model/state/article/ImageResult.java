@@ -51,6 +51,11 @@ public class ImageResult implements Serializable {
     private String sectionTitle;
 
     /**
+     * Placeholder ID used to locate the image insertion point in article content.
+     */
+    private String placeholderId;
+
+    /**
      * Image description.
      */
     private String description;

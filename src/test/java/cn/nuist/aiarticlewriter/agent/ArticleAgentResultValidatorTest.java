@@ -1,5 +1,6 @@
 package cn.nuist.aiarticlewriter.agent;
 
+import cn.nuist.aiarticlewriter.model.state.article.Agent4Result;
 import cn.nuist.aiarticlewriter.model.state.article.ImageRequirement;
 import cn.nuist.aiarticlewriter.model.state.article.OutlineResult;
 import cn.nuist.aiarticlewriter.model.state.article.OutlineSection;
@@ -89,6 +90,67 @@ class ArticleAgentResultValidatorTest {
         assertThatThrownBy(() -> validator.validateImageRequirements(requirements, title, outline, content))
                 .isInstanceOf(ArticleAgentException.class)
                 .hasMessageContaining("Markdown heading");
+    }
+
+    @Test
+    void shouldAcceptAgent4ResultWithMatchingPlaceholders() {
+        TitleResult title = title();
+        String contentWithPlaceholders = """
+                ## Planning the Article
+                Useful content.
+                {{IMAGE_PLACEHOLDER_2}}
+
+                ## Validating the Output
+                More useful content.
+                """;
+        Agent4Result result = Agent4Result.builder()
+                .contentWithPlaceholders(contentWithPlaceholders)
+                .imageRequirements(List.of(
+                        ImageRequirement.builder()
+                                .position(1)
+                                .type("cover")
+                                .sectionTitle(title.getMainTitle())
+                                .keywords("cover")
+                                .placeholderId("")
+                                .build(),
+                        ImageRequirement.builder()
+                                .position(2)
+                                .type("section")
+                                .sectionTitle("Planning the Article")
+                                .keywords("planning")
+                                .placeholderId("{{IMAGE_PLACEHOLDER_2}}")
+                                .build()))
+                .build();
+
+        assertThatCode(() -> validator.validateAgent4Result(result, title, content()))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void shouldRejectAgent4ResultWhenPlaceholderIsMissingFromContent() {
+        TitleResult title = title();
+        Agent4Result result = Agent4Result.builder()
+                .contentWithPlaceholders(content())
+                .imageRequirements(List.of(
+                        ImageRequirement.builder()
+                                .position(1)
+                                .type("cover")
+                                .sectionTitle(title.getMainTitle())
+                                .keywords("cover")
+                                .placeholderId("")
+                                .build(),
+                        ImageRequirement.builder()
+                                .position(2)
+                                .type("section")
+                                .sectionTitle("Planning the Article")
+                                .keywords("planning")
+                                .placeholderId("{{IMAGE_PLACEHOLDER_2}}")
+                                .build()))
+                .build();
+
+        assertThatThrownBy(() -> validator.validateAgent4Result(result, title, content()))
+                .isInstanceOf(ArticleAgentException.class)
+                .hasMessageContaining("contentWithPlaceholders");
     }
 
     private TitleResult title() {

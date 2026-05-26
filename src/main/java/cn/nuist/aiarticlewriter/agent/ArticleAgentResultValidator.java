@@ -1,5 +1,6 @@
 package cn.nuist.aiarticlewriter.agent;
 
+import cn.nuist.aiarticlewriter.model.state.article.Agent4Result;
 import cn.nuist.aiarticlewriter.model.state.article.ImageRequirement;
 import cn.nuist.aiarticlewriter.model.state.article.ImageResult;
 import cn.nuist.aiarticlewriter.model.state.article.OutlineResult;
@@ -22,6 +23,8 @@ public class ArticleAgentResultValidator {
     private static final int MAX_TOPIC_LENGTH = 500;
 
     private static final Pattern MARKDOWN_HEADING_PATTERN = Pattern.compile("^#{1,6}\\s+(.+?)\\s*$");
+
+    private static final Pattern IMAGE_PLACEHOLDER_PATTERN = Pattern.compile("\\{\\{IMAGE_PLACEHOLDER_(\\d+)}}");
 
     /**
      * Validate initial article workflow input.
@@ -194,7 +197,28 @@ public class ArticleAgentResultValidator {
             if (isBlank(requirement.getKeywords())) {
                 throw new ArticleAgentException("Image requirement keywords cannot be blank");
             }
+            validateImageRequirementPlaceholder(requirement, null);
             validateImageRequirementType(requirement, title, markdownHeadings);
+        }
+    }
+
+    /**
+     * Validate agent 4 image analysis result.
+     *
+     * @param result agent 4 result
+     * @param title selected title
+     * @param markdownContent original article body
+     */
+    public void validateAgent4Result(Agent4Result result, TitleResult title, String markdownContent) {
+        if (result == null) {
+            throw new ArticleAgentException("Agent 4 result cannot be null");
+        }
+        if (isBlank(result.getContentWithPlaceholders())) {
+            throw new ArticleAgentException("Agent 4 contentWithPlaceholders cannot be blank");
+        }
+        validateImageRequirements(result.getImageRequirements(), title, markdownContent);
+        for (ImageRequirement requirement : result.getImageRequirements()) {
+            validateImageRequirementPlaceholder(requirement, result.getContentWithPlaceholders());
         }
     }
 
@@ -235,6 +259,46 @@ public class ArticleAgentResultValidator {
             if (isBlank(image.getMethod())) {
                 throw new ArticleAgentException("Image result method cannot be blank");
             }
+            validateImageResultPlaceholder(image);
+        }
+    }
+
+    private void validateImageRequirementPlaceholder(ImageRequirement requirement, String contentWithPlaceholders) {
+        if (isBlank(requirement.getPlaceholderId())) {
+            if (contentWithPlaceholders != null && !isCoverImageRequirement(requirement)) {
+                throw new ArticleAgentException("Image requirement placeholderId cannot be blank");
+            }
+            return;
+        }
+        Matcher matcher = IMAGE_PLACEHOLDER_PATTERN.matcher(requirement.getPlaceholderId().trim());
+        if (!matcher.matches()) {
+            throw new ArticleAgentException("Image requirement placeholderId format is invalid");
+        }
+        int placeholderPosition = Integer.parseInt(matcher.group(1));
+        if (requirement.getPosition() == null || placeholderPosition != requirement.getPosition()) {
+            throw new ArticleAgentException("Image requirement placeholderId must match position");
+        }
+        if (contentWithPlaceholders != null && !contentWithPlaceholders.contains(requirement.getPlaceholderId())) {
+            throw new ArticleAgentException("Image requirement placeholderId must exist in contentWithPlaceholders");
+        }
+    }
+
+    private boolean isCoverImageRequirement(ImageRequirement requirement) {
+        return requirement.getPosition() != null && requirement.getPosition() == 1
+                && "cover".equals(requirement.getType());
+    }
+
+    private void validateImageResultPlaceholder(ImageResult image) {
+        if (isBlank(image.getPlaceholderId())) {
+            return;
+        }
+        Matcher matcher = IMAGE_PLACEHOLDER_PATTERN.matcher(image.getPlaceholderId().trim());
+        if (!matcher.matches()) {
+            throw new ArticleAgentException("Image result placeholderId format is invalid");
+        }
+        int placeholderPosition = Integer.parseInt(matcher.group(1));
+        if (image.getPosition() == null || placeholderPosition != image.getPosition()) {
+            throw new ArticleAgentException("Image result placeholderId must match position");
         }
     }
 

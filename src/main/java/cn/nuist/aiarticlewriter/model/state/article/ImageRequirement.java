@@ -41,9 +41,19 @@ public class ImageRequirement implements Serializable {
     private String keywords;
 
     /**
+     * Preferred image source, such as PEXELS, AI_GENERATION, MERMAID, MEME, or SVG_DIAGRAM.
+     */
+    private String imageSource;
+
+    /**
      * Image generation prompt.
      */
     private String prompt;
+
+    /**
+     * Placeholder ID used to locate the image insertion point in article content.
+     */
+    private String placeholderId;
 
     /**
      * Visual intent, such as photo, flowchart, diagram, or meme.

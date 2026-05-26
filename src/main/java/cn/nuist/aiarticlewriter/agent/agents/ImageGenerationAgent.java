@@ -1,6 +1,7 @@
 package cn.nuist.aiarticlewriter.agent.agents;
 
 import cn.nuist.aiarticlewriter.model.enums.ImageMethodEnum;
+import cn.nuist.aiarticlewriter.model.enums.SseMessageTypeEnum;
 import cn.nuist.aiarticlewriter.model.image.ImageAsset;
 import cn.nuist.aiarticlewriter.model.image.ImageRequest;
 import cn.nuist.aiarticlewriter.model.state.article.ImageRequirement;
@@ -8,6 +9,8 @@ import cn.nuist.aiarticlewriter.model.state.article.ImageResult;
 import cn.nuist.aiarticlewriter.service.ImageService;
 import cn.nuist.aiarticlewriter.service.ImageStorageService;
 import cn.nuist.aiarticlewriter.service.ImageStrategySelector;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -15,6 +18,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Agent responsible for acquiring article images and storing them.
@@ -30,6 +34,8 @@ public class ImageGenerationAgent {
 
     private final ImageStorageService imageStorageService;
 
+    private final ObjectMapper objectMapper;
+
     /**
      * Generate image results from image requirements.
      *
@@ -37,6 +43,17 @@ public class ImageGenerationAgent {
      * @return generated image results
      */
     public List<ImageResult> generateImages(List<ImageRequirement> requirements) {
+        return generateImages(requirements, null);
+    }
+
+    /**
+     * Generate image results from image requirements and emit each completed image.
+     *
+     * @param requirements image requirements
+     * @param streamHandler optional stream handler for completed image events
+     * @return generated image results
+     */
+    public List<ImageResult> generateImages(List<ImageRequirement> requirements, Consumer<String> streamHandler) {
         List<ImageResult> imageResults = new ArrayList<>();
         if (requirements == null || requirements.isEmpty()) {
             return imageResults;
@@ -45,7 +62,9 @@ public class ImageGenerationAgent {
                 .sorted(Comparator.comparing(ImageRequirement::getPosition))
                 .toList();
         for (ImageRequirement requirement : sortedRequirements) {
-            imageResults.add(generateImage(requirement));
+            ImageResult imageResult = generateImage(requirement);
+            imageResults.add(imageResult);
+            emitImageComplete(imageResult, streamHandler);
         }
         log.info("ImageGenerationAgent completed image generation, count={}", imageResults.size());
         return imageResults;
@@ -58,6 +77,8 @@ public class ImageGenerationAgent {
             if (imageService == null) {
                 throw new IllegalStateException("No image service available");
             }
+            log.info("ImageGenerationAgent selected image service, position={}, method={}, sectionTitle={}",
+                    requirement.getPosition(), imageService.getMethod().getValue(), requirement.getSectionTitle());
             ImageAsset asset = imageService.acquire(request);
             validateAsset(asset);
             String storedUrl = imageStorageService.upload(asset, buildObjectKey(requirement, asset.getMethod(), asset));
@@ -91,6 +112,18 @@ public class ImageGenerationAgent {
         return buildImageResult(requirement, fallbackAsset.getUrl(), fallbackAsset);
     }
 
+    private void emitImageComplete(ImageResult imageResult, Consumer<String> streamHandler) {
+        if (streamHandler == null || imageResult == null) {
+            return;
+        }
+        try {
+            streamHandler.accept(SseMessageTypeEnum.IMAGE_COMPLETE.getStreamingPrefix()
+                    + objectMapper.writeValueAsString(imageResult));
+        } catch (JsonProcessingException e) {
+            log.warn("Failed to serialize image complete event, position={}", imageResult.getPosition(), e);
+        }
+    }
+
     private ImageService getPicsumImageService() {
         return imageServices.stream()
                 .filter(imageService -> ImageMethodEnum.PICSUM.equals(imageService.getMethod()))
@@ -108,8 +141,16 @@ public class ImageGenerationAgent {
                 .visualType(requirement.getVisualType())
                 .aspectRatio(requirement.getAspectRatio())
                 .style(requirement.getStyle())
-                .preferredMethod(ImageMethodEnum.getEnumByValue(requirement.getPreferredMethod()))
+                .preferredMethod(resolvePreferredMethod(requirement))
                 .build();
+    }
+
+    private ImageMethodEnum resolvePreferredMethod(ImageRequirement requirement) {
+        ImageMethodEnum imageSource = ImageMethodEnum.getEnumByValue(requirement.getImageSource());
+        if (imageSource != null) {
+            return imageSource;
+        }
+        return ImageMethodEnum.getEnumByValue(requirement.getPreferredMethod());
     }
 
     private void validateAsset(ImageAsset asset) {
@@ -137,6 +178,7 @@ public class ImageGenerationAgent {
                 .mediaType(asset.getMediaType().getValue())
                 .keywords(requirement.getKeywords())
                 .sectionTitle(requirement.getSectionTitle())
+                .placeholderId(requirement.getPlaceholderId())
                 .description(asset.getDescription() == null ? requirement.getType() : asset.getDescription())
                 .build();
     }

@@ -91,10 +91,11 @@ public class ArticleAsyncService {
             articleAgentOrchestrator.analyzeImageRequirements(state);
             sendSseMessage(taskId, SseMessageTypeEnum.AGENT4_COMPLETE, Map.of(
                     "taskId", taskId,
+                    "contentWithPlaceholders", state.getContentWithPlaceholders(),
                     "imageRequirements", state.getImageRequirements()
             ));
 
-            articleAgentOrchestrator.generateImages(state);
+            articleAgentOrchestrator.generateImages(state, message -> handleAgentMessage(taskId, message, currentState));
             sendSseMessage(taskId, SseMessageTypeEnum.AGENT5_COMPLETE, Map.of(
                     "taskId", taskId,
                     "images", state.getImages()
@@ -198,6 +199,7 @@ public class ArticleAsyncService {
         } else if (SseMessageTypeEnum.AGENT4_COMPLETE.getValue().equals(message)) {
             data.put("type", SseMessageTypeEnum.AGENT4_COMPLETE.getValue());
             data.put("taskId", state.getTaskId());
+            data.put("contentWithPlaceholders", state.getContentWithPlaceholders());
             data.put("imageRequirements", state.getImageRequirements());
         } else if (SseMessageTypeEnum.AGENT5_COMPLETE.getValue().equals(message)) {
             data.put("type", SseMessageTypeEnum.AGENT5_COMPLETE.getValue());

@@ -8,6 +8,7 @@ import cn.nuist.aiarticlewriter.agent.agents.TitleAgent;
 import cn.nuist.aiarticlewriter.agent.support.ArticleContentAssembler;
 import cn.nuist.aiarticlewriter.model.enums.ArticleStatusEnum;
 import cn.nuist.aiarticlewriter.model.enums.ArticleStepEnum;
+import cn.nuist.aiarticlewriter.model.state.article.Agent4Result;
 import cn.nuist.aiarticlewriter.model.state.article.ArticleState;
 import cn.nuist.aiarticlewriter.model.state.article.ImageRequirement;
 import cn.nuist.aiarticlewriter.model.state.article.ImageResult;
@@ -158,9 +159,11 @@ public class ArticleAgentOrchestrator {
             log.info("Starting image requirement analysis, taskId={}", state.getTaskId());
             resultValidator.validateMarkdown("Outline", state.getOutlineMarkdown());
             resultValidator.validateMarkdown("Article content", state.getContent());
-            List<ImageRequirement> imageRequirements = imageRequirementAgent.analyzeImageRequirements(selectedTitle,
+            Agent4Result agent4Result = imageRequirementAgent.analyzeImagePlan(selectedTitle,
                     state.getOutlineMarkdown(), state.getContent());
-            resultValidator.validateImageRequirements(imageRequirements, selectedTitle, state.getContent());
+            resultValidator.validateAgent4Result(agent4Result, selectedTitle, state.getContent());
+            List<ImageRequirement> imageRequirements = agent4Result.getImageRequirements();
+            state.setContentWithPlaceholders(agent4Result.getContentWithPlaceholders());
             state.setImageRequirements(imageRequirements);
             log.info("Image requirement analysis completed, taskId={}, count={}", state.getTaskId(),
                     imageRequirements.size());
@@ -174,10 +177,21 @@ public class ArticleAgentOrchestrator {
      * @return updated article state
      */
     public ArticleState generateImages(ArticleState state) {
+        return generateImages(state, null);
+    }
+
+    /**
+     * Generate or search images from image requirements with streaming output.
+     *
+     * @param state article state
+     * @param streamHandler streaming handler
+     * @return updated article state
+     */
+    public ArticleState generateImages(ArticleState state, Consumer<String> streamHandler) {
         return runStage(state, ArticleStepEnum.IMAGE_GENERATION, () -> {
             log.info("Starting image generation, taskId={}", state.getTaskId());
             resultValidator.validateImageRequirementsExist(state.getImageRequirements());
-            List<ImageResult> images = imageGenerationAgent.generateImages(state.getImageRequirements());
+            List<ImageResult> images = imageGenerationAgent.generateImages(state.getImageRequirements(), streamHandler);
             resultValidator.validateImageResults(images);
             state.setImages(images);
             images.stream()
@@ -199,7 +213,10 @@ public class ArticleAgentOrchestrator {
             log.info("Starting article content assembly, taskId={}", state.getTaskId());
             resultValidator.validateMarkdown("Article content", state.getContent());
             resultValidator.validateImageResults(state.getImages());
-            String fullContent = articleContentAssembler.assemble(state.getContent(), state.getImages());
+            String content = state.getContentWithPlaceholders() == null || state.getContentWithPlaceholders().isBlank()
+                    ? state.getContent()
+                    : state.getContentWithPlaceholders();
+            String fullContent = articleContentAssembler.assemble(content, state.getImages());
             state.setFullContent(fullContent);
             state.setCurrentStep(ArticleStepEnum.COMPLETED);
             state.setStatus(ArticleStatusEnum.COMPLETED);
