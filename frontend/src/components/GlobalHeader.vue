@@ -56,6 +56,7 @@ import {
   EditOutlined,
   UnorderedListOutlined,
   SettingOutlined,
+  BarChartOutlined,
   UserOutlined,
   DownOutlined,
   LogoutOutlined,
@@ -79,7 +80,10 @@ const menuItems = computed(() => {
   }
 
   if (loginUserStore.isAdmin) {
-    items.push({ key: '/admin/userManage', label: 'Management', icon: SettingOutlined })
+    items.push(
+      { key: '/admin/userManage', label: 'Management', icon: SettingOutlined },
+      { key: '/admin/dataAnalysis', label: 'Data', icon: BarChartOutlined },
+    )
   }
 
   return items

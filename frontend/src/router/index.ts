@@ -57,6 +57,15 @@ const router = createRouter({
         requiresAdmin: true,
       },
     },
+    {
+      path: '/admin/dataAnalysis',
+      name: 'Data Analysis',
+      component: () => import('@/pages/admin/DataAnalysisPage.vue'),
+      meta: {
+        requiresAuth: true,
+        requiresAdmin: true,
+      },
+    },
   ],
 })
 

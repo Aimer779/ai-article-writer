@@ -48,6 +48,57 @@
             @pressEnter="handleStart"
           />
           <div class="char-count">{{ topicInput.length }} / 500</div>
+
+          <!-- Article Style -->
+          <div class="option-section">
+            <div class="option-header">
+              <span class="option-title">Article Style</span>
+              <span class="option-hint">Default style will be used if none selected</span>
+            </div>
+            <div class="option-group">
+              <label
+                v-for="style in articleStyles"
+                :key="style.value"
+                class="option-pill"
+                :class="{ 'option-pill-active': selectedStyle === style.value }"
+              >
+                <input
+                  v-model="selectedStyle"
+                  type="radio"
+                  name="article-style"
+                  :value="style.value"
+                  class="option-input"
+                />
+                {{ style.label }}
+              </label>
+            </div>
+          </div>
+
+          <!-- Image Method -->
+          <div class="option-section">
+            <div class="option-header">
+              <span class="option-title">Image Method</span>
+              <span class="option-hint">All methods supported if none selected</span>
+            </div>
+            <div class="option-group">
+              <label
+                v-for="method in imageMethods"
+                :key="method.value"
+                class="option-pill"
+                :class="{ 'option-pill-active': selectedMethods.includes(method.value) }"
+              >
+                <input
+                  v-model="selectedMethods"
+                  type="checkbox"
+                  :value="method.value"
+                  class="option-input"
+                />
+                {{ method.label }}
+              </label>
+            </div>
+
+          </div>
+
           <a-button
             type="primary"
             size="large"
@@ -228,6 +279,26 @@ const loginUserStore = useLoginUserStore()
 
 const topicInput = ref('')
 const activeTabKey = ref('title')
+
+const selectedStyle = ref('default')
+const selectedMethods = ref<string[]>([])
+
+const articleStyles = [
+  { label: 'Default', value: 'default' },
+  { label: 'Tech Style', value: 'tech' },
+  { label: 'Emotional', value: 'emotional' },
+  { label: 'Educational', value: 'educational' },
+  { label: 'Humorous', value: 'humorous' },
+]
+
+const imageMethods = [
+  { label: 'Pexels', value: 'pexels' },
+  { label: 'Nano Banana', value: 'nano_banana' },
+  { label: 'Mermaid', value: 'mermaid' },
+  { label: 'Iconify', value: 'iconify' },
+  { label: 'Meme', value: 'meme' },
+  { label: 'SVG', value: 'svg' },
+]
 
 // Auto-switch tabs based on progress
 watch(
@@ -600,6 +671,75 @@ onUnmounted(() => {
   background: #e2e8f0;
   border-color: #e2e8f0;
   color: #94a3b8;
+}
+
+/* Option Sections */
+.option-section {
+  margin-top: 20px;
+}
+
+.option-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.option-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f1f1f;
+}
+
+.option-hint {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.option-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.option-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #475569;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.option-pill:hover {
+  border-color: #3b82f6;
+  color: #2563eb;
+}
+
+.option-pill-active {
+  background: #dbeafe;
+  border-color: #3b82f6;
+  color: #1d4ed8;
+  font-weight: 500;
+}
+
+.option-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.option-note {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 8px 0 0;
 }
 
 .error-alert {
