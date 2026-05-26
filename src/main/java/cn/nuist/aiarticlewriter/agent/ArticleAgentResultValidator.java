@@ -147,26 +147,7 @@ public class ArticleAgentResultValidator {
      */
     public void validateImageRequirements(List<ImageRequirement> requirements, TitleResult title, OutlineResult outline,
             String markdownContent) {
-        if (requirements == null || requirements.isEmpty()) {
-            throw new ArticleAgentException("Image requirements cannot be empty");
-        }
-        Set<String> markdownHeadings = extractMarkdownHeadings(markdownContent);
-        Set<Integer> positions = new HashSet<>();
-        for (int i = 0; i < requirements.size(); i++) {
-            ImageRequirement requirement = requirements.get(i);
-            if (requirement == null) {
-                throw new ArticleAgentException("Image requirement cannot be null");
-            }
-            int expectedPosition = i + 1;
-            if (requirement.getPosition() == null || requirement.getPosition() != expectedPosition) {
-                throw new ArticleAgentException("Image requirement positions must start from 1 and increase by 1");
-            }
-            if (!positions.add(requirement.getPosition())) {
-                throw new ArticleAgentException("Image requirement position cannot be duplicated");
-            }
-            validateImageRequirementText(requirement);
-            validateImageRequirementType(requirement, title, markdownHeadings);
-        }
+        validateImageRequirementsInternal(requirements, title, markdownContent, false);
         ensureOutlineSupportsSectionImages(requirements, outline);
     }
 
@@ -178,6 +159,11 @@ public class ArticleAgentResultValidator {
      * @param markdownContent article body
      */
     public void validateImageRequirements(List<ImageRequirement> requirements, TitleResult title, String markdownContent) {
+        validateImageRequirementsInternal(requirements, title, markdownContent, false);
+    }
+
+    private void validateImageRequirementsInternal(List<ImageRequirement> requirements, TitleResult title,
+            String markdownContent, boolean allowPlaceholderSectionTitle) {
         validateImageRequirementsExist(requirements);
         Set<String> markdownHeadings = extractMarkdownHeadings(markdownContent);
         Set<Integer> positions = new HashSet<>();
@@ -195,7 +181,7 @@ public class ArticleAgentResultValidator {
             }
             validateImageRequirementText(requirement);
             validateImageRequirementPlaceholder(requirement, null);
-            validateImageRequirementType(requirement, title, markdownHeadings);
+            validateImageRequirementType(requirement, title, markdownHeadings, allowPlaceholderSectionTitle);
         }
     }
 
@@ -213,7 +199,7 @@ public class ArticleAgentResultValidator {
         if (isBlank(result.getContentWithPlaceholders())) {
             throw new ArticleAgentException("Agent 4 contentWithPlaceholders cannot be blank");
         }
-        validateImageRequirements(result.getImageRequirements(), title, markdownContent);
+        validateImageRequirementsInternal(result.getImageRequirements(), title, markdownContent, true);
         for (ImageRequirement requirement : result.getImageRequirements()) {
             validateImageRequirementPlaceholder(requirement, result.getContentWithPlaceholders());
         }
@@ -326,7 +312,8 @@ public class ArticleAgentResultValidator {
         }
     }
 
-    private void validateImageRequirementType(ImageRequirement requirement, TitleResult title, Set<String> markdownHeadings) {
+    private void validateImageRequirementType(ImageRequirement requirement, TitleResult title, Set<String> markdownHeadings,
+            boolean allowPlaceholderSectionTitle) {
         if (requirement.getPosition() == 1) {
             if (!"cover".equals(requirement.getType())) {
                 throw new ArticleAgentException("Image requirement at position 1 must use type cover");
@@ -340,6 +327,9 @@ public class ArticleAgentResultValidator {
             throw new ArticleAgentException("Section image requirements must use type section");
         }
         if (isBlank(requirement.getSectionTitle()) || !markdownHeadings.contains(requirement.getSectionTitle().trim())) {
+            if (allowPlaceholderSectionTitle && !isBlank(requirement.getPlaceholderId())) {
+                return;
+            }
             throw new ArticleAgentException("Section image sectionTitle must match a Markdown heading");
         }
     }

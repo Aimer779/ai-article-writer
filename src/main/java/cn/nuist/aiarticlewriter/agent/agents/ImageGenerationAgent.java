@@ -81,11 +81,11 @@ public class ImageGenerationAgent {
                     requirement.getPosition(), imageService.getMethod().getValue(), requirement.getSectionTitle());
             ImageAsset asset = imageService.acquire(request);
             validateAsset(asset);
-            String storedUrl = imageStorageService.upload(asset, buildObjectKey(requirement, asset.getMethod(), asset));
-            if (storedUrl == null || storedUrl.isBlank()) {
-                throw new IllegalStateException("Image storage returned blank URL");
+            String imageUrl = resolveImageUrl(requirement, asset);
+            if (imageUrl == null || imageUrl.isBlank()) {
+                throw new IllegalStateException("Image URL cannot be blank");
             }
-            ImageResult imageResult = buildImageResult(requirement, storedUrl, asset);
+            ImageResult imageResult = buildImageResult(requirement, imageUrl, asset);
             log.info("ImageGenerationAgent generated image, position={}, method={}, sectionTitle={}",
                     requirement.getPosition(), asset.getMethod().getValue(), requirement.getSectionTitle());
             return imageResult;
@@ -110,6 +110,17 @@ public class ImageGenerationAgent {
                 .build();
         ImageAsset fallbackAsset = getPicsumImageService().acquire(fallbackRequest);
         return buildImageResult(requirement, fallbackAsset.getUrl(), fallbackAsset);
+    }
+
+    private String resolveImageUrl(ImageRequirement requirement, ImageAsset asset) {
+        if (ImageMethodEnum.PEXELS.equals(asset.getMethod())) {
+            return asset.getUrl();
+        }
+        String storedUrl = imageStorageService.upload(asset, buildObjectKey(requirement, asset.getMethod(), asset));
+        if (storedUrl == null || storedUrl.isBlank()) {
+            throw new IllegalStateException("Image storage returned blank URL");
+        }
+        return storedUrl;
     }
 
     private void emitImageComplete(ImageResult imageResult, Consumer<String> streamHandler) {

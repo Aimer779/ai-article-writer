@@ -191,6 +191,38 @@ class ArticleAgentResultValidatorTest {
                 .hasMessageContaining("Pexels");
     }
 
+    @Test
+    void shouldAcceptAgent4ResultWhenPlaceholderExistsAndSectionTitleDoesNotMatchHeading() {
+        TitleResult title = title();
+        Agent4Result result = Agent4Result.builder()
+                .contentWithPlaceholders("""
+                        ## Planning the Article
+                        Useful content.
+                        {{IMAGE_PLACEHOLDER_2}}
+                        """)
+                .imageRequirements(List.of(
+                        ImageRequirement.builder()
+                                .position(1)
+                                .type("cover")
+                                .sectionTitle(title.getMainTitle())
+                                .imageSource("AI_GENERATION")
+                                .prompt("Create a clean editorial cover illustration.")
+                                .placeholderId("")
+                                .build(),
+                        ImageRequirement.builder()
+                                .position(2)
+                                .type("section")
+                                .sectionTitle("Article Planning")
+                                .imageSource("SVG_DIAGRAM")
+                                .prompt("Draw a clean concept diagram about article planning.")
+                                .placeholderId("{{IMAGE_PLACEHOLDER_2}}")
+                                .build()))
+                .build();
+
+        assertThatCode(() -> validator.validateAgent4Result(result, title, content()))
+                .doesNotThrowAnyException();
+    }
+
     private TitleResult title() {
         return TitleResult.builder()
                 .mainTitle("Building Reliable AI Article Workflows")

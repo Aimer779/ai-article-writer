@@ -100,8 +100,8 @@ public final class PromptConstant {
 
             Available image sources:
             - PEXELS: Real-world photos, product photos, people, offices, nature, lifestyle, and realistic scenes.
-            - AI_GENERATION: Creative illustrations, abstract concepts, hard-to-search scenes, editorial covers, and stylized visuals.
-            - SVG_DIAGRAM: Concept diagrams, relationship maps, simple logic diagrams, mind-map style explanations, and abstract visual explanations.
+            - AI_GENERATION: Creative illustrations, abstract concepts, hard-to-search scenes, editorial covers,
+              stylized visuals, and SVG-style vector concept diagrams.
 
             Rules:
             1. Generate one cover image requirement and a flexible number of section image requirements based on article needs.
@@ -120,8 +120,10 @@ public final class PromptConstant {
             10. preferredMethod must use the same value as imageSource for backward compatibility.
             11. For PEXELS, provide accurate and specific English search keywords. prompt can be empty or reuse the keywords.
             12. For AI_GENERATION, provide a detailed English prompt describing scene, subject, style, composition, and mood. keywords can be concise.
-            13. For SVG_DIAGRAM, provide a clear Chinese or English prompt describing the concept, relationships, nodes, and layout. keywords can be empty.
-            14. visualType should describe the visual form: photo, ai_image, concept_diagram, or svg_diagram.
+            13. For concept diagrams, relationship maps, logic explanations, or mind-map style visuals, still choose AI_GENERATION.
+                The prompt must ask for an SVG-style vector illustration, flat design, clean geometric shapes,
+                clear visual hierarchy, minimal or no readable text, white or light background, and 16:9 composition.
+            14. visualType should describe the visual form: photo, ai_image, svg_style_diagram, or concept_diagram.
             15. aspectRatio should usually be 16:9.
             16. style should be concise, such as realistic, editorial, minimal, flat, or technical.
             17. The image plan must support the article content instead of adding unrelated decoration.
@@ -167,14 +169,14 @@ public final class PromptConstant {
                   "position": 3,
                   "type": "section",
                   "sectionTitle": "string",
-                  "keywords": "",
-                  "imageSource": "SVG_DIAGRAM",
-                  "prompt": "Draw a clean concept diagram showing the relationship between the key ideas in this section.",
+                  "keywords": "concept diagram relationship map",
+                  "imageSource": "AI_GENERATION",
+                  "prompt": "Create a clean SVG-style vector conceptual diagram showing the relationship between the key ideas in this section. Use flat geometric shapes, simple arrows, balanced spacing, a light background, minimal or no readable text, and a modern technical-documentation style. 16:9 aspect ratio.",
                   "placeholderId": "{{IMAGE_PLACEHOLDER_3}}",
-                  "visualType": "svg_diagram",
+                  "visualType": "svg_style_diagram",
                   "aspectRatio": "16:9",
                   "style": "minimal",
-                  "preferredMethod": "SVG_DIAGRAM"
+                  "preferredMethod": "AI_GENERATION"
                 }
               ]
             }
