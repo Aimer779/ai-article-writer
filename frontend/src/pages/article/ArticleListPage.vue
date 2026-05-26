@@ -248,7 +248,7 @@ async function exportArticle(record: API.ArticleVO) {
       message.warning('Article content is empty')
       return
     }
-    downloadArticleAsMarkdown(record.mainTitle, fullContent)
+    downloadArticleAsMarkdown({ ...record, fullContent })
     message.success('Article exported as Markdown')
   } catch (err: any) {
     message.error(err.message || 'Network error')

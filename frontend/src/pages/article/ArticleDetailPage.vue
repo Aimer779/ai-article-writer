@@ -148,7 +148,7 @@ async function loadArticle() {
 
 function handleExport() {
   if (!article.value) return
-  downloadArticleAsMarkdown(article.value.mainTitle, article.value.fullContent || article.value.content)
+  downloadArticleAsMarkdown(article.value)
   message.success('Article exported as Markdown')
 }
 

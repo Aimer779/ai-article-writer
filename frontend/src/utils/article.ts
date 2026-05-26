@@ -61,12 +61,29 @@ export function downloadFile(content: string, filename: string, mimeType = 'text
 }
 
 /**
- * Download article fullContent as a Markdown file.
+ * Download article as a Markdown file.
+ * Includes main title, sub title, cover image, and content.
  */
-export function downloadArticleAsMarkdown(mainTitle: string | undefined, content: string | undefined): void {
-  const safeTitle = (mainTitle || 'untitled').replace(/[\\/:*?"<>|]/g, '_')
-  const safeContent = content || ''
-  downloadFile(safeContent, `${safeTitle}.md`, 'text/markdown')
+export function downloadArticleAsMarkdown(article: {
+  mainTitle?: string
+  subTitle?: string
+  coverImage?: string
+  fullContent?: string
+  content?: string
+}): void {
+  const safeTitle = (article.mainTitle || 'untitled').replace(/[\\/:*?"<>|]/g, '_')
+  let markdown = ''
+  if (article.mainTitle) {
+    markdown += `# ${article.mainTitle}\n\n`
+  }
+  if (article.subTitle) {
+    markdown += `> ${article.subTitle}\n\n`
+  }
+  if (article.coverImage) {
+    markdown += `![Cover](${article.coverImage})\n\n`
+  }
+  markdown += article.fullContent || article.content || ''
+  downloadFile(markdown, `${safeTitle}.md`, 'text/markdown')
 }
 
 /**
