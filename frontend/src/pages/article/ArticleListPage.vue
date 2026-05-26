@@ -1,45 +1,61 @@
 <template>
   <div class="list-page">
-    <a-card title="My Articles" :bordered="false" class="list-card">
-      <!-- Search Form -->
-      <a-form layout="inline" class="search-form" @submit.prevent="handleSearch">
-        <a-form-item label="Topic">
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="header-left">
+        <h1 class="page-title">History</h1>
+        <p class="page-subtitle">Manage all your created articles</p>
+      </div>
+      <a-button type="primary" class="create-btn" @click="router.push('/create')">
+        <PlusOutlined />
+        Create New Article
+      </a-button>
+    </div>
+
+    <a-card :bordered="false" class="list-card">
+      <!-- Search Bar -->
+      <div class="search-bar">
+        <div class="search-inputs">
           <a-input
             v-model:value="searchParams.topic"
             placeholder="Search by topic"
             allow-clear
-          />
-        </a-form-item>
-        <a-form-item label="Title">
+            class="search-input"
+          >
+            <template #prefix>
+              <SearchOutlined />
+            </template>
+          </a-input>
           <a-input
             v-model:value="searchParams.mainTitle"
             placeholder="Search by title"
             allow-clear
-          />
-        </a-form-item>
-        <a-form-item label="Status">
+            class="search-input"
+          >
+            <template #prefix>
+              <SearchOutlined />
+            </template>
+          </a-input>
           <a-select
             v-model:value="searchParams.status"
             placeholder="All Status"
             allow-clear
-            style="width: 140px"
+            class="status-select"
           >
             <a-select-option value="PENDING">Pending</a-select-option>
             <a-select-option value="PROCESSING">Processing</a-select-option>
             <a-select-option value="COMPLETED">Completed</a-select-option>
             <a-select-option value="FAILED">Failed</a-select-option>
           </a-select>
-        </a-form-item>
-        <a-form-item>
-          <a-button type="primary" html-type="submit">
-            <SearchOutlined />
+          <a-button type="primary" @click="handleSearch">
             Search
           </a-button>
-          <a-button style="margin-left: 8px" @click="handleReset">
+          <a-button @click="handleReset">
             Reset
           </a-button>
-        </a-form-item>
-      </a-form>
+        </div>
+        <span class="total-count">Total <strong>{{ pagination.total }}</strong> articles</span>
+      </div>
 
       <!-- Table -->
       <a-table
@@ -52,15 +68,20 @@
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'status'">
-            <a-tag :color="ARTICLE_STATUS_COLOR[record.status] || 'default'">
+            <span class="status-dot" :class="`status-${record.status?.toLowerCase()}`">
+              <span class="dot" />
               {{ ARTICLE_STATUS_TEXT[record.status] || record.status }}
-            </a-tag>
+            </span>
           </template>
           <template v-if="column.key === 'action'">
-            <a-space>
-              <a-button type="link" size="small" @click="viewArticle(record)">
+            <a-space :size="16">
+              <a-button type="link" class="action-btn action-view" @click="viewArticle(record)">
                 <EyeOutlined />
                 View
+              </a-button>
+              <a-button type="link" class="action-btn action-export" @click="exportArticle(record)">
+                <DownloadOutlined />
+                Export
               </a-button>
               <a-popconfirm
                 title="Are you sure to delete this article?"
@@ -68,7 +89,7 @@
                 cancel-text="No"
                 @confirm="deleteArticle(record)"
               >
-                <a-button type="link" danger size="small">
+                <a-button type="link" class="action-btn action-delete">
                   <DeleteOutlined />
                   Delete
                 </a-button>
@@ -85,9 +106,16 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
-import { SearchOutlined, EyeOutlined, DeleteOutlined } from '@ant-design/icons-vue'
-import { listArticleByPage, deleteArticle as deleteArticleApi } from '@/api/articleController'
-import { ARTICLE_STATUS_TEXT, ARTICLE_STATUS_COLOR } from '@/constants/article'
+import {
+  SearchOutlined,
+  EyeOutlined,
+  DeleteOutlined,
+  DownloadOutlined,
+  PlusOutlined,
+} from '@ant-design/icons-vue'
+import { listArticleByPage, deleteArticle as deleteArticleApi, getArticleById } from '@/api/articleController'
+import { ARTICLE_STATUS_TEXT } from '@/constants/article'
+import { downloadArticleAsMarkdown } from '@/utils/article'
 import type { TablePaginationConfig } from 'ant-design-vue'
 import type { TableColumnsType } from 'ant-design-vue'
 
@@ -109,28 +137,23 @@ const pagination = reactive<TablePaginationConfig>({
   pageSize: 10,
   total: 0,
   showSizeChanger: true,
-  showTotal: (total: number) => `Total ${total} articles`,
 })
 
 // ==================== Columns ====================
 const columns: TableColumnsType<API.ArticleVO> = [
   {
-    title: 'ID',
-    dataIndex: 'id',
-    key: 'id',
-    width: 80,
-  },
-  {
     title: 'Topic',
     dataIndex: 'topic',
     key: 'topic',
     ellipsis: true,
+    width: 200,
   },
   {
     title: 'Title',
     dataIndex: 'mainTitle',
     key: 'mainTitle',
     ellipsis: true,
+    width: 280,
   },
   {
     title: 'Status',
@@ -153,7 +176,7 @@ const columns: TableColumnsType<API.ArticleVO> = [
   {
     title: 'Action',
     key: 'action',
-    width: 160,
+    width: 240,
     fixed: 'right',
   },
 ]
@@ -208,6 +231,30 @@ function viewArticle(record: API.ArticleVO) {
   }
 }
 
+async function exportArticle(record: API.ArticleVO) {
+  if (!record.id) return
+  try {
+    let fullContent = record.fullContent
+    if (!fullContent) {
+      const res = await getArticleById({ id: record.id })
+      if (res.data.code === 0 && res.data.data) {
+        fullContent = res.data.data.fullContent
+      } else {
+        message.error(res.data.message || 'Failed to load article content')
+        return
+      }
+    }
+    if (!fullContent) {
+      message.warning('Article content is empty')
+      return
+    }
+    downloadArticleAsMarkdown(record.mainTitle, fullContent)
+    message.success('Article exported as Markdown')
+  } catch (err: any) {
+    message.error(err.message || 'Network error')
+  }
+}
+
 async function deleteArticle(record: API.ArticleVO) {
   if (!record.id) return
   try {
@@ -233,19 +280,158 @@ onMounted(() => {
   padding: 24px;
 }
 
+/* Page Header */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0;
+  color: #1f1f1f;
+}
+
+.page-subtitle {
+  font-size: 14px;
+  color: #888;
+  margin: 0;
+}
+
+.create-btn {
+  background: #22c55e;
+  border-color: #22c55e;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.create-btn:hover {
+  background: #16a34a;
+  border-color: #16a34a;
+}
+
+/* Card */
 .list-card {
   background: #fff;
-  border-radius: 8px;
+  border-radius: 12px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
-.search-form {
-  margin-bottom: 24px;
+/* Search Bar */
+.search-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
   padding-bottom: 16px;
   border-bottom: 1px solid #f0f0f0;
 }
 
-.search-form .ant-form-item {
-  margin-bottom: 16px;
+.search-inputs {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.search-input {
+  width: 200px;
+}
+
+.status-select {
+  width: 140px;
+}
+
+.total-count {
+  font-size: 14px;
+  color: #888;
+  white-space: nowrap;
+}
+
+.total-count strong {
+  color: #262626;
+  font-weight: 600;
+}
+
+/* Status Dot */
+.status-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-completed {
+  color: #22c55e;
+}
+.status-completed .dot {
+  background: #22c55e;
+}
+
+.status-processing {
+  color: #3b82f6;
+}
+.status-processing .dot {
+  background: #3b82f6;
+}
+
+.status-pending {
+  color: #888;
+}
+.status-pending .dot {
+  background: #888;
+}
+
+.status-failed {
+  color: #ef4444;
+}
+.status-failed .dot {
+  background: #ef4444;
+}
+
+/* Action Buttons */
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  font-size: 14px;
+}
+
+.action-view {
+  color: #22c55e;
+}
+.action-view:hover {
+  color: #16a34a;
+}
+
+.action-export {
+  color: #595959;
+}
+.action-export:hover {
+  color: #262626;
+}
+
+.action-delete {
+  color: #ef4444;
+}
+.action-delete:hover {
+  color: #dc2626;
 }
 </style>

@@ -1,190 +1,235 @@
 <template>
   <div class="create-page">
-    <!-- Idle / Input State -->
-    <div v-if="showInputPanel" class="input-panel">
-      <div class="input-container">
-        <h1 class="page-title">AI Article Creation</h1>
-        <p class="page-subtitle">
-          Enter a topic and let AI generate a complete article with outline, content, and images.
-        </p>
-        <a-input
-          v-model:value="topicInput"
-          size="large"
-          placeholder="e.g., The Future of Artificial Intelligence in Healthcare"
-          :disabled="!creationStore.canStart"
-          @pressEnter="handleStart"
-        />
-        <a-button
-          type="primary"
-          size="large"
-          :loading="creationStore.isCreating"
-          :disabled="!topicInput.trim() || !creationStore.canStart"
-          @click="handleStart"
-        >
-          Start Creation
-        </a-button>
+    <a-row :gutter="24" class="main-row">
+      <!-- Left: Progress Steps -->
+      <a-col :xs="24" :lg="4" class="side-col">
+        <div class="side-section">
+          <h3 class="side-title">Creation Flow</h3>
+          <p class="side-subtitle">AI agent collaboration visualization</p>
+          <div class="steps-list">
+            <div
+              v-for="(step, index) in CREATION_STEPS"
+              :key="step.key"
+              class="step-item"
+              :class="{
+                'step-active': creationStore.currentStepIndex === index,
+                'step-completed': creationStore.currentStepIndex > index,
+              }"
+            >
+              <div class="step-marker">
+                <span v-if="creationStore.currentStepIndex > index" class="step-check">
+                  <CheckOutlined />
+                </span>
+                <span v-else class="step-number">{{ index + 1 }}</span>
+              </div>
+              <div class="step-body">
+                <div class="step-name">{{ step.title }}</div>
+                <div class="step-desc">{{ step.description }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </a-col>
 
-        <!-- Error Alert -->
-        <a-alert
-          v-if="creationStore.isFailed && creationStore.error"
-          type="error"
-          :message="creationStore.error"
-          show-icon
-          closable
-          class="error-alert"
-          @close="creationStore.reset()"
-        />
+      <!-- Center: Input or Preview -->
+      <a-col :xs="24" :lg="14" class="center-col">
+        <!-- Input Panel -->
+        <div v-if="showInputPanel" class="center-panel input-panel">
+          <h1 class="center-title">AI Article Creation</h1>
+          <p class="center-subtitle">
+            Enter a topic and let AI generate a complete article with outline, content, and images.
+          </p>
+          <a-textarea
+            v-model:value="topicInput"
+            :rows="4"
+            placeholder="e.g., The Future of Artificial Intelligence in Healthcare"
+            :disabled="!creationStore.canStart"
+            class="topic-textarea"
+            @pressEnter="handleStart"
+          />
+          <div class="char-count">{{ topicInput.length }} / 500</div>
+          <a-button
+            type="primary"
+            size="large"
+            class="start-btn"
+            :loading="creationStore.isCreating"
+            :disabled="!topicInput.trim() || !creationStore.canStart"
+            @click="handleStart"
+          >
+            <RocketOutlined />
+            Start Creation
+          </a-button>
 
-        <!-- Completed Summary -->
-        <div v-if="creationStore.isCompleted" class="completed-summary">
-          <a-result status="success" title="Article Created Successfully!">
+          <a-alert
+            v-if="creationStore.isFailed && creationStore.error"
+            type="error"
+            :message="creationStore.error"
+            show-icon
+            closable
+            class="error-alert"
+            @close="creationStore.reset()"
+          />
+
+          <a-result
+            v-if="creationStore.isCompleted"
+            status="success"
+            title="Article Created Successfully!"
+            class="success-result"
+          >
             <template #extra>
               <a-button type="primary" @click="goToArticle">
                 View Article
               </a-button>
-              <a-button @click="creationStore.reset()">
+              <a-button @click="handleReset">
                 Create Another
               </a-button>
             </template>
           </a-result>
         </div>
-      </div>
-    </div>
 
-    <!-- Creation Progress State -->
-    <div v-else class="progress-panel">
-      <!-- Top bar -->
-      <div class="progress-header">
-        <div class="topic-display">
-          <span class="label">Topic:</span>
-          <span class="value">{{ topicInput }}</span>
-        </div>
-        <div class="status-display">
-          <a-tag v-if="creationStore.isConnected" color="processing">Streaming</a-tag>
-          <a-tag v-else-if="creationStore.isCreating" color="processing">Creating Task</a-tag>
-          <a-tag v-else-if="creationStore.isCompleted" color="success">Completed</a-tag>
-          <a-tag v-else-if="creationStore.isFailed" color="error">Failed</a-tag>
-          <span v-if="creationStore.taskId" class="task-id">Task: {{ creationStore.taskId }}</span>
-        </div>
-      </div>
+        <!-- Preview Panel -->
+        <div v-else class="center-panel preview-panel">
+          <div class="preview-header">
+            <span class="topic-tag">Topic: {{ topicInput }}</span>
+            <a-tag v-if="creationStore.isConnected" color="processing">Streaming</a-tag>
+            <a-tag v-else-if="creationStore.isCreating" color="processing">Creating</a-tag>
+            <a-tag v-else-if="creationStore.isCompleted" color="success">Completed</a-tag>
+            <a-tag v-else-if="creationStore.isFailed" color="error">Failed</a-tag>
+          </div>
 
-      <a-row :gutter="24" class="progress-body">
-        <!-- Left: Progress & Logs -->
-        <a-col :xs="24" :lg="8" class="left-panel">
-          <a-card title="Progress" :bordered="false" class="progress-card">
-            <a-steps
-              direction="vertical"
-              :current="creationStore.currentStepIndex"
-              size="small"
-              class="creation-steps"
+          <a-tabs v-model:activeKey="activeTabKey" class="preview-tabs">
+            <a-tab-pane key="title" tab="Title Preview">
+              <div class="content-preview">
+                <div v-if="creationStore.articleTitle" class="markdown-body">
+                  <h2>Generated Title</h2>
+                  <p>{{ creationStore.articleTitle }}</p>
+                </div>
+                <div v-else class="empty-placeholder">
+                  <a-spin v-if="creationStore.currentStepIndex >= 0 && !creationStore.articleTitle" />
+                  <p v-else>Title will appear here once generation starts.</p>
+                </div>
+              </div>
+            </a-tab-pane>
+
+            <a-tab-pane key="outline" tab="Outline Preview">
+              <div class="content-preview">
+                <div
+                  v-if="creationStore.outlineDisplay"
+                  class="markdown-body"
+                  v-html="renderOutline"
+                />
+                <div v-else class="empty-placeholder">
+                  <a-spin v-if="creationStore.currentStepIndex >= 1 && !creationStore.outlineDisplay" />
+                  <p v-else>Outline will appear here once generation starts.</p>
+                </div>
+                <span v-if="isTypingOutline" class="typing-cursor" />
+              </div>
+            </a-tab-pane>
+
+            <a-tab-pane key="content" tab="Content Preview">
+              <div class="content-preview">
+                <div
+                  v-if="creationStore.contentDisplay"
+                  class="markdown-body"
+                  v-html="renderContent"
+                />
+                <div v-else class="empty-placeholder">
+                  <a-spin v-if="creationStore.currentStepIndex >= 2 && !creationStore.contentDisplay" />
+                  <p v-else>Content will appear here after outline is complete.</p>
+                </div>
+                <span v-if="isTypingContent" class="typing-cursor" />
+              </div>
+            </a-tab-pane>
+          </a-tabs>
+
+          <div v-if="creationStore.isCompleted || creationStore.isFailed" class="bottom-actions">
+            <a-button v-if="creationStore.isCompleted" type="primary" @click="goToArticle">
+              View Full Article
+            </a-button>
+            <a-button @click="handleReset">
+              {{ creationStore.isCompleted ? 'Create Another' : 'Try Again' }}
+            </a-button>
+          </div>
+        </div>
+      </a-col>
+
+      <!-- Right: Sidebar -->
+      <a-col :xs="24" :lg="6" class="side-col">
+        <!-- Quota Card -->
+        <div class="side-card">
+          <h4 class="card-title">
+            <CrownOutlined />
+            Creation Quota
+          </h4>
+          <div class="quota-body">
+            <a-tag v-if="loginUserStore.isAdmin" color="gold">Admin</a-tag>
+            <span class="quota-text">{{ loginUserStore.isAdmin ? 'Unlimited' : '10 / 10 remaining' }}</span>
+          </div>
+        </div>
+
+        <!-- Hot Topics -->
+        <div class="side-card">
+          <h4 class="card-title">
+            <FireOutlined />
+            Hot Topics
+          </h4>
+          <div class="topic-tags">
+            <a-tag
+              v-for="topic in hotTopics"
+              :key="topic"
+              class="topic-tag-item"
+              @click="selectTopic(topic)"
             >
-              <a-step
-                v-for="step in CREATION_STEPS"
-                :key="step.key"
-                :title="step.title"
-                :description="step.description"
-              />
-            </a-steps>
-          </a-card>
+              {{ topic }}
+            </a-tag>
+          </div>
+        </div>
 
-          <a-card title="Execution Log" :bordered="false" class="log-card">
-            <div ref="logContainer" class="log-container">
-              <div
-                v-for="(log, index) in creationStore.logs"
-                :key="index"
-                class="log-item"
-              >
-                {{ log }}
-              </div>
-              <div v-if="creationStore.logs.length === 0" class="log-empty">
-                Waiting to start...
+        <!-- Writing Tips -->
+        <div class="side-card">
+          <h4 class="card-title">
+            <StarOutlined />
+            Writing Tips
+          </h4>
+          <div class="tips-list">
+            <div v-for="(tip, idx) in writingTips" :key="idx" class="tip-item">
+              <span class="tip-num">{{ idx + 1 }}</span>
+              <div class="tip-body">
+                <div class="tip-name">{{ tip.name }}</div>
+                <div class="tip-desc">{{ tip.desc }}</div>
               </div>
             </div>
-          </a-card>
-
-          <a-card v-if="creationStore.imageCount > 0" :bordered="false" class="image-card">
-            <div class="image-stat">
-              <PictureOutlined />
-              <span>Images generated: {{ creationStore.imageCount }}</span>
-            </div>
-          </a-card>
-        </a-col>
-
-        <!-- Right: Content Preview -->
-        <a-col :xs="24" :lg="16" class="right-panel">
-          <a-card :bordered="false" class="preview-card">
-            <a-tabs v-model:activeKey="activeTabKey">
-              <a-tab-pane key="outline" tab="Outline">
-                <div class="content-preview">
-                  <div
-                    v-if="creationStore.outlineDisplay"
-                    class="markdown-body"
-                    v-html="renderOutline"
-                  />
-                  <div v-else class="empty-placeholder">
-                    <a-spin v-if="creationStore.currentStepIndex >= 1 && !creationStore.outlineDisplay" />
-                    <p v-else>Outline will appear here once generation starts.</p>
-                  </div>
-                  <!-- Typing cursor indicator -->
-                  <span
-                    v-if="isTypingOutline"
-                    class="typing-cursor"
-                  />
-                </div>
-              </a-tab-pane>
-
-              <a-tab-pane key="content" tab="Content" :disabled="creationStore.currentStepIndex < 2">
-                <div class="content-preview">
-                  <div
-                    v-if="creationStore.contentDisplay"
-                    class="markdown-body"
-                    v-html="renderContent"
-                  />
-                  <div v-else class="empty-placeholder">
-                    <a-spin v-if="creationStore.currentStepIndex >= 2 && !creationStore.contentDisplay" />
-                    <p v-else>Content will appear here after outline is complete.</p>
-                  </div>
-                  <span
-                    v-if="isTypingContent"
-                    class="typing-cursor"
-                  />
-                </div>
-              </a-tab-pane>
-            </a-tabs>
-          </a-card>
-        </a-col>
-      </a-row>
-
-      <!-- Bottom actions -->
-      <div v-if="creationStore.isCompleted || creationStore.isFailed" class="bottom-actions">
-        <a-button v-if="creationStore.isCompleted" type="primary" @click="goToArticle">
-          View Full Article
-        </a-button>
-        <a-button @click="handleReset">
-          {{ creationStore.isCompleted ? 'Create Another' : 'Try Again' }}
-        </a-button>
-      </div>
-    </div>
+          </div>
+        </div>
+      </a-col>
+    </a-row>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { PictureOutlined } from '@ant-design/icons-vue'
+import {
+  CheckOutlined,
+  RocketOutlined,
+  CrownOutlined,
+  FireOutlined,
+  StarOutlined,
+} from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { useArticleCreationStore } from '@/stores/articleCreation'
+import { useLoginUserStore } from '@/stores'
 import { CREATION_STEPS } from '@/constants/article'
 import { markdownToHtml } from '@/utils/article'
 
 const router = useRouter()
 const creationStore = useArticleCreationStore()
+const loginUserStore = useLoginUserStore()
 
 const topicInput = ref('')
-const activeTabKey = ref('outline')
-const logContainer = ref<HTMLDivElement | null>(null)
+const activeTabKey = ref('title')
 
-// Auto-switch to content tab when content generation starts
+// Auto-switch tabs based on progress
 watch(
   () => creationStore.currentStepIndex,
   (idx) => {
@@ -192,17 +237,8 @@ watch(
       activeTabKey.value = 'content'
     } else if (idx >= 1) {
       activeTabKey.value = 'outline'
-    }
-  },
-)
-
-// Auto-scroll logs
-watch(
-  () => creationStore.logs.length,
-  async () => {
-    await nextTick()
-    if (logContainer.value) {
-      logContainer.value.scrollTop = logContainer.value.scrollHeight
+    } else if (idx >= 0) {
+      activeTabKey.value = 'title'
     }
   },
 )
@@ -240,6 +276,25 @@ const renderContent = computed(() => {
   return markdownToHtml(creationStore.contentDisplay)
 })
 
+const hotTopics = [
+  'How AI Changes the Workplace in 2026',
+  'How Programmers Improve Competitiveness',
+  'Pros and Cons of Remote Work',
+  'How to Cultivate Deep Thinking',
+  'New Energy Vehicle Trends',
+  'Healthy Diet Guide',
+]
+
+const writingTips = [
+  { name: 'Hit the Pain Point', desc: 'Address what users care about most' },
+  { name: 'Create Suspense', desc: 'Spark curiosity in readers' },
+  { name: 'Use Numbers', desc: 'Concrete data adds persuasion' },
+]
+
+function selectTopic(topic: string) {
+  topicInput.value = topic
+}
+
 async function handleStart() {
   const topic = topicInput.value.trim()
   if (!topic) {
@@ -266,161 +321,314 @@ function goToArticle() {
 }
 
 onUnmounted(() => {
-  // Do not disconnect on unmount so user can navigate away and back
-  // creationStore.disconnectSSE()
+  // Keep SSE alive for navigation
 })
 </script>
 
 <style scoped>
 .create-page {
-  min-height: calc(100vh - 128px);
-}
-
-/* Input Panel */
-.input-panel {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 500px;
-  padding: 48px 24px;
-}
-
-.input-container {
-  width: 100%;
-  max-width: 640px;
-  text-align: center;
-}
-
-.page-title {
-  font-size: 36px;
-  font-weight: 700;
-  margin-bottom: 12px;
-  color: #1f1f1f;
-}
-
-.page-subtitle {
-  font-size: 16px;
-  color: #595959;
-  margin-bottom: 32px;
-}
-
-.input-container .ant-input {
-  margin-bottom: 16px;
-}
-
-.input-container .ant-btn {
-  min-width: 160px;
-}
-
-.error-alert {
-  margin-top: 24px;
-  text-align: left;
-}
-
-.completed-summary {
-  margin-top: 32px;
-}
-
-/* Progress Panel */
-.progress-panel {
+  min-height: calc(100vh - 64px);
+  background: #f8fafc;
   padding: 24px;
 }
 
-.progress-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-  padding: 16px 20px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
-}
-
-.topic-display .label {
-  color: #8c8c8c;
-  margin-right: 8px;
-}
-
-.topic-display .value {
-  font-weight: 600;
-  color: #262626;
-}
-
-.status-display {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.task-id {
-  font-size: 12px;
-  color: #8c8c8c;
-  font-family: monospace;
-}
-
-.progress-body {
+.main-row {
+  max-width: 1400px;
+  margin: 0 auto;
   align-items: flex-start;
 }
 
-.left-panel {
+/* ==================== Side Column ==================== */
+.side-col {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.progress-card,
-.log-card,
-.image-card,
-.preview-card {
+.side-section,
+.side-card {
   background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
-.creation-steps :deep(.ant-steps-item-description) {
+.side-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 4px;
+  color: #1f1f1f;
+}
+
+.side-subtitle {
   font-size: 12px;
-  color: #8c8c8c;
+  color: #94a3b8;
+  margin: 0 0 16px;
 }
 
-.log-container {
-  max-height: 300px;
-  overflow-y: auto;
-  font-family: monospace;
+/* Steps */
+.steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.step-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px 0;
+  position: relative;
+}
+
+.step-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 40px;
+  bottom: 0;
+  width: 1px;
+  background: #e2e8f0;
+}
+
+.step-marker {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+.step-check {
+  font-size: 14px;
+  color: #22c55e;
+}
+
+.step-active .step-marker {
+  background: #22c55e;
+  color: #fff;
+}
+
+.step-completed .step-marker {
+  background: #dcfce7;
+  color: #22c55e;
+}
+
+.step-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #475569;
+  line-height: 20px;
+}
+
+.step-active .step-name {
+  color: #22c55e;
+  font-weight: 600;
+}
+
+.step-desc {
   font-size: 12px;
-  line-height: 1.8;
-  background: #fafafa;
-  padding: 12px;
-  border-radius: 4px;
+  color: #94a3b8;
+  margin-top: 2px;
+  line-height: 18px;
 }
 
-.log-item {
-  color: #595959;
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-
-.log-empty {
-  color: #bfbfbf;
-  text-align: center;
-  padding: 24px 0;
-}
-
-.image-stat {
+/* Side Cards */
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 12px;
+  color: #1f1f1f;
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #595959;
 }
 
-/* Content Preview */
-.preview-card {
+.card-title :deep(.anticon) {
+  font-size: 16px;
+}
+
+.quota-body {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.quota-text {
+  font-size: 14px;
+  color: #475569;
+}
+
+.topic-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.topic-tag-item {
+  cursor: pointer;
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #475569;
+  transition: all 0.2s;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topic-tag-item:hover {
+  background: #dcfce7;
+  border-color: #22c55e;
+  color: #16a34a;
+}
+
+.tips-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tip-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.tip-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #22c55e;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tip-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #334155;
+}
+
+.tip-desc {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+/* ==================== Center Column ==================== */
+.center-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.center-panel {
+  background: #fff;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   min-height: 600px;
 }
 
+/* Input Panel */
+.center-title {
+  font-size: 24px;
+  font-weight: 700;
+  text-align: center;
+  margin: 0 0 8px;
+  color: #0f172a;
+}
+
+.center-subtitle {
+  font-size: 14px;
+  color: #64748b;
+  text-align: center;
+  margin: 0 0 32px;
+}
+
+.topic-textarea {
+  border-radius: 10px;
+  font-size: 15px;
+  resize: none;
+}
+
+.topic-textarea :deep(.ant-input) {
+  border-radius: 10px;
+}
+
+.char-count {
+  text-align: right;
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+
+.start-btn {
+  width: 100%;
+  margin-top: 16px;
+  border-radius: 10px;
+  height: 48px;
+  font-size: 16px;
+  font-weight: 500;
+  background: #22c55e;
+  border-color: #22c55e;
+}
+
+.start-btn:hover {
+  background: #16a34a;
+  border-color: #16a34a;
+}
+
+.start-btn:disabled {
+  background: #e2e8f0;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+}
+
+.error-alert {
+  margin-top: 20px;
+}
+
+.success-result {
+  margin-top: 20px;
+}
+
+/* Preview Panel */
+.preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.topic-tag {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.preview-tabs :deep(.ant-tabs-nav) {
+  margin-bottom: 16px;
+}
+
 .content-preview {
-  min-height: 500px;
-  padding: 8px 4px;
+  min-height: 420px;
   position: relative;
 }
 
@@ -430,7 +638,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   min-height: 300px;
-  color: #bfbfbf;
+  color: #cbd5e1;
 }
 
 .typing-cursor {
@@ -450,6 +658,15 @@ onUnmounted(() => {
   50% {
     opacity: 0;
   }
+}
+
+.bottom-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #f1f5f9;
 }
 
 /* Markdown body styles */
@@ -536,25 +753,15 @@ onUnmounted(() => {
   text-decoration: underline;
 }
 
-/* Bottom actions */
-.bottom-actions {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 24px;
-  padding: 16px;
-}
-
-/* Responsive */
+/* ==================== Responsive ==================== */
 @media (max-width: 992px) {
-  .progress-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
+  .side-col {
+    margin-top: 16px;
   }
 
-  .left-panel {
-    margin-bottom: 16px;
+  .center-panel {
+    padding: 20px;
+    min-height: auto;
   }
 }
 </style>
