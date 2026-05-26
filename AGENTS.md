@@ -69,10 +69,16 @@ ai-article-writer/
 - Comments should be written in English.
 - Log messages should be written in English.
 - Java fields and methods use camelCase.
-- API responses should use `BaseResponse` and `ResultUtils`.
-- Business errors should use `BusinessException` with `ErrorCode`.
-- Controller methods should stay thin and delegate business logic to services.
+- Controller methods should stay thin: validate request shape, get the current user when needed, call services, and wrap responses.
+- API responses must use `BaseResponse` and `ResultUtils`; do not return raw data directly from controllers.
+- Parameter validation should use `ThrowUtils.throwIf(...)` with `ErrorCode`.
+- Use `ThrowUtils.throwIf(...)` for conditional guards; create `BusinessException` directly only when a non-guard exception object is required.
 - Do not expose entity objects directly when sensitive fields may be included; return VO objects instead.
+- Use DTO objects for request payloads and VO objects for response payloads.
+- Avoid broad `BeanUtils.copyProperties` for security-sensitive updates or fields with different semantics; map important fields explicitly.
+- Keep mappers minimal and place business rules in services, not controllers or mapper interfaces.
+- Add `@Transactional` on service methods when a business operation performs multiple related database writes.
+- For MyBatis-Flex entities, use `@Table(..., camelToUnderline = false)` when table columns use camelCase, and use `@Column(isLogicDelete = true)` for logic-delete fields.
 
 ## Key Points
 
@@ -83,7 +89,7 @@ Read these reference docs only when the task is related:
 - Image search and storage: `doc/image-service.md`
 - Runtime configuration and tests: `doc/runtime-config-and-tests.md`
 
-When adding backend business modules, follow the existing entity -> DTO -> VO -> mapper -> service -> controller structure. Use `BaseResponse` / `ResultUtils`, `BusinessException` / `ErrorCode`, and return VO objects instead of exposing entities directly. For MyBatis-Flex entities, use `@Table(..., camelToUnderline = false)` when table columns use camelCase.
+When adding backend business modules, follow the existing entity -> DTO -> VO -> mapper -> service -> controller structure. Keep controllers thin, put business rules in services, and follow the Code Style rules above for responses, errors, validation, VO mapping, and MyBatis-Flex entity annotations.
 
 ## Development
 

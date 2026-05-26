@@ -5,8 +5,8 @@ import cn.nuist.aiarticlewriter.common.BaseResponse;
 import cn.nuist.aiarticlewriter.common.DeleteRequest;
 import cn.nuist.aiarticlewriter.common.ResultUtils;
 import cn.nuist.aiarticlewriter.constant.UserConstant;
-import cn.nuist.aiarticlewriter.exception.BusinessException;
 import cn.nuist.aiarticlewriter.exception.ErrorCode;
+import cn.nuist.aiarticlewriter.exception.ThrowUtils;
 import cn.nuist.aiarticlewriter.model.dto.user.UserLoginRequest;
 import cn.nuist.aiarticlewriter.model.dto.user.UserQueryRequest;
 import cn.nuist.aiarticlewriter.model.dto.user.UserRegisterRequest;
@@ -46,9 +46,7 @@ public class UserController {
     @PostMapping("/register")
     @Operation(summary = "User register")
     public BaseResponse<Long> userRegister(@RequestBody UserRegisterRequest userRegisterRequest) {
-        if (userRegisterRequest == null) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
+        ThrowUtils.throwIf(userRegisterRequest == null, ErrorCode.PARAMS_ERROR);
         String userAccount = userRegisterRequest.getUserAccount();
         String userPassword = userRegisterRequest.getUserPassword();
         String checkPassword = userRegisterRequest.getCheckPassword();
@@ -66,9 +64,7 @@ public class UserController {
     @PostMapping("/login")
     @Operation(summary = "User login")
     public BaseResponse<LoginUserVO> userLogin(@RequestBody UserLoginRequest userLoginRequest, HttpServletRequest request) {
-        if (userLoginRequest == null) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
+        ThrowUtils.throwIf(userLoginRequest == null, ErrorCode.PARAMS_ERROR);
         String userAccount = userLoginRequest.getUserAccount();
         String userPassword = userLoginRequest.getUserPassword();
         LoginUserVO loginUserVO = userService.userLogin(userAccount, userPassword, request);
@@ -112,9 +108,7 @@ public class UserController {
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     @Operation(summary = "Get user by id")
     public BaseResponse<LoginUserVO> getUserById(@RequestParam Long id) {
-        if (id == null || id <= 0) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
+        ThrowUtils.throwIf(id == null || id <= 0, ErrorCode.PARAMS_ERROR);
         LoginUserVO userVO = userService.getUserVOById(id);
         return ResultUtils.success(userVO);
     }
@@ -129,9 +123,7 @@ public class UserController {
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     @Operation(summary = "Page users")
     public BaseResponse<Page<LoginUserVO>> listUserByPage(@RequestBody UserQueryRequest userQueryRequest) {
-        if (userQueryRequest == null) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
+        ThrowUtils.throwIf(userQueryRequest == null, ErrorCode.PARAMS_ERROR);
         User userQuery = new User();
         BeanUtils.copyProperties(userQueryRequest, userQuery);
         Page<LoginUserVO> userPage = userService.pageUserVO(
@@ -155,13 +147,11 @@ public class UserController {
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     @Operation(summary = "Delete user")
     public BaseResponse<Boolean> deleteUser(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
-        if (deleteRequest == null || deleteRequest.getId() == null || deleteRequest.getId() <= 0) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
+        ThrowUtils.throwIf(deleteRequest == null || deleteRequest.getId() == null || deleteRequest.getId() <= 0,
+                ErrorCode.PARAMS_ERROR);
         User loginUser = userService.getLoginUser(request);
-        if (deleteRequest.getId().equals(loginUser.getId())) {
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "Cannot delete current login user");
-        }
+        ThrowUtils.throwIf(deleteRequest.getId().equals(loginUser.getId()), ErrorCode.OPERATION_ERROR,
+                "Cannot delete current login user");
         boolean result = userService.deleteUser(deleteRequest.getId());
         return ResultUtils.success(result);
     }

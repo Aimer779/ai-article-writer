@@ -4,7 +4,6 @@ import cn.nuist.aiarticlewriter.agent.support.SseEmitterManager;
 import cn.nuist.aiarticlewriter.common.BaseResponse;
 import cn.nuist.aiarticlewriter.common.DeleteRequest;
 import cn.nuist.aiarticlewriter.common.ResultUtils;
-import cn.nuist.aiarticlewriter.exception.BusinessException;
 import cn.nuist.aiarticlewriter.exception.ErrorCode;
 import cn.nuist.aiarticlewriter.exception.ThrowUtils;
 import cn.nuist.aiarticlewriter.model.dto.article.ArticleCreateRequest;
@@ -64,9 +63,7 @@ public class ArticleController {
     @Operation(summary = "Create article task")
     public BaseResponse<String> createArticleTask(@RequestBody ArticleCreateRequest articleCreateRequest,
             HttpServletRequest request) {
-        if (articleCreateRequest == null) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
+        ThrowUtils.throwIf(articleCreateRequest == null, ErrorCode.PARAMS_ERROR);
         User loginUser = userService.getLoginUser(request);
         String taskId = articleService.createArticleTask(articleCreateRequest.getTopic(), loginUser);
         articleAsyncService.executeArticleGeneration(taskId, loginUser.getId(), articleCreateRequest.getTopic(), null);
@@ -103,9 +100,7 @@ public class ArticleController {
     @GetMapping("/get")
     @Operation(summary = "Get article by id")
     public BaseResponse<ArticleVO> getArticleById(@RequestParam Long id, HttpServletRequest request) {
-        if (id == null || id <= 0) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
+        ThrowUtils.throwIf(id == null || id <= 0, ErrorCode.PARAMS_ERROR);
         User loginUser = userService.getLoginUser(request);
         ArticleVO articleVO = articleService.getArticleVOById(id, loginUser);
         return ResultUtils.success(articleVO);
@@ -154,9 +149,7 @@ public class ArticleController {
     @Operation(summary = "Page articles")
     public BaseResponse<Page<ArticleVO>> listArticleByPage(@RequestBody ArticleQueryRequest articleQueryRequest,
             HttpServletRequest request) {
-        if (articleQueryRequest == null) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
+        ThrowUtils.throwIf(articleQueryRequest == null, ErrorCode.PARAMS_ERROR);
         User loginUser = userService.getLoginUser(request);
         Page<ArticleVO> articlePage = articleService.listArticleByPage(articleQueryRequest, loginUser);
         return ResultUtils.success(articlePage);
@@ -187,10 +180,8 @@ public class ArticleController {
     @Operation(summary = "Update article")
     public BaseResponse<Boolean> updateArticle(@RequestBody ArticleUpdateRequest articleUpdateRequest,
             HttpServletRequest request) {
-        if (articleUpdateRequest == null || articleUpdateRequest.getId() == null
-                || articleUpdateRequest.getId() <= 0) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
+        ThrowUtils.throwIf(articleUpdateRequest == null || articleUpdateRequest.getId() == null
+                || articleUpdateRequest.getId() <= 0, ErrorCode.PARAMS_ERROR);
         User loginUser = userService.getLoginUser(request);
         Article article = new Article();
         BeanUtils.copyProperties(articleUpdateRequest, article);
@@ -208,9 +199,8 @@ public class ArticleController {
     @PostMapping("/delete")
     @Operation(summary = "Delete article")
     public BaseResponse<Boolean> deleteArticle(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
-        if (deleteRequest == null || deleteRequest.getId() == null || deleteRequest.getId() <= 0) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
+        ThrowUtils.throwIf(deleteRequest == null || deleteRequest.getId() == null || deleteRequest.getId() <= 0,
+                ErrorCode.PARAMS_ERROR);
         User loginUser = userService.getLoginUser(request);
         boolean result = articleService.deleteArticle(deleteRequest.getId(), loginUser);
         return ResultUtils.success(result);

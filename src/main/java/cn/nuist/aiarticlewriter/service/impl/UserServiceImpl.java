@@ -4,7 +4,6 @@ import cn.hutool.core.util.ReUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.SecureUtil;
 import cn.nuist.aiarticlewriter.constant.UserConstant;
-import cn.nuist.aiarticlewriter.exception.BusinessException;
 import cn.nuist.aiarticlewriter.exception.ErrorCode;
 import cn.nuist.aiarticlewriter.exception.ThrowUtils;
 import cn.nuist.aiarticlewriter.mapper.UserMapper;
@@ -50,9 +49,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public long userRegister(String userAccount, String userPassword, String checkPassword) {
-        if (StrUtil.hasBlank(userAccount, userPassword, checkPassword)) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Parameters cannot be blank");
-        }
+        ThrowUtils.throwIf(StrUtil.hasBlank(userAccount, userPassword, checkPassword), ErrorCode.PARAMS_ERROR,
+                "Parameters cannot be blank");
         ThrowUtils.throwIf(userAccount.length() < MIN_ACCOUNT_LENGTH, ErrorCode.PARAMS_ERROR, "User account is too short");
         ThrowUtils.throwIf(userPassword.length() < MIN_PASSWORD_LENGTH || checkPassword.length() < MIN_PASSWORD_LENGTH,
                 ErrorCode.PARAMS_ERROR, "User password is too short");
@@ -84,9 +82,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public LoginUserVO userLogin(String userAccount, String userPassword, HttpServletRequest request) {
         ThrowUtils.throwIf(request == null, ErrorCode.PARAMS_ERROR);
-        if (StrUtil.hasBlank(userAccount, userPassword)) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Parameters cannot be blank");
-        }
+        ThrowUtils.throwIf(StrUtil.hasBlank(userAccount, userPassword), ErrorCode.PARAMS_ERROR,
+                "Parameters cannot be blank");
         ThrowUtils.throwIf(userAccount.length() < MIN_ACCOUNT_LENGTH, ErrorCode.PARAMS_ERROR, "User account is too short");
         ThrowUtils.throwIf(userPassword.length() < MIN_PASSWORD_LENGTH, ErrorCode.PARAMS_ERROR, "User password is too short");
         ThrowUtils.throwIf(!ReUtil.isMatch(VALID_ACCOUNT_PATTERN, userAccount), ErrorCode.PARAMS_ERROR, "User account contains invalid characters");
