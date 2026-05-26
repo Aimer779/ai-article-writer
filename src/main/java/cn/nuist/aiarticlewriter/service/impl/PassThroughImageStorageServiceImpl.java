@@ -23,6 +23,9 @@ public class PassThroughImageStorageServiceImpl implements ImageStorageService {
         if (asset.getMediaType() == ImageMediaTypeEnum.IMAGE_URL) {
             return uploadFromUrl(asset.getUrl(), objectKey);
         }
+        if (asset.getBytes() != null && asset.getBytes().length > 0) {
+            return uploadBytes(asset.getBytes(), objectKey, asset.getContentType());
+        }
         if (asset.getContent() != null) {
             return uploadText(asset.getContent(), objectKey, asset.getContentType());
         }

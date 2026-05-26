@@ -123,8 +123,9 @@ public class ImageGenerationAgent {
             throw new IllegalStateException("Image asset media type cannot be null");
         }
         if ((asset.getUrl() == null || asset.getUrl().isBlank())
-                && (asset.getContent() == null || asset.getContent().isBlank())) {
-            throw new IllegalStateException("Image asset must contain URL or content");
+                && (asset.getContent() == null || asset.getContent().isBlank())
+                && (asset.getBytes() == null || asset.getBytes().length == 0)) {
+            throw new IllegalStateException("Image asset must contain URL, content, or bytes");
         }
     }
 
@@ -154,6 +155,9 @@ public class ImageGenerationAgent {
         }
         if (asset.getContentType() != null && asset.getContentType().contains("png")) {
             return ".png";
+        }
+        if (asset.getContentType() != null && asset.getContentType().contains("pdf")) {
+            return ".pdf";
         }
         return ".jpg";
     }

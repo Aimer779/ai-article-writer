@@ -77,3 +77,25 @@ image-storage:
     region: ${COS_REGION:}
     bucket-name: ${COS_BUCKET_NAME:}
     domain: ${COS_DOMAIN:}
+
+# Mermaid CLI rendering configuration
+mermaid:
+  cli-command: ${MERMAID_CLI_COMMAND:mmdc}
+  background-color: ${MERMAID_BACKGROUND_COLOR:transparent}
+  output-format: ${MERMAID_OUTPUT_FORMAT:svg}
+  width: ${MERMAID_WIDTH:1200}
+  timeout: ${MERMAID_TIMEOUT:30000}
+
+# Meme image search configuration
+emoji-pack:
+  search-url: ${EMOJI_PACK_SEARCH_URL:https://cn.bing.com/images/async}
+  suffix: ${EMOJI_PACK_SUFFIX:表情包}
+  timeout: ${EMOJI_PACK_TIMEOUT:10000}
+  blocked-domains:
+    - tumblr.com
+    - pinterest.com
+    - pinimg.com
+    - facebook.com
+    - instagram.com
+    - twitter.com
+    - x.com

@@ -43,6 +43,11 @@ public class ImageAsset implements Serializable {
     private String content;
 
     /**
+     * Raw image bytes.
+     */
+    private byte[] bytes;
+
+    /**
      * Suggested file name.
      */
     private String fileName;

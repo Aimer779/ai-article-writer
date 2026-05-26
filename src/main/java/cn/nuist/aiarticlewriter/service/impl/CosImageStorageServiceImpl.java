@@ -41,6 +41,9 @@ public class CosImageStorageServiceImpl implements ImageStorageService {
         if (asset.getMediaType() == ImageMediaTypeEnum.IMAGE_URL) {
             return uploadFromUrl(asset.getUrl(), objectKey);
         }
+        if (asset.getBytes() != null && asset.getBytes().length > 0) {
+            return uploadBytes(asset.getBytes(), objectKey, asset.getContentType());
+        }
         if (asset.getMediaType() == ImageMediaTypeEnum.BASE64_IMAGE) {
             return uploadBytes(decodeBase64(asset.getContent()), objectKey, asset.getContentType());
         }

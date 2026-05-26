@@ -108,7 +108,8 @@ public final class PromptConstant {
             - visualType must describe the best visual form: photo, ai_image, flowchart, sequence, architecture_diagram, concept_diagram, meme, or svg_diagram.
             - preferredMethod must be one of: PEXELS, AI_GENERATION, MERMAID, MEME, SVG_DIAGRAM.
             - Prefer PEXELS for real-world photos, AI_GENERATION for abstract or hard-to-search scenes, MERMAID for process or sequence diagrams, SVG_DIAGRAM for conceptual diagrams, and MEME only for humorous sections.
-            - prompt must be a precise generation instruction for non-Pexels methods, and can reuse keywords for Pexels.
+            - prompt must be valid Mermaid source code when preferredMethod is MERMAID. Do not wrap Mermaid code in Markdown fences.
+            - prompt must be a precise generation instruction for other non-Pexels methods, and can reuse keywords for Pexels.
             - aspectRatio should usually be 16:9.
             - style should be concise, such as realistic, editorial, minimal, flat, or humorous.
             - The image plan must support the article content instead of adding unrelated decoration.

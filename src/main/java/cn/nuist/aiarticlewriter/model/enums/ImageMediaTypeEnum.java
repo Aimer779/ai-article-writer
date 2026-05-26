@@ -11,8 +11,10 @@ import java.util.Arrays;
 public enum ImageMediaTypeEnum {
 
     IMAGE_URL("Remote image URL", "IMAGE_URL", "image/jpeg"),
+    IMAGE_BYTES("Rendered image bytes", "IMAGE_BYTES", "application/octet-stream"),
     BASE64_IMAGE("Base64 encoded image", "BASE64_IMAGE", "image/png"),
     SVG("SVG image content", "SVG", "image/svg+xml"),
+    PDF("PDF document content", "PDF", "application/pdf"),
     MERMAID("Mermaid source content", "MERMAID", "text/plain");
 
     private final String text;

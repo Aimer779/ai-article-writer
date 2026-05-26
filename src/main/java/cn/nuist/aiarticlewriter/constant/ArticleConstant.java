@@ -34,4 +34,19 @@ public interface ArticleConstant {
      * Picsum random image URL template.
      */
     String PICSUM_URL_TEMPLATE = "https://picsum.photos/800/600?random=%d";
+
+    /**
+     * Bing image search URL.
+     */
+    String BING_IMAGE_SEARCH_URL = "https://cn.bing.com/images/async";
+
+    /**
+     * Meme keyword suffix appended by the service.
+     */
+    String EMOJI_PACK_SUFFIX = "表情包";
+
+    /**
+     * Maximum Bing image search result count.
+     */
+    int BING_MAX_IMAGES = 30;
 }
