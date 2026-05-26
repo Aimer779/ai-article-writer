@@ -22,9 +22,11 @@ frontend/
 │   ├── main.ts                    # Entry file
 │   ├── App.vue                    # Root component
 │   ├── env.d.ts                   # Type declarations
+│   ├── style.css                  # Global styles
 │   ├── api/                       # OpenAPI generated API clients and types
 │   │   ├── index.ts
 │   │   ├── typings.d.ts
+│   │   ├── articleController.ts
 │   │   ├── healthController.ts
 │   │   └── userController.ts
 │   ├── pages/                     # Page components
@@ -32,21 +34,33 @@ frontend/
 │   │   ├── user/
 │   │   │   ├── UserLoginPage.vue
 │   │   │   └── UserRegisterPage.vue
+│   │   ├── article/
+│   │   │   ├── ArticleCreatePage.vue
+│   │   │   ├── ArticleDetailPage.vue
+│   │   │   └── ArticleListPage.vue
 │   │   └── admin/
 │   │       └── UserManagePage.vue
 │   ├── components/                # Shared components
 │   │   ├── GlobalHeader.vue
-│   │   └── GlobalFooter.vue
+│   │   ├── GlobalFooter.vue
+│   │   └── HelloWorld.vue
 │   ├── constants/                 # Shared frontend constants
+│   │   ├── article.ts
 │   │   └── user.ts
 │   ├── layouts/                   # Layout components
 │   │   └── BasicLayout.vue
 │   ├── router/                    # Router config
 │   │   └── index.ts
 │   ├── stores/                    # Pinia stores
-│   │   └── index.ts
-│   └── utils/                     # Utilities
-│       └── request.ts             # Axios wrapper
+│   │   ├── index.ts
+│   │   └── articleCreation.ts
+│   ├── utils/                     # Utilities
+│   │   ├── article.ts
+│   │   └── request.ts             # Axios wrapper
+│   └── assets/                    # Static assets
+│       ├── hero.png
+│       ├── vite.svg
+│       └── vue.svg
 ├── vite.config.ts                 # Vite config
 ├── tsconfig.json                  # TypeScript config
 ├── tsconfig.node.json             # Node environment TS config
@@ -68,11 +82,13 @@ frontend/
 1. **API Requests**: Unified in `utils/request.ts` with interceptors configured
 2. **CORS Proxy**: Vite configured `/api` proxy to backend `http://localhost:8567`
 3. **Code Generation**: Run `pnpm openapi2ts` after starting backend to generate API code
-4. **Generated API Clients**: Generated API clients live under `src/api/`; prefer generated controller functions such as `@/api/userController` over handwritten API wrappers
+4. **Generated API Clients**: Generated API clients live under `src/api/`; prefer generated controller functions such as `@/api/userController` and `@/api/articleController` over handwritten API wrappers
 5. **Generated Types**: OpenAPI types are generated in `src/api/typings.d.ts` under the global `API` namespace, such as `API.LoginUserVO` and `API.UserLoginRequest`
 6. **User Constants**: User roles and user-related constants should be defined in `src/constants/user.ts`
-7. **Login State**: Login state is managed by `useLoginUserStore` in `src/stores/index.ts`
-8. **Route Auth**: Protected routes should use route metadata such as `requiresAuth` and `requiresAdmin`, with access enforced by the router guard
+7. **Article Constants**: Article-related constants (SSE message types, creation steps) should be defined in `src/constants/article.ts`
+8. **Login State**: Login state is managed by `useLoginUserStore` in `src/stores/index.ts`
+9. **Article Creation State**: Article creation and SSE stream state is managed by `useArticleCreationStore` in `src/stores/articleCreation.ts`
+10. **Route Auth**: Protected routes should use route metadata such as `requiresAuth` and `requiresAdmin`, with access enforced by the router guard
 
 
 ## Development Commands
