@@ -58,8 +58,8 @@ ai-article-writer/
 | Package | Description |
 |---------|-------------|
 | `annotation` | Custom annotations, such as permission checks |
-| `agent` | Article generation agents, orchestration, LLM helpers, content assembly, and SSE support |
-| `aop` | Aspect interceptors for cross-cutting concerns |
+| `agent` | Article generation agents, orchestration, LLM helpers, content assembly, execution logging, and SSE support |
+| `aop` | Aspect interceptors for cross-cutting concerns, including auth checks and agent execution logging |
 | `common` | Common utilities including response wrapper, pagination, and helper classes |
 | `config` | Spring configuration classes and runtime properties for LLM, image providers, COS storage, and Stripe payments |
 | `constant` | Shared constants, including centralized AI prompt templates |
@@ -98,6 +98,8 @@ Image generation follows: select provider -> acquire `ImageAsset` -> upload to s
 
 Stripe payment follows: authenticated user -> create `payment_record` with `PENDING` status -> create Stripe Checkout Session -> handle Stripe webhook -> mark payment `SUCCEEDED` only when Stripe reports `payment_status=paid` -> activate VIP membership by setting `vipTime` and upgrading normal users to `vip`. Keep webhook handling idempotent and verify signatures with `STRIPE_WEBHOOK_SECRET`.
 
+Agent execution logging follows: annotate Spring-managed public agent stage methods with `@AgentExecution` -> extract `taskId` from `ArticleState` -> store compact JSON input/output summaries in `agent_log` -> save logs asynchronously. Keep log messages in English and avoid storing full generated article content or sensitive prompt text unless explicitly required.
+
 When adding backend business modules, follow the existing entity -> DTO -> VO -> mapper -> service -> controller structure. Keep controllers thin, put business rules in services, and follow the Code Style rules above for responses, errors, validation, VO mapping, and MyBatis-Flex entity annotations.
 
 ## Development
@@ -119,6 +121,9 @@ mvn test -Dtest=ClassName
 
 # Apply VIP/payment migration in PowerShell
 Get-Content sql/add_payment_vip.sql | mysql -u root -p
+
+# Apply agent log migration in PowerShell
+Get-Content sql/add_agent_log.sql | mysql -u root -p
 ```
 
 ### Frontend

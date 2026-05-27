@@ -6,6 +6,7 @@ import cn.nuist.aiarticlewriter.agent.agents.ImageRequirementAgent;
 import cn.nuist.aiarticlewriter.agent.agents.OutlineAgent;
 import cn.nuist.aiarticlewriter.agent.agents.TitleAgent;
 import cn.nuist.aiarticlewriter.agent.support.ArticleContentAssembler;
+import cn.nuist.aiarticlewriter.annotation.AgentExecution;
 import cn.nuist.aiarticlewriter.model.enums.ArticleStatusEnum;
 import cn.nuist.aiarticlewriter.model.enums.ArticleStepEnum;
 import cn.nuist.aiarticlewriter.model.state.article.Agent4Result;
@@ -71,6 +72,7 @@ public class ArticleAgentOrchestrator {
      * @param userRequirement optional user requirement
      * @return updated article state
      */
+    @AgentExecution(value = "agent1_generate_titles", description = "Generate candidate article titles")
     public ArticleState generateTitleOptions(ArticleState state, String userRequirement) {
         return runStage(state, ArticleStepEnum.TITLE, () -> {
             log.info("Starting title option generation, taskId={}, topic={}", state.getTaskId(), state.getTopic());
@@ -110,6 +112,7 @@ public class ArticleAgentOrchestrator {
      * @param streamHandler streaming handler
      * @return updated article state
      */
+    @AgentExecution(value = "agent2_generate_outline", description = "Generate article outline")
     public ArticleState generateOutline(ArticleState state, String userRequirement, Consumer<String> streamHandler) {
         return runStage(state, ArticleStepEnum.OUTLINE, () -> {
             TitleResult selectedTitle = requireSelectedTitle(state);
@@ -132,6 +135,7 @@ public class ArticleAgentOrchestrator {
      * @param streamHandler streaming handler
      * @return updated article state
      */
+    @AgentExecution(value = "agent3_generate_content", description = "Generate article content")
     public ArticleState generateContent(ArticleState state, String userRequirement, Consumer<String> streamHandler) {
         return runStage(state, ArticleStepEnum.CONTENT, () -> {
             TitleResult selectedTitle = requireSelectedTitle(state);
@@ -153,6 +157,7 @@ public class ArticleAgentOrchestrator {
      * @param state article state
      * @return updated article state
      */
+    @AgentExecution(value = "agent4_analyze_image_requirements", description = "Analyze article image requirements")
     public ArticleState analyzeImageRequirements(ArticleState state) {
         return runStage(state, ArticleStepEnum.IMAGE_REQUIREMENT, () -> {
             TitleResult selectedTitle = requireSelectedTitle(state);
@@ -187,6 +192,7 @@ public class ArticleAgentOrchestrator {
      * @param streamHandler streaming handler
      * @return updated article state
      */
+    @AgentExecution(value = "agent5_generate_images", description = "Generate or acquire article images")
     public ArticleState generateImages(ArticleState state, Consumer<String> streamHandler) {
         return runStage(state, ArticleStepEnum.IMAGE_GENERATION, () -> {
             log.info("Starting image generation, taskId={}", state.getTaskId());
@@ -208,6 +214,7 @@ public class ArticleAgentOrchestrator {
      * @param state article state
      * @return updated article state
      */
+    @AgentExecution(value = "agent6_assemble_full_content", description = "Assemble final article content")
     public ArticleState assembleFullContent(ArticleState state) {
         return runStage(state, ArticleStepEnum.ASSEMBLE, () -> {
             log.info("Starting article content assembly, taskId={}", state.getTaskId());
