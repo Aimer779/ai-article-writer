@@ -305,7 +305,7 @@ const articleStyles = [
 
 const imageMethods = [
   { label: 'Pexels', value: 'pexels' },
-  { label: 'Nano Banana', value: 'nano_banana' },
+  { label: 'AI Image', value: 'nano_banana' },
   { label: 'Mermaid', value: 'mermaid' },
   { label: 'Iconify', value: 'iconify' },
   { label: 'Meme', value: 'meme' },
