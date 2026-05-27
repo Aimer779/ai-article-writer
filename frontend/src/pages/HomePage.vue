@@ -195,11 +195,12 @@ onMounted(() => {
 
 .hero-inner {
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
+  grid-template-columns: 1fr auto;
   gap: var(--space-6);
   align-items: center;
   max-width: 1200px;
   margin: 0 auto;
+  padding: 0 var(--space-5);
 }
 
 .hero-title {
@@ -263,8 +264,7 @@ onMounted(() => {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-1);
-  width: 100%;
-  max-width: 220px;
+  width: 320px;
 }
 
 .flow-node {
