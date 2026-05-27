@@ -23,6 +23,7 @@ A full-stack web application for AI-powered article writing, built with Spring B
 | Image Generation | DashScope Qwen-Image, Mermaid CLI, LLM-generated SVG | - |
 | Object Storage | Tencent Cloud COS | 5.6.x |
 | HTML Parsing | Jsoup | 1.15.x |
+| Payments | Stripe Checkout + Webhook | stripe-java 29.x |
 
 ### Frontend
 
@@ -60,13 +61,13 @@ ai-article-writer/
 | `agent` | Article generation agents, orchestration, LLM helpers, content assembly, and SSE support |
 | `aop` | Aspect interceptors for cross-cutting concerns |
 | `common` | Common utilities including response wrapper, pagination, and helper classes |
-| `config` | Spring configuration classes and runtime properties for LLM, image providers, and COS storage |
+| `config` | Spring configuration classes and runtime properties for LLM, image providers, COS storage, and Stripe payments |
 | `constant` | Shared constants, including centralized AI prompt templates |
-| `controller` | REST API endpoints, including health checks and user APIs |
+| `controller` | REST API endpoints, including health checks, user APIs, article APIs, and payment APIs |
 | `exception` | Exception handling with error codes and custom exceptions |
 | `mapper` | MyBatis-Flex data access mappers |
 | `model` | Entities, request DTOs, response VOs, enums, and workflow state models |
-| `service` | Business service interfaces and implementations, including image acquisition providers and storage adapters |
+| `service` | Business service interfaces and implementations, including article persistence, image acquisition, storage adapters, and payment processing |
 
 ## Code Style
 
@@ -95,6 +96,8 @@ Read these reference docs only when the task is related:
 
 Image generation follows: select provider -> acquire `ImageAsset` -> upload to storage -> fallback to Picsum on failure. New image providers should implement `ImageService`, return `ImageAsset`, and register their method in `ImageMethodEnum`. Do not return temporary third-party image URLs as final article image URLs when COS is enabled.
 
+Stripe payment follows: authenticated user -> create `payment_record` with `PENDING` status -> create Stripe Checkout Session -> handle Stripe webhook -> mark payment `SUCCEEDED` only when Stripe reports `payment_status=paid` -> activate VIP membership by setting `vipTime` and upgrading normal users to `vip`. Keep webhook handling idempotent and verify signatures with `STRIPE_WEBHOOK_SECRET`.
+
 When adding backend business modules, follow the existing entity -> DTO -> VO -> mapper -> service -> controller structure. Keep controllers thin, put business rules in services, and follow the Code Style rules above for responses, errors, validation, VO mapping, and MyBatis-Flex entity annotations.
 
 ## Development
@@ -113,6 +116,9 @@ mvn compile
 
 # Run focused tests
 mvn test -Dtest=ClassName
+
+# Apply VIP/payment migration in PowerShell
+Get-Content sql/add_payment_vip.sql | mysql -u root -p
 ```
 
 ### Frontend

@@ -45,6 +45,8 @@ public class User implements Serializable {
 
     private String userRole;
 
+    private LocalDateTime vipTime;
+
     private LocalDateTime editTime;
 
     private LocalDateTime createTime;

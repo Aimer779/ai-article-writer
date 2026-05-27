@@ -39,6 +39,7 @@ public class UserServiceImpl implements UserService {
             "userAccount",
             "userName",
             "userRole",
+            "vipTime",
             "createTime",
             "editTime",
             "updateTime"
@@ -128,6 +129,9 @@ public class UserServiceImpl implements UserService {
         }
         LoginUserVO loginUserVO = new LoginUserVO();
         BeanUtils.copyProperties(user, loginUserVO);
+        loginUserVO.setVip(user.getVipTime() != null
+                || UserConstant.VIP_ROLE.equals(user.getUserRole())
+                || UserConstant.ADMIN_ROLE.equals(user.getUserRole()));
         return loginUserVO;
     }
 

@@ -117,3 +117,13 @@ ai-image:
   watermark: ${DASHSCOPE_IMAGE_WATERMARK:false}
   timeout: ${DASHSCOPE_IMAGE_TIMEOUT:60000}
   folder: ${DASHSCOPE_IMAGE_FOLDER:ai-generated}
+
+# Stripe international payment configuration
+stripe:
+  secret-key: ${STRIPE_SECRET_KEY:}
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+  success-url: ${STRIPE_SUCCESS_URL:http://localhost:5173/payment/success?session_id={CHECKOUT_SESSION_ID}}
+  cancel-url: ${STRIPE_CANCEL_URL:http://localhost:5173/payment/cancel}
+  currency: ${STRIPE_CURRENCY:usd}
+  vip-permanent-price: ${STRIPE_VIP_PERMANENT_PRICE:9.99}
+  vip-product-name: ${STRIPE_VIP_PRODUCT_NAME:AI Article Writer VIP}

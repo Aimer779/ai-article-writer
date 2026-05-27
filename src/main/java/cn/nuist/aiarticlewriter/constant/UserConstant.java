@@ -21,6 +21,11 @@ public interface UserConstant {
     String ADMIN_ROLE = "admin";
 
     /**
+     * VIP user role.
+     */
+    String VIP_ROLE = "vip";
+
+    /**
      * Password salt.
      */
     String SALT = "aiArticleWriter";

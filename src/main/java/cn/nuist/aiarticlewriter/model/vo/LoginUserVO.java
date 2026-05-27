@@ -46,6 +46,16 @@ public class LoginUserVO implements Serializable {
     private String userRole;
 
     /**
+     * VIP activation time.
+     */
+    private LocalDateTime vipTime;
+
+    /**
+     * Whether the user has VIP membership.
+     */
+    private Boolean vip;
+
+    /**
      * Business edit time.
      */
     private LocalDateTime editTime;

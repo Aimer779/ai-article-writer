@@ -11,6 +11,7 @@ import java.util.Arrays;
 public enum UserRoleEnum {
 
     USER("User", "user"),
+    VIP("VIP", "vip"),
     ADMIN("Admin", "admin");
 
     private final String text;
