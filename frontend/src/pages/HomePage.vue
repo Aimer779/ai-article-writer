@@ -66,17 +66,40 @@
           :style="{ animationDelay: `${index * 60}ms` }"
           @click="viewArticle(item)"
         >
-          <div class="card-top">
-            <span
-              class="status-badge"
-              :class="item.status?.toLowerCase() || 'pending'"
+          <!-- Cover image -->
+          <div class="card-cover">
+            <img
+              v-if="item.coverImage"
+              :src="item.coverImage"
+              :alt="item.mainTitle || 'Cover'"
+              class="cover-img"
+              loading="lazy"
+            />
+            <div
+              v-else
+              class="cover-placeholder"
+              :style="placeholderStyle(index)"
             >
-              {{ ARTICLE_STATUS_TEXT[item.status || ''] || item.status }}
-            </span>
-            <time class="card-date">{{ formatTime(item.createTime) }}</time>
+              <span class="placeholder-letter">
+                {{ (item.mainTitle || item.topic || '?').charAt(0).toUpperCase() }}
+              </span>
+            </div>
           </div>
-          <h3 class="card-title">{{ item.mainTitle || 'Untitled' }}</h3>
-          <p class="card-topic">{{ item.topic }}</p>
+
+          <!-- Card body -->
+          <div class="card-body">
+            <div class="card-top">
+              <span
+                class="status-badge"
+                :class="item.status?.toLowerCase() || 'pending'"
+              >
+                {{ ARTICLE_STATUS_TEXT[item.status || ''] || item.status }}
+              </span>
+              <time class="card-date">{{ formatTime(item.createTime) }}</time>
+            </div>
+            <h3 class="card-title">{{ item.mainTitle || 'Untitled' }}</h3>
+            <p class="card-topic">{{ item.topic }}</p>
+          </div>
         </article>
       </div>
 
@@ -96,27 +119,6 @@
       </div>
     </section>
 
-    <!-- How it works -->
-    <section class="content-section">
-      <h2 class="section-title-center">How it works</h2>
-      <div class="steps-grid">
-        <div class="step-block">
-          <div class="step-num">01</div>
-          <h3>Enter a topic</h3>
-          <p>Describe what you want to write about. The Research Agent gathers context and trends.</p>
-        </div>
-        <div class="step-block">
-          <div class="step-num">02</div>
-          <h3>Agents collaborate</h3>
-          <p>Outline, writing, and image agents work in sequence — streaming progress live.</p>
-        </div>
-        <div class="step-block">
-          <div class="step-num">03</div>
-          <h3>Publish or export</h3>
-          <p>Review the full article with cover images, then export as Markdown or share directly.</p>
-        </div>
-      </div>
-    </section>
   </div>
 </template>
 
@@ -127,6 +129,7 @@ import {
   EditOutlined,
   FileTextOutlined,
   RightOutlined,
+  FileImageOutlined,
 } from '@ant-design/icons-vue'
 import { listArticleByPage } from '@/api/articleController'
 import { ARTICLE_STATUS_TEXT } from '@/constants/article'
@@ -145,6 +148,14 @@ function formatTime(timeStr: string | undefined): string {
     month: 'short',
     day: 'numeric',
   })
+}
+
+function placeholderStyle(index: number) {
+  const hues = [45, 25, 55, 35, 65, 15]
+  const hue = hues[index % hues.length]
+  return {
+    background: `linear-gradient(135deg, oklch(92% 0.03 ${hue}), oklch(86% 0.04 ${hue}))`,
+  }
 }
 
 function viewArticle(item: API.ArticleVO) {
@@ -367,7 +378,7 @@ onMounted(() => {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: var(--space-4);
+  overflow: hidden;
   cursor: pointer;
   transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
   animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -378,6 +389,47 @@ onMounted(() => {
   border-color: var(--border-strong);
   box-shadow: var(--shadow-1);
   transform: translateY(-2px);
+}
+
+/* Cover image */
+.card-cover {
+  position: relative;
+  width: 100%;
+  height: 140px;
+  overflow: hidden;
+  background: var(--canvas);
+}
+
+.cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.article-card:hover .cover-img {
+  transform: scale(1.04);
+}
+
+.cover-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.placeholder-letter {
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--text-muted);
+  opacity: 0.5;
+  line-height: 1;
+}
+
+/* Card body */
+.card-body {
+  padding: var(--space-4);
 }
 
 .card-top {
@@ -472,58 +524,6 @@ onMounted(() => {
 .loading-wrapper {
   text-align: center;
   padding: var(--space-6) 0;
-}
-
-/* How it works */
-.section-title-center {
-  text-align: center;
-  font-size: 20px;
-  font-weight: 600;
-  margin-bottom: var(--space-5);
-}
-
-.steps-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-5);
-}
-
-@media (max-width: 768px) {
-  .steps-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.step-block {
-  padding: var(--space-4);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
-  background: var(--surface);
-  transition: border-color 0.15s ease;
-}
-
-.step-block:hover {
-  border-color: var(--border-strong);
-}
-
-.step-num {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--accent);
-  letter-spacing: 0.05em;
-  margin-bottom: var(--space-2);
-}
-
-.step-block h3 {
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: var(--space-1);
-}
-
-.step-block p {
-  font-size: 14px;
-  color: var(--text-secondary);
-  line-height: 1.6;
 }
 
 @keyframes fadeInUp {
