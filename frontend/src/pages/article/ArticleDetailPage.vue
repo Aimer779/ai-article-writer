@@ -10,9 +10,19 @@
           <a-breadcrumb-item>Article detail</a-breadcrumb-item>
         </a-breadcrumb>
         <a-space>
+          <a-select
+            v-model:value="selectedTheme"
+            placeholder="Select theme"
+            style="width: 180px"
+            :options="themeOptions"
+            allow-clear
+          />
           <a-button @click="router.push('/articles')">
             <ArrowLeftOutlined />
             Back
+          </a-button>
+          <a-button @click="handleCopyWechat">
+            Copy for WeChat
           </a-button>
           <a-button type="primary" @click="handleExport">
             <DownloadOutlined />
@@ -187,6 +197,9 @@ import { getArticleById, getArticleByTaskId } from '@/api/articleController'
 import { listAgentLogByPage, getExecutionStats } from '@/api/agentLogController'
 import { ARTICLE_STATUS_TEXT } from '@/constants/article'
 import { markdownToHtml, downloadArticleAsMarkdown } from '@/utils/article'
+import { getStyleList } from '@/constants/themes'
+import { copyToWechat } from '@/utils/clipboardExporter'
+import 'highlight.js/styles/github.css'
 
 const route = useRoute()
 const router = useRouter()
@@ -200,9 +213,15 @@ const logLoading = ref(false)
 const agentLogs = ref<API.AgentLogVO[]>([])
 const logStats = ref<API.AgentExecutionStatsVO | null>(null)
 
+const selectedTheme = ref<string>('')
+
+const themeOptions = computed(() => {
+  return getStyleList().map((t) => ({ label: t.name, value: t.key }))
+})
+
 const renderedContent = computed(() => {
   const md = article.value?.fullContent || article.value?.content || ''
-  return markdownToHtml(md)
+  return markdownToHtml(md, selectedTheme.value || undefined)
 })
 
 function formatTime(timeStr: string): string {
@@ -289,6 +308,18 @@ async function loadArticle() {
     error.value = err.message || 'Failed to load article'
   } finally {
     loading.value = false
+  }
+}
+
+async function handleCopyWechat() {
+  if (!article.value) return
+  const md = article.value.fullContent || article.value.content || ''
+  const html = markdownToHtml(md, selectedTheme.value || undefined)
+  const ok = await copyToWechat(html, selectedTheme.value || undefined)
+  if (ok) {
+    message.success('Copied to clipboard in WeChat format')
+  } else {
+    message.error('Failed to copy')
   }
 }
 

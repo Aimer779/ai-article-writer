@@ -97,5 +97,8 @@ application-local.properties
 # AI Agents
 .agents/
 
+# Reference projects
+rico-md-master/
+
 # Temporary files
 tmp/

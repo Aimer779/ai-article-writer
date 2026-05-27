@@ -159,22 +159,32 @@
         <div v-else class="center-panel surface-card preview-panel">
           <div class="preview-header">
             <span class="topic-tag">Topic: {{ topicInput }}</span>
-            <span
-              v-if="creationStore.isConnected"
-              class="status-badge processing"
-            >Streaming</span>
-            <span
-              v-else-if="creationStore.isCreating"
-              class="status-badge processing"
-            >Creating</span>
-            <span
-              v-else-if="creationStore.isCompleted"
-              class="status-badge completed"
-            >Completed</span>
-            <span
-              v-else-if="creationStore.isFailed"
-              class="status-badge failed"
-            >Failed</span>
+            <a-space>
+              <a-select
+                v-model:value="selectedTheme"
+                placeholder="Theme"
+                style="width: 160px"
+                :options="themeOptions"
+                allow-clear
+                size="small"
+              />
+              <span
+                v-if="creationStore.isConnected"
+                class="status-badge processing"
+              >Streaming</span>
+              <span
+                v-else-if="creationStore.isCreating"
+                class="status-badge processing"
+              >Creating</span>
+              <span
+                v-else-if="creationStore.isCompleted"
+                class="status-badge completed"
+              >Completed</span>
+              <span
+                v-else-if="creationStore.isFailed"
+                class="status-badge failed"
+              >Failed</span>
+            </a-space>
           </div>
 
           <a-tabs v-model:activeKey="activeTabKey" class="preview-tabs">
@@ -300,6 +310,8 @@ import { useArticleCreationStore } from '@/stores/articleCreation'
 import { useLoginUserStore } from '@/stores'
 import { CREATION_STEPS } from '@/constants/article'
 import { markdownToHtml } from '@/utils/article'
+import { getStyleList } from '@/constants/themes'
+import 'highlight.js/styles/github.css'
 
 const router = useRouter()
 const creationStore = useArticleCreationStore()
@@ -313,6 +325,11 @@ let titlePreviewTimer: number | null = null
 
 const selectedStyle = ref('default')
 const selectedMethods = ref<string[]>([])
+const selectedTheme = ref<string>('')
+
+const themeOptions = computed(() => {
+  return getStyleList().map((t) => ({ label: t.name, value: t.key }))
+})
 
 /* ---------- Typing Placeholder Effect ---------- */
 const PLACEHOLDER_TOPICS = [
@@ -486,12 +503,12 @@ function appendTypingCursor(html: string): string {
 }
 
 const renderOutline = computed(() => {
-  const html = markdownToHtml(creationStore.outlineDisplay)
+  const html = markdownToHtml(creationStore.outlineDisplay, selectedTheme.value || undefined)
   return isTypingOutline.value ? appendTypingCursor(html) : html
 })
 
 const renderContent = computed(() => {
-  const html = markdownToHtml(creationStore.contentDisplay)
+  const html = markdownToHtml(creationStore.contentDisplay, selectedTheme.value || undefined)
   return isTypingContent.value ? appendTypingCursor(html) : html
 })
 
