@@ -27,21 +27,44 @@
           <a-button type="link" @click="router.push('/user/login')">Login</a-button>
           <a-button type="primary" @click="router.push('/user/register')">Register</a-button>
         </a-space>
-        <a-dropdown v-else>
-          <a-button class="user-btn">
-            <UserOutlined />
-            {{ displayName }}
-            <DownOutlined />
-          </a-button>
-          <template #overlay>
-            <a-menu @click="handleUserMenuClick">
-              <a-menu-item key="logout">
-                <LogoutOutlined />
-                Logout
-              </a-menu-item>
-            </a-menu>
-          </template>
-        </a-dropdown>
+        <a-space v-else>
+          <router-link
+            v-if="!isVip"
+            to="/vip"
+            class="upgrade-vip-btn"
+          >
+            <CrownOutlined />
+            <span>Upgrade VIP</span>
+          </router-link>
+          <router-link
+            v-else
+            to="/vip"
+            class="vip-badge"
+          >
+            <CrownOutlined />
+            <span>VIP</span>
+          </router-link>
+          <a-dropdown>
+            <a-button class="user-btn">
+              <UserOutlined />
+              {{ displayName }}
+              <DownOutlined />
+            </a-button>
+            <template #overlay>
+              <a-menu @click="handleUserMenuClick">
+                <a-menu-item v-if="isVip" key="vip">
+                  <CrownOutlined />
+                  VIP Benefits
+                </a-menu-item>
+                <a-menu-divider v-if="isVip" />
+                <a-menu-item key="logout">
+                  <LogoutOutlined />
+                  Logout
+                </a-menu-item>
+              </a-menu>
+            </template>
+          </a-dropdown>
+        </a-space>
       </div>
     </div>
   </a-layout-header>
@@ -60,12 +83,16 @@ import {
   UserOutlined,
   DownOutlined,
   LogoutOutlined,
+  CrownOutlined,
 } from '@ant-design/icons-vue'
 import { useLoginUserStore } from '@/stores'
+import { USER_ROLE_VIP } from '@/constants/user'
 
 const router = useRouter()
 const route = useRoute()
 const loginUserStore = useLoginUserStore()
+
+const isVip = computed(() => loginUserStore.loginUser.userRole === USER_ROLE_VIP || loginUserStore.loginUser.vip === true)
 
 const menuItems = computed(() => {
   const items = [
@@ -102,6 +129,8 @@ const handleUserMenuClick = async ({ key }: { key: string }) => {
     } else {
       message.error(response.data.message || 'Logout failed')
     }
+  } else if (key === 'vip') {
+    router.push('/vip')
   }
 }
 </script>
@@ -183,5 +212,41 @@ const handleUserMenuClick = async ({ key }: { key: string }) => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+
+.upgrade-vip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+  color: #c41d7f;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.3s;
+}
+
+.upgrade-vip-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(196, 29, 127, 0.2);
+}
+
+.vip-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
+  color: #874d00;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.vip-badge:hover {
+  opacity: 0.9;
 }
 </style>

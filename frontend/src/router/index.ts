@@ -49,6 +49,14 @@ const router = createRouter({
       component: UserRegisterPage,
     },
     {
+      path: '/vip',
+      name: 'VIP Membership',
+      component: () => import('@/pages/VipPage.vue'),
+      meta: {
+        requiresAuth: true,
+      },
+    },
+    {
       path: '/admin/userManage',
       name: 'User Management',
       component: () => import('@/pages/admin/UserManagePage.vue'),

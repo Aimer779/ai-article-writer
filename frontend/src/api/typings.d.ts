@@ -81,6 +81,24 @@ declare namespace API {
     message?: string;
   };
 
+  type BaseResponsePagePaymentRecordVO = {
+    code?: number;
+    data?: PagePaymentRecordVO;
+    message?: string;
+  };
+
+  type BaseResponsePaymentRecordVO = {
+    code?: number;
+    data?: PaymentRecordVO;
+    message?: string;
+  };
+
+  type BaseResponsePaymentSessionVO = {
+    code?: number;
+    data?: PaymentSessionVO;
+    message?: string;
+  };
+
   type BaseResponseString = {
     code?: number;
     data?: string;
@@ -103,6 +121,10 @@ declare namespace API {
     taskId: string;
   };
 
+  type getPaymentRecordByIdParams = {
+    id: number;
+  };
+
   type getProgressParams = {
     taskId: string;
   };
@@ -118,6 +140,8 @@ declare namespace API {
     userAvatar?: string;
     userProfile?: string;
     userRole?: string;
+    vipTime?: string;
+    vip?: boolean;
     editTime?: string;
     createTime?: string;
     updateTime?: string;
@@ -139,6 +163,53 @@ declare namespace API {
     totalPage?: number;
     totalRow?: number;
     optimizeCountQuery?: boolean;
+  };
+
+  type PagePaymentRecordVO = {
+    records?: PaymentRecordVO[];
+    pageNumber?: number;
+    pageSize?: number;
+    totalPage?: number;
+    totalRow?: number;
+    optimizeCountQuery?: boolean;
+  };
+
+  type PaymentCreateRequest = {
+    productType?: string;
+  };
+
+  type PaymentQueryRequest = {
+    pageNum?: number;
+    pageSize?: number;
+    sortField?: string;
+    sortOrder?: string;
+    id?: number;
+    userId?: number;
+    stripeSessionId?: string;
+    status?: string;
+    productType?: string;
+  };
+
+  type PaymentRecordVO = {
+    id?: number;
+    userId?: number;
+    stripeSessionId?: string;
+    stripePaymentIntentId?: string;
+    amount?: number;
+    currency?: string;
+    status?: string;
+    productType?: string;
+    description?: string;
+    refundTime?: string;
+    refundReason?: string;
+    createTime?: string;
+    updateTime?: string;
+  };
+
+  type PaymentSessionVO = {
+    paymentRecordId?: number;
+    stripeSessionId?: string;
+    checkoutUrl?: string;
   };
 
   type SseEmitter = {

@@ -9,6 +9,7 @@ export const useLoginUserStore = defineStore('loginUser', () => {
 
   const isLoggedIn = computed(() => Boolean(loginUser.value.id))
   const isAdmin = computed(() => loginUser.value.userRole === USER_ROLE.ADMIN)
+  const isVip = computed(() => loginUser.value.userRole === USER_ROLE.VIP || loginUser.value.vip === true)
 
   function setLoginUser(user: API.LoginUserVO = {}) {
     loginUser.value = user
@@ -43,6 +44,7 @@ export const useLoginUserStore = defineStore('loginUser', () => {
     loading,
     isLoggedIn,
     isAdmin,
+    isVip,
     setLoginUser,
     fetchLoginUser,
     logout,
