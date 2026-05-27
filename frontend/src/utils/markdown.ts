@@ -116,8 +116,9 @@ function applyThemeToHtml(html: string, themeKey: string): string {
     })
   }
 
-  // Wrap all content in a container div to isolate container styles
-  const container = doc.createElement('div')
+  // Wrap all content in a container section to isolate container styles
+  // <section> is preferred over <div> for WeChat editor compatibility
+  const container = doc.createElement('section')
   while (doc.body.firstChild) {
     container.appendChild(doc.body.firstChild)
   }

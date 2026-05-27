@@ -247,28 +247,6 @@ function convertOrderedListsToWechatParagraphs(doc: Document, themeKey?: string)
     list.parentNode?.replaceChild(fragment, list)
   })
 
-  // Normalize unordered lists too
-  doc.querySelectorAll('ul').forEach((list) => {
-    const items = Array.from(list.children).filter(
-      (child) => child.tagName?.toUpperCase() === 'LI'
-    )
-    if (items.length === 0) {
-      list.remove()
-      return
-    }
-    const fragment = doc.createDocumentFragment()
-    items.forEach((item) => {
-      const paragraph = doc.createElement('p')
-      const text = (item.textContent || '').replace(/\s+/g, ' ').trim()
-      paragraph.setAttribute(
-        'style',
-        `${typography} margin: 0 0 14px !important; white-space: normal !important; word-break: break-word !important; overflow-wrap: anywhere !important;`
-      )
-      paragraph.appendChild(doc.createTextNode(`• ${text}`))
-      fragment.appendChild(paragraph)
-    })
-    list.parentNode?.replaceChild(fragment, list)
-  })
 }
 
 function normalizeBlockquotes(doc: Document) {
@@ -307,6 +285,16 @@ function wrapSectionIfNeeded(doc: Document, themeKey?: string) {
   const bgColor = extractBackgroundColor(containerStyle)
   if (!bgColor || bgColor === '#fff' || bgColor === '#ffffff') return
 
+  // If applyThemeToHtml already wrapped content in a section, avoid nesting
+  const existing = doc.body.firstElementChild
+  if (existing && existing.tagName.toLowerCase() === 'section') {
+    const existingStyle = existing.getAttribute('style') || ''
+    if (!existingStyle.includes('background-color')) {
+      existing.setAttribute('style', `background-color: ${bgColor}; ${existingStyle}`)
+    }
+    return
+  }
+
   const paddingMatch = containerStyle.match(/padding:\s*([^;]+)/)
   const maxWidthMatch = containerStyle.match(/max-width:\s*([^;]+)/)
 
@@ -320,6 +308,32 @@ function wrapSectionIfNeeded(doc: Document, themeKey?: string) {
     section.appendChild(doc.body.firstChild)
   }
   doc.body.appendChild(section)
+}
+
+/**
+ * Wrap direct text child nodes of block-level elements in a span.
+ * This improves WeChat editor's style retention for pasted content.
+ */
+function wrapInlineTextNodes(doc: Document) {
+  const blockSelectors = 'h1, h2, h3, h4, h5, h6, p, li, td, th'
+  const spanStyle = 'box-sizing: border-box; margin: 0; display: inline;'
+
+  doc.querySelectorAll(blockSelectors).forEach((el) => {
+    // Skip if this element already only contains a single span
+    if (el.children.length === 1 && el.children[0].tagName.toLowerCase() === 'span' && el.childNodes.length === 1) {
+      return
+    }
+
+    const nodes = Array.from(el.childNodes)
+    nodes.forEach((node) => {
+      if (node.nodeType === Node.TEXT_NODE && node.textContent?.trim()) {
+        const span = doc.createElement('span')
+        span.setAttribute('style', spanStyle)
+        span.textContent = node.textContent
+        el.replaceChild(span, node)
+      }
+    })
+  })
 }
 
 function buildClipboardPlainText(doc: Document): string {
@@ -402,20 +416,71 @@ export async function copyToWechat(renderedHTML: string, themeKey?: string): Pro
     normalizeBlockquotes(doc)
     normalizeTablesForWechat(doc)
     wrapSectionIfNeeded(doc, themeKey)
+    wrapInlineTextNodes(doc)
+
+    // Remove all class attributes for clean WeChat pasting
+    doc.querySelectorAll('[class]').forEach((el) => {
+      el.removeAttribute('class')
+    })
 
     const text = buildClipboardPlainText(doc)
     const html = doc.body.innerHTML
 
-    const item = new ClipboardItem({
-      'text/html': new Blob([html], { type: 'text/html' }),
-      'text/plain': new Blob([text], { type: 'text/plain' }),
-    })
-
-    await navigator.clipboard.write([item])
-    return true
+    return await writeClipboard(html, text)
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Copy to WeChat failed:', error)
     return false
   }
+}
+
+/**
+ * Write rich HTML and plain text to the system clipboard.
+ * Uses ClipboardItem when available, falling back to document.execCommand('copy')
+ * for better cross-platform and WeChat-editor compatibility.
+ */
+async function writeClipboard(html: string, plainText: string): Promise<boolean> {
+  // Attempt 1: Modern Clipboard API (works well on macOS / modern Chrome)
+  if (typeof ClipboardItem !== 'undefined' && navigator.clipboard?.write) {
+    try {
+      const item = new ClipboardItem({
+        'text/html': new Blob([html], { type: 'text/html' }),
+        'text/plain': new Blob([plainText], { type: 'text/plain' }),
+      })
+      await navigator.clipboard.write([item])
+      return true
+    } catch {
+      // Fall through to legacy method
+    }
+  }
+
+  // Attempt 2: Legacy execCommand copy via a temporary contenteditable element.
+  // This is more reliable on Windows and for WeChat's editor.
+  const container = document.createElement('div')
+  container.contentEditable = 'true'
+  container.innerHTML = html
+  container.style.position = 'fixed'
+  container.style.left = '-9999px'
+  container.style.top = '0'
+  container.style.opacity = '0'
+  document.body.appendChild(container)
+
+  const selection = window.getSelection()
+  const range = document.createRange()
+  range.selectNodeContents(container)
+  selection?.removeAllRanges()
+  selection?.addRange(range)
+
+  let success = false
+  try {
+    success = document.execCommand('copy')
+  } catch {
+    success = false
+  }
+
+  selection?.removeAllRanges()
+  if (container.parentNode) {
+    document.body.removeChild(container)
+  }
+  return success
 }
