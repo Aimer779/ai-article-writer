@@ -141,7 +141,7 @@ const recentArticles = ref<API.ArticleVO[]>([])
 function formatTime(timeStr: string | undefined): string {
   if (!timeStr) return '-'
   const date = new Date(timeStr)
-  return date.toLocaleDateString(undefined, {
+  return date.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
   })
