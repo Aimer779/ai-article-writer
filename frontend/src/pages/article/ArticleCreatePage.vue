@@ -3,9 +3,9 @@
     <a-row :gutter="24" class="main-row">
       <!-- Left: Progress Steps -->
       <a-col :xs="24" :lg="4" class="side-col">
-        <div class="side-section">
-          <h3 class="side-title">Creation Flow</h3>
-          <p class="side-subtitle">AI agent collaboration visualization</p>
+        <div class="side-section surface-card">
+          <h3 class="side-title">Creation flow</h3>
+          <p class="side-subtitle">Multi-agent pipeline</p>
           <div class="steps-list">
             <div
               v-for="(step, index) in CREATION_STEPS"
@@ -34,10 +34,10 @@
       <!-- Center: Input or Preview -->
       <a-col :xs="24" :lg="14" class="center-col">
         <!-- Input Panel -->
-        <div v-if="showInputPanel" class="center-panel input-panel">
-          <h1 class="center-title">AI Article Creation</h1>
+        <div v-if="showInputPanel" class="center-panel surface-card input-panel">
+          <h1 class="center-title">Create an article</h1>
           <p class="center-subtitle">
-            Enter a topic and let AI generate a complete article with outline, content, and images.
+            Enter a topic and let the agents generate a complete article with outline, content, and images.
           </p>
           <a-textarea
             v-model:value="topicInput"
@@ -52,8 +52,8 @@
           <!-- Article Style -->
           <div class="option-section">
             <div class="option-header">
-              <span class="option-title">Article Style</span>
-              <span class="option-hint">Default style will be used if none selected</span>
+              <span class="option-title">Article style</span>
+              <span class="option-hint">Default if none selected</span>
             </div>
             <div class="option-group">
               <label
@@ -77,8 +77,8 @@
           <!-- Image Method -->
           <div class="option-section">
             <div class="option-header">
-              <span class="option-title">Image Method</span>
-              <span class="option-hint">All methods supported if none selected</span>
+              <span class="option-title">Image method</span>
+              <span class="option-hint">All methods if none selected</span>
             </div>
             <div class="option-group">
               <label
@@ -96,7 +96,6 @@
                 {{ method.label }}
               </label>
             </div>
-
           </div>
 
           <a-button
@@ -108,7 +107,7 @@
             @click="handleStart"
           >
             <RocketOutlined />
-            Start Creation
+            Start creation
           </a-button>
 
           <a-alert
@@ -124,35 +123,47 @@
           <a-result
             v-if="creationStore.isCompleted"
             status="success"
-            title="Article Created Successfully!"
+            title="Article created successfully"
             class="success-result"
           >
             <template #extra>
               <a-button type="primary" @click="goToArticle">
-                View Article
+                View article
               </a-button>
               <a-button @click="handleReset">
-                Create Another
+                Create another
               </a-button>
             </template>
           </a-result>
         </div>
 
         <!-- Preview Panel -->
-        <div v-else class="center-panel preview-panel">
+        <div v-else class="center-panel surface-card preview-panel">
           <div class="preview-header">
             <span class="topic-tag">Topic: {{ topicInput }}</span>
-            <a-tag v-if="creationStore.isConnected" color="processing">Streaming</a-tag>
-            <a-tag v-else-if="creationStore.isCreating" color="processing">Creating</a-tag>
-            <a-tag v-else-if="creationStore.isCompleted" color="success">Completed</a-tag>
-            <a-tag v-else-if="creationStore.isFailed" color="error">Failed</a-tag>
+            <span
+              v-if="creationStore.isConnected"
+              class="status-badge processing"
+            >Streaming</span>
+            <span
+              v-else-if="creationStore.isCreating"
+              class="status-badge processing"
+            >Creating</span>
+            <span
+              v-else-if="creationStore.isCompleted"
+              class="status-badge completed"
+            >Completed</span>
+            <span
+              v-else-if="creationStore.isFailed"
+              class="status-badge failed"
+            >Failed</span>
           </div>
 
           <a-tabs v-model:activeKey="activeTabKey" class="preview-tabs">
-            <a-tab-pane key="title" tab="Title Preview">
+            <a-tab-pane key="title" tab="Title">
               <div class="content-preview">
                 <div v-if="creationStore.articleTitle" class="markdown-body">
-                  <h2>Generated Title</h2>
+                  <h2>Generated title</h2>
                   <h3>{{ creationStore.articleTitle }}</h3>
                   <p v-if="creationStore.articleSubTitle">{{ creationStore.articleSubTitle }}</p>
                 </div>
@@ -163,7 +174,7 @@
               </div>
             </a-tab-pane>
 
-            <a-tab-pane key="outline" tab="Outline Preview">
+            <a-tab-pane key="outline" tab="Outline">
               <div class="content-preview">
                 <div
                   v-if="creationStore.outlineDisplay"
@@ -178,7 +189,7 @@
               </div>
             </a-tab-pane>
 
-            <a-tab-pane key="content" tab="Content Preview">
+            <a-tab-pane key="content" tab="Content">
               <div class="content-preview">
                 <div
                   v-if="creationStore.contentDisplay"
@@ -196,10 +207,10 @@
 
           <div v-if="creationStore.isCompleted || creationStore.isFailed" class="bottom-actions">
             <a-button v-if="creationStore.isCompleted" type="primary" @click="goToArticle">
-              View Full Article
+              View full article
             </a-button>
             <a-button @click="handleReset">
-              {{ creationStore.isCompleted ? 'Create Another' : 'Try Again' }}
+              {{ creationStore.isCompleted ? 'Create another' : 'Try again' }}
             </a-button>
           </div>
         </div>
@@ -208,40 +219,40 @@
       <!-- Right: Sidebar -->
       <a-col :xs="24" :lg="6" class="side-col">
         <!-- Quota Card -->
-        <div class="side-card">
+        <div class="side-card surface-card">
           <h4 class="card-title">
             <CrownOutlined />
-            Creation Quota
+            Creation quota
           </h4>
           <div class="quota-body">
-            <a-tag v-if="loginUserStore.isAdmin" color="gold">Admin</a-tag>
+            <span v-if="loginUserStore.isAdmin" class="status-badge completed">Admin</span>
             <span class="quota-text">{{ loginUserStore.isAdmin ? 'Unlimited' : '10 / 10 remaining' }}</span>
           </div>
         </div>
 
         <!-- Hot Topics -->
-        <div class="side-card">
+        <div class="side-card surface-card">
           <h4 class="card-title">
             <FireOutlined />
-            Hot Topics
+            Hot topics
           </h4>
           <div class="topic-tags">
-            <a-tag
+            <button
               v-for="topic in hotTopics"
               :key="topic"
-              class="topic-tag-item"
+              class="topic-tag-item press-scale"
               @click="selectTopic(topic)"
             >
               {{ topic }}
-            </a-tag>
+            </button>
           </div>
         </div>
 
         <!-- Writing Tips -->
-        <div class="side-card">
+        <div class="side-card surface-card">
           <h4 class="card-title">
             <StarOutlined />
-            Writing Tips
+            Writing tips
           </h4>
           <div class="tips-list">
             <div v-for="(tip, idx) in writingTips" :key="idx" class="tip-item">
@@ -288,7 +299,7 @@ const selectedMethods = ref<string[]>([])
 
 const articleStyles = [
   { label: 'Default', value: 'default' },
-  { label: 'Tech Style', value: 'tech' },
+  { label: 'Tech', value: 'tech' },
   { label: 'Emotional', value: 'emotional' },
   { label: 'Educational', value: 'educational' },
   { label: 'Humorous', value: 'humorous' },
@@ -384,13 +395,13 @@ const hotTopics = [
 ]
 
 const writingTips = [
-  { name: 'Hit the Pain Point', desc: 'Address what users care about most' },
-  { name: 'Create Suspense', desc: 'Spark curiosity in readers' },
-  { name: 'Use Numbers', desc: 'Concrete data adds persuasion' },
-  { name: 'Tell a Story', desc: 'Narratives make content memorable' },
-  { name: 'Keep It Concise', desc: 'Short paragraphs improve readability' },
-  { name: 'Use Active Voice', desc: 'Direct sentences feel more energetic' },
-  { name: 'Add a Call to Action', desc: 'Guide readers on what to do next' },
+  { name: 'Hit the pain point', desc: 'Address what users care about most' },
+  { name: 'Create suspense', desc: 'Spark curiosity in readers' },
+  { name: 'Use numbers', desc: 'Concrete data adds persuasion' },
+  { name: 'Tell a story', desc: 'Narratives make content memorable' },
+  { name: 'Keep it concise', desc: 'Short paragraphs improve readability' },
+  { name: 'Use active voice', desc: 'Direct sentences feel more energetic' },
+  { name: 'Add a call to action', desc: 'Guide readers on what to do next' },
 ]
 
 function selectTopic(topic: string) {
@@ -433,9 +444,8 @@ onUnmounted(() => {
 
 <style scoped>
 .create-page {
-  min-height: calc(100vh - 64px);
-  background: #f8fafc;
-  padding: 24px;
+  min-height: calc(100vh - 60px);
+  padding: var(--space-5);
 }
 
 .main-row {
@@ -447,28 +457,25 @@ onUnmounted(() => {
 .side-col {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 .side-section,
 .side-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  padding: var(--space-4);
 }
 
 .side-title {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   margin: 0 0 4px;
-  color: #1f1f1f;
+  color: var(--ink);
 }
 
 .side-subtitle {
   font-size: 12px;
-  color: #94a3b8;
-  margin: 0 0 16px;
+  color: var(--text-muted);
+  margin: 0 0 var(--space-4);
 }
 
 /* Steps */
@@ -481,7 +488,7 @@ onUnmounted(() => {
 .step-item {
   display: flex;
   gap: 12px;
-  padding: 12px 0;
+  padding: 10px 0;
   position: relative;
 }
 
@@ -489,102 +496,124 @@ onUnmounted(() => {
   content: '';
   position: absolute;
   left: 15px;
-  top: 40px;
+  top: 38px;
   bottom: 0;
   width: 1px;
-  background: #e2e8f0;
+  background: var(--border);
+  transition: background-color 0.3s ease;
+}
+
+.step-item.step-completed:not(:last-child)::after {
+  background: var(--accent);
 }
 
 .step-marker {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background: #f1f5f9;
-  color: #94a3b8;
+  background: var(--canvas);
+  border: 2px solid var(--border);
+  color: var(--text-muted);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   flex-shrink: 0;
   z-index: 1;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 .step-check {
-  font-size: 14px;
-  color: #22c55e;
+  font-size: 13px;
 }
 
 .step-active .step-marker {
-  background: #22c55e;
+  background: var(--accent);
+  border-color: var(--accent);
   color: #fff;
+  animation: stepPulse 2s ease-in-out infinite;
 }
 
 .step-completed .step-marker {
-  background: #dcfce7;
-  color: #22c55e;
+  background: var(--accent-subtle);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .step-name {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
-  color: #475569;
+  color: var(--text-secondary);
   line-height: 20px;
+  transition: color 0.3s ease;
 }
 
 .step-active .step-name {
-  color: #22c55e;
+  color: var(--ink);
   font-weight: 600;
 }
 
 .step-desc {
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--text-muted);
   margin-top: 2px;
   line-height: 18px;
+}
+
+@keyframes stepPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
 }
 
 /* Side Cards */
 .card-title {
   font-size: 14px;
   font-weight: 600;
-  margin: 0 0 12px;
-  color: #1f1f1f;
+  margin: 0 0 var(--space-3);
+  color: var(--ink);
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
 .card-title :deep(.anticon) {
-  font-size: 16px;
+  font-size: 15px;
+  color: var(--accent);
 }
 
 .quota-body {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .quota-text {
   font-size: 14px;
-  color: #475569;
+  color: var(--text-secondary);
 }
 
 .topic-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .topic-tag-item {
   cursor: pointer;
-  font-size: 13px;
-  padding: 4px 10px;
-  border-radius: 6px;
-  background: #f8fafc;
-  border-color: #e2e8f0;
-  color: #475569;
-  transition: all 0.2s;
+  font-size: 12px;
+  padding: 5px 10px;
+  border-radius: var(--radius-md);
+  background: var(--canvas);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -592,15 +621,15 @@ onUnmounted(() => {
 }
 
 .topic-tag-item:hover {
-  background: #dcfce7;
-  border-color: #22c55e;
-  color: #16a34a;
+  background: var(--accent-subtle);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .tips-list {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--space-3);
 }
 
 .tip-item {
@@ -613,9 +642,9 @@ onUnmounted(() => {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: #22c55e;
+  background: var(--accent);
   color: #fff;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -626,12 +655,12 @@ onUnmounted(() => {
 .tip-name {
   font-size: 13px;
   font-weight: 500;
-  color: #334155;
+  color: var(--ink);
 }
 
 .tip-desc {
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--text-muted);
   margin-top: 2px;
 }
 
@@ -642,95 +671,77 @@ onUnmounted(() => {
 }
 
 .center-panel {
-  background: #fff;
-  border-radius: 12px;
-  padding: 32px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  padding: var(--space-5);
   min-height: 600px;
 }
 
 /* Input Panel */
 .center-title {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   text-align: center;
-  margin: 0 0 8px;
-  color: #0f172a;
+  margin: 0 0 var(--space-2);
+  color: var(--ink);
 }
 
 .center-subtitle {
   font-size: 14px;
-  color: #64748b;
+  color: var(--text-secondary);
   text-align: center;
-  margin: 0 0 32px;
+  margin: 0 0 var(--space-5);
 }
 
 .topic-textarea {
-  border-radius: 10px;
   font-size: 15px;
   resize: none;
 }
 
 .topic-textarea :deep(.ant-input) {
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
 }
 
 .char-count {
   text-align: right;
   font-size: 12px;
-  color: #94a3b8;
-  margin-top: 4px;
+  color: var(--text-muted);
+  margin-top: var(--space-1);
 }
 
 .start-btn {
   width: 100%;
-  margin-top: 16px;
-  border-radius: 10px;
+  margin-top: var(--space-4);
   height: 48px;
-  font-size: 16px;
-  font-weight: 500;
-  background: #22c55e;
-  border-color: #22c55e;
-}
-
-.start-btn:hover {
-  background: #16a34a;
-  border-color: #16a34a;
-}
-
-.start-btn:disabled {
-  background: #e2e8f0;
-  border-color: #e2e8f0;
-  color: #94a3b8;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 /* Option Sections */
 .option-section {
-  margin-top: 20px;
+  margin-top: var(--space-4);
 }
 
 .option-header {
   display: flex;
   align-items: baseline;
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
 }
 
 .option-title {
   font-size: 14px;
   font-weight: 600;
-  color: #1f1f1f;
+  color: var(--ink);
 }
 
 .option-hint {
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--text-muted);
 }
 
 .option-group {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: var(--space-2);
 }
 
 .option-pill {
@@ -738,25 +749,25 @@ onUnmounted(() => {
   align-items: center;
   gap: 6px;
   padding: 6px 14px;
-  border-radius: 20px;
-  border: 1px solid #e2e8f0;
-  background: #fff;
-  color: #475569;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
   font-size: 13px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
   user-select: none;
 }
 
 .option-pill:hover {
-  border-color: #3b82f6;
-  color: #2563eb;
+  border-color: var(--border-strong);
+  color: var(--ink);
 }
 
 .option-pill-active {
-  background: #dbeafe;
-  border-color: #3b82f6;
-  color: #1d4ed8;
+  background: var(--accent-subtle);
+  border-color: var(--accent);
+  color: var(--accent);
   font-weight: 500;
 }
 
@@ -767,18 +778,12 @@ onUnmounted(() => {
   height: 0;
 }
 
-.option-note {
-  font-size: 12px;
-  color: #94a3b8;
-  margin: 8px 0 0;
-}
-
 .error-alert {
-  margin-top: 20px;
+  margin-top: var(--space-4);
 }
 
 .success-result {
-  margin-top: 20px;
+  margin-top: var(--space-4);
 }
 
 /* Preview Panel */
@@ -786,19 +791,46 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 
 .topic-tag {
   font-size: 13px;
-  color: #64748b;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
+.status-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.status-badge.completed {
+  background: var(--success-subtle);
+  color: var(--success);
+}
+
+.status-badge.processing {
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
+
+.status-badge.failed {
+  background: var(--error-subtle);
+  color: var(--error);
+}
+
 .preview-tabs :deep(.ant-tabs-nav) {
-  margin-bottom: 16px;
+  margin-bottom: var(--space-3);
 }
 
 .content-preview {
@@ -812,14 +844,14 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   min-height: 300px;
-  color: #cbd5e1;
+  color: var(--text-muted);
 }
 
 .typing-cursor {
   display: inline-block;
   width: 2px;
   height: 1.2em;
-  background: #1890ff;
+  background: var(--accent);
   margin-left: 2px;
   vertical-align: text-bottom;
   animation: blink 1s step-end infinite;
@@ -837,10 +869,10 @@ onUnmounted(() => {
 .bottom-actions {
   display: flex;
   justify-content: center;
-  gap: 12px;
-  margin-top: 24px;
-  padding-top: 16px;
-  border-top: 1px solid #f1f5f9;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
 }
 
 /* Markdown body styles */
@@ -850,37 +882,39 @@ onUnmounted(() => {
 .markdown-body :deep(h4),
 .markdown-body :deep(h5),
 .markdown-body :deep(h6) {
-  margin-top: 16px;
-  margin-bottom: 12px;
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-3);
   font-weight: 600;
   line-height: 1.4;
-  color: #262626;
+  color: var(--ink);
 }
 
-.markdown-body :deep(h1) { font-size: 24px; }
-.markdown-body :deep(h2) { font-size: 20px; }
-.markdown-body :deep(h3) { font-size: 18px; }
-.markdown-body :deep(h4) { font-size: 16px; }
+.markdown-body :deep(h1) { font-size: 22px; }
+.markdown-body :deep(h2) { font-size: 18px; }
+.markdown-body :deep(h3) { font-size: 16px; }
+.markdown-body :deep(h4) { font-size: 15px; }
+
 .markdown-body :deep(p) {
-  margin-bottom: 12px;
-  line-height: 1.8;
-  color: #434343;
+  margin-bottom: var(--space-3);
+  line-height: 1.75;
+  color: var(--text-secondary);
 }
 
 .markdown-body :deep(code) {
-  background: #f5f5f5;
+  background: var(--code-bg);
   padding: 2px 6px;
-  border-radius: 3px;
-  font-family: monospace;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
   font-size: 0.9em;
+  color: var(--ink);
 }
 
 .markdown-body :deep(pre) {
-  background: #f5f5f5;
+  background: var(--code-bg);
   padding: 12px 16px;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   overflow-x: auto;
-  margin-bottom: 12px;
+  margin-bottom: var(--space-3);
 }
 
 .markdown-body :deep(pre code) {
@@ -889,37 +923,41 @@ onUnmounted(() => {
 }
 
 .markdown-body :deep(blockquote) {
-  border-left: 4px solid #d9d9d9;
+  border-left: 3px solid var(--border-strong);
   padding-left: 12px;
   margin-left: 0;
-  color: #595959;
+  color: var(--text-secondary);
+  font-style: italic;
 }
 
 .markdown-body :deep(ul),
 .markdown-body :deep(ol) {
   padding-left: 20px;
-  margin-bottom: 12px;
+  margin-bottom: var(--space-3);
 }
 
 .markdown-body :deep(li) {
   margin-bottom: 4px;
-  line-height: 1.8;
+  line-height: 1.75;
+  color: var(--text-secondary);
 }
 
 .markdown-body :deep(img) {
   max-width: 100%;
-  border-radius: 4px;
-  margin: 12px 0;
+  border-radius: var(--radius-md);
+  margin: var(--space-3) 0;
+  outline: 1px solid rgba(0, 0, 0, 0.08);
+  outline-offset: -1px;
 }
 
 .markdown-body :deep(hr) {
   border: none;
-  border-top: 1px solid #e8e8e8;
-  margin: 16px 0;
+  border-top: 1px solid var(--border);
+  margin: var(--space-4) 0;
 }
 
 .markdown-body :deep(a) {
-  color: #1890ff;
+  color: var(--accent);
   text-decoration: none;
 }
 
@@ -927,14 +965,36 @@ onUnmounted(() => {
   text-decoration: underline;
 }
 
+.markdown-body :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: var(--space-3);
+}
+
+.markdown-body :deep(th),
+.markdown-body :deep(td) {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  text-align: left;
+}
+
+.markdown-body :deep(th) {
+  background: var(--surface-elevated);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  color: var(--text-secondary);
+}
+
 /* ==================== Responsive ==================== */
 @media (max-width: 992px) {
   .side-col {
-    margin-top: 16px;
+    margin-top: var(--space-4);
   }
 
   .center-panel {
-    padding: 20px;
+    padding: var(--space-4);
     min-height: auto;
   }
 }

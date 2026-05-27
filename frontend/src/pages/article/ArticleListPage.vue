@@ -8,11 +8,11 @@
       </div>
       <a-button type="primary" class="create-btn" @click="router.push('/create')">
         <PlusOutlined />
-        Create New Article
+        Create new article
       </a-button>
     </div>
 
-    <a-card :bordered="false" class="list-card">
+    <div class="surface-card list-card">
       <!-- Search Bar -->
       <div class="search-bar">
         <div class="search-inputs">
@@ -38,7 +38,7 @@
           </a-input>
           <a-select
             v-model:value="searchParams.status"
-            placeholder="All Status"
+            placeholder="All status"
             allow-clear
             class="status-select"
           >
@@ -68,37 +68,37 @@
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'status'">
-            <span class="status-dot" :class="`status-${record.status?.toLowerCase()}`">
+            <span class="status-badge" :class="`status-${record.status?.toLowerCase()}`">
               <span class="dot" />
               {{ ARTICLE_STATUS_TEXT[record.status] || record.status }}
             </span>
           </template>
           <template v-if="column.key === 'action'">
             <a-space :size="16">
-              <a-button type="link" class="action-btn action-view" @click="viewArticle(record)">
+              <button class="action-btn action-view press-scale" @click="viewArticle(record)">
                 <EyeOutlined />
                 View
-              </a-button>
-              <a-button type="link" class="action-btn action-export" @click="exportArticle(record)">
+              </button>
+              <button class="action-btn action-export press-scale" @click="exportArticle(record)">
                 <DownloadOutlined />
                 Export
-              </a-button>
+              </button>
               <a-popconfirm
-                title="Are you sure to delete this article?"
-                ok-text="Yes"
-                cancel-text="No"
+                title="Delete this article?"
+                ok-text="Delete"
+                cancel-text="Cancel"
                 @confirm="deleteArticle(record)"
               >
-                <a-button type="link" class="action-btn action-delete">
+                <button class="action-btn action-delete press-scale">
                   <DeleteOutlined />
                   Delete
-                </a-button>
+                </button>
               </a-popconfirm>
             </a-space>
           </template>
         </template>
       </a-table>
-    </a-card>
+    </div>
   </div>
 </template>
 
@@ -162,13 +162,13 @@ const columns: TableColumnsType<API.ArticleVO> = [
     width: 120,
   },
   {
-    title: 'Created At',
+    title: 'Created',
     dataIndex: 'createTime',
     key: 'createTime',
     width: 180,
   },
   {
-    title: 'Completed At',
+    title: 'Completed',
     dataIndex: 'completedTime',
     key: 'completedTime',
     width: 180,
@@ -277,7 +277,8 @@ onMounted(() => {
 
 <style scoped>
 .list-page {
-  padding: 24px;
+  max-width: 1280px;
+  margin: 0 auto;
 }
 
 /* Page Header */
@@ -285,7 +286,7 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: var(--space-4);
 }
 
 .header-left {
@@ -295,35 +296,25 @@ onMounted(() => {
 }
 
 .page-title {
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 22px;
+  font-weight: 700;
   margin: 0;
-  color: #1f1f1f;
+  color: var(--ink);
 }
 
 .page-subtitle {
   font-size: 14px;
-  color: #888;
+  color: var(--text-secondary);
   margin: 0;
 }
 
 .create-btn {
-  background: #22c55e;
-  border-color: #22c55e;
-  border-radius: 6px;
-  font-weight: 500;
-}
-
-.create-btn:hover {
-  background: #16a34a;
-  border-color: #16a34a;
+  font-weight: 600;
 }
 
 /* Card */
 .list-card {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  padding: var(--space-4);
 }
 
 /* Search Bar */
@@ -331,15 +322,17 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: var(--space-3);
 }
 
 .search-inputs {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 
@@ -353,56 +346,67 @@ onMounted(() => {
 
 .total-count {
   font-size: 14px;
-  color: #888;
+  color: var(--text-muted);
   white-space: nowrap;
 }
 
 .total-count strong {
-  color: #262626;
+  color: var(--ink);
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
-/* Status Dot */
-.status-dot {
+/* Status Badge */
+.status-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 14px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
 }
 
 .dot {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   display: inline-block;
 }
 
 .status-completed {
-  color: #22c55e;
+  background: var(--success-subtle);
+  color: var(--success);
 }
 .status-completed .dot {
-  background: #22c55e;
+  background: var(--success);
 }
 
 .status-processing {
-  color: #3b82f6;
+  background: var(--accent-subtle);
+  color: var(--accent);
 }
 .status-processing .dot {
-  background: #3b82f6;
+  background: var(--accent);
 }
 
 .status-pending {
-  color: #888;
+  background: var(--canvas);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
 }
 .status-pending .dot {
-  background: #888;
+  background: var(--text-muted);
 }
 
 .status-failed {
-  color: #ef4444;
+  background: var(--error-subtle);
+  color: var(--error);
 }
 .status-failed .dot {
-  background: #ef4444;
+  background: var(--error);
 }
 
 /* Action Buttons */
@@ -412,26 +416,40 @@ onMounted(() => {
   gap: 4px;
   padding: 0;
   font-size: 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  transition: color 0.15s ease;
 }
 
 .action-view {
-  color: #22c55e;
+  color: var(--success);
 }
 .action-view:hover {
-  color: #16a34a;
+  color: oklch(48% 0.15 145);
 }
 
 .action-export {
-  color: #595959;
+  color: var(--text-secondary);
 }
 .action-export:hover {
-  color: #262626;
+  color: var(--ink);
 }
 
 .action-delete {
-  color: #ef4444;
+  color: var(--error);
 }
 .action-delete:hover {
-  color: #dc2626;
+  color: oklch(45% 0.18 25);
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
 }
 </style>

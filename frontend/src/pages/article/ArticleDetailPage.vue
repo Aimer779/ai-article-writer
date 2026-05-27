@@ -7,12 +7,12 @@
           <a-breadcrumb-item>
             <router-link to="/articles">History</router-link>
           </a-breadcrumb-item>
-          <a-breadcrumb-item>Article Detail</a-breadcrumb-item>
+          <a-breadcrumb-item>Article detail</a-breadcrumb-item>
         </a-breadcrumb>
         <a-space>
           <a-button @click="router.push('/articles')">
             <ArrowLeftOutlined />
-            Back to List
+            Back
           </a-button>
           <a-button type="primary" @click="handleExport">
             <DownloadOutlined />
@@ -41,48 +41,51 @@
       <!-- Article Content -->
       <template v-else-if="article">
         <!-- Meta Card -->
-        <a-card :bordered="false" class="meta-card">
+        <div class="surface-card meta-card">
           <div class="article-meta">
             <h1 class="article-title">{{ article.mainTitle || 'Untitled' }}</h1>
             <p v-if="article.subTitle" class="article-subtitle">{{ article.subTitle }}</p>
             <div class="meta-tags">
-              <a-tag color="blue">Topic: {{ article.topic }}</a-tag>
-              <a-tag :color="ARTICLE_STATUS_COLOR[article.status || ''] || 'default'">
+              <span class="meta-tag">Topic: {{ article.topic }}</span>
+              <span
+                class="status-badge"
+                :class="article.status?.toLowerCase() || 'pending'"
+              >
                 {{ ARTICLE_STATUS_TEXT[article.status || ''] || article.status }}
-              </a-tag>
-              <a-tag v-if="article.taskId">Task: {{ article.taskId }}</a-tag>
+              </span>
+              <span v-if="article.taskId" class="meta-tag">Task: {{ article.taskId }}</span>
             </div>
             <div class="meta-times">
               <span v-if="article.createTime">
                 <ClockCircleOutlined />
-                Created: {{ formatTime(article.createTime) }}
+                Created {{ formatTime(article.createTime) }}
               </span>
               <span v-if="article.completedTime">
                 <CheckCircleOutlined />
-                Completed: {{ formatTime(article.completedTime) }}
+                Completed {{ formatTime(article.completedTime) }}
               </span>
             </div>
           </div>
-        </a-card>
+        </div>
 
         <!-- Agent Execution Log Panel -->
-        <a-card v-if="article.taskId" :bordered="false" class="log-card">
-          <div class="log-header" @click="toggleLogPanel">
+        <div v-if="article.taskId" class="surface-card log-card">
+          <button class="log-header" @click="toggleLogPanel">
             <div class="log-header-left">
               <ExperimentOutlined class="log-header-icon" />
-              <span class="log-header-title">Execution Log</span>
-              <a-tag
+              <span class="log-header-title">Execution log</span>
+              <span
                 v-if="logStats"
-                :color="logStats.failedCount && logStats.failedCount > 0 ? 'error' : 'success'"
-                class="log-status-tag"
+                class="status-badge"
+                :class="logStats.failedCount && logStats.failedCount > 0 ? 'failed' : 'completed'"
               >
-                {{ logStats.failedCount && logStats.failedCount > 0 ? 'failed' : 'success' }}
-              </a-tag>
+                {{ logStats.failedCount && logStats.failedCount > 0 ? 'Has failures' : 'All succeeded' }}
+              </span>
             </div>
             <div class="log-header-right">
               <component :is="logExpanded ? UpOutlined : DownOutlined" class="log-toggle-icon" />
             </div>
-          </div>
+          </button>
 
           <div v-show="logExpanded" class="log-body">
             <a-spin v-if="logLoading" size="small" tip="Loading logs..." class="log-spinner" />
@@ -90,16 +93,16 @@
               <!-- Stats Row -->
               <div v-if="agentLogs.length" class="log-stats">
                 <div class="log-stat-item">
-                  <div class="log-stat-label">Total Duration</div>
-                  <div class="log-stat-value">{{ formatDuration(totalDuration) }}</div>
+                  <div class="log-stat-label">Total duration</div>
+                  <div class="log-stat-value text-tabular">{{ formatDuration(totalDuration) }}</div>
                 </div>
                 <div class="log-stat-item">
-                  <div class="log-stat-label">Agent Count</div>
-                  <div class="log-stat-value">{{ agentLogs.length }}</div>
+                  <div class="log-stat-label">Agent count</div>
+                  <div class="log-stat-value text-tabular">{{ agentLogs.length }}</div>
                 </div>
                 <div class="log-stat-item">
-                  <div class="log-stat-label">Avg Duration</div>
-                  <div class="log-stat-value">{{ formatDuration(logStats?.averageDurationMs) }}</div>
+                  <div class="log-stat-label">Avg duration</div>
+                  <div class="log-stat-value text-tabular">{{ formatDuration(logStats?.averageDurationMs) }}</div>
                 </div>
               </div>
 
@@ -126,35 +129,39 @@
                         <LoadingOutlined v-else-if="log.status === 'running'" />
                         <ProfileOutlined v-else />
                       </div>
-                      <div v-if="index !== agentLogs.length - 1" class="timeline-line"></div>
+                      <div v-if="index !== agentLogs.length - 1" class="timeline-line" />
                     </div>
                   </div>
                   <div class="timeline-content">
                     <div class="timeline-row">
-                      <span class="timeline-name">{{ log.agentName || 'Unknown Agent' }}</span>
-                      <span class="timeline-duration">{{ formatDuration(log.durationMs) }}</span>
+                      <span class="timeline-name">{{ log.agentName || 'Unknown agent' }}</span>
+                      <span class="timeline-duration text-tabular">{{ formatDuration(log.durationMs) }}</span>
                     </div>
                     <div class="timeline-time">{{ formatTime(log.startTime || '') }}</div>
                   </div>
                 </div>
               </div>
 
-              <a-empty v-else description="No execution logs available" class="log-empty" />
+              <div v-else class="empty-state">
+                <p>No execution logs available</p>
+              </div>
             </template>
           </div>
-        </a-card>
+        </div>
 
         <!-- Cover Image -->
-        <a-card v-if="article.coverImage" :bordered="false" class="cover-card">
+        <div v-if="article.coverImage" class="surface-card cover-card">
           <img :src="article.coverImage" alt="Cover" class="cover-image" />
-        </a-card>
+        </div>
 
         <!-- Body -->
-        <a-card :bordered="false" class="body-card">
+        <div class="surface-card body-card">
           <div v-if="article.fullContent" class="markdown-body" v-html="renderedContent" />
           <div v-else-if="article.content" class="markdown-body" v-html="renderedContent" />
-          <a-empty v-else description="No content available" />
-        </a-card>
+          <div v-else class="empty-state">
+            <p>No content available</p>
+          </div>
+        </div>
       </template>
     </div>
   </div>
@@ -178,7 +185,7 @@ import {
 } from '@ant-design/icons-vue'
 import { getArticleById, getArticleByTaskId } from '@/api/articleController'
 import { listAgentLogByPage, getExecutionStats } from '@/api/agentLogController'
-import { ARTICLE_STATUS_TEXT, ARTICLE_STATUS_COLOR } from '@/constants/article'
+import { ARTICLE_STATUS_TEXT } from '@/constants/article'
 import { markdownToHtml, downloadArticleAsMarkdown } from '@/utils/article'
 
 const route = useRoute()
@@ -298,9 +305,7 @@ onMounted(() => {
 
 <style scoped>
 .detail-page {
-  padding: 24px;
-  background: #f5f5f5;
-  min-height: calc(100vh - 128px);
+  min-height: calc(100vh - 60px);
 }
 
 .detail-container {
@@ -312,7 +317,9 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: var(--space-4);
+  flex-wrap: wrap;
+  gap: var(--space-3);
 }
 
 .loading-wrapper {
@@ -324,11 +331,10 @@ onMounted(() => {
 
 .meta-card,
 .cover-card,
-.body-card {
-  background: #fff;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+.body-card,
+.log-card {
+  margin-bottom: var(--space-4);
+  padding: var(--space-5);
 }
 
 .article-meta {
@@ -338,29 +344,73 @@ onMounted(() => {
 .article-title {
   font-size: 28px;
   font-weight: 700;
-  margin-bottom: 8px;
-  color: #1f1f1f;
+  margin-bottom: var(--space-2);
+  color: var(--ink);
+  letter-spacing: -0.018em;
+  line-height: 1.25;
 }
 
 .article-subtitle {
   font-size: 16px;
-  color: #595959;
-  margin-bottom: 16px;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-4);
 }
 
 .meta-tags {
   display: flex;
   justify-content: center;
-  gap: 8px;
+  gap: var(--space-2);
   flex-wrap: wrap;
-  margin-bottom: 12px;
+  margin-bottom: var(--space-3);
+}
+
+.meta-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--canvas);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+
+.status-badge.completed {
+  background: var(--success-subtle);
+  color: var(--success);
+}
+
+.status-badge.processing {
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
+
+.status-badge.pending {
+  background: var(--canvas);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.status-badge.failed {
+  background: var(--error-subtle);
+  color: var(--error);
 }
 
 .meta-times {
   display: flex;
   justify-content: center;
-  gap: 24px;
-  color: #8c8c8c;
+  gap: var(--space-5);
+  color: var(--text-muted);
   font-size: 13px;
 }
 
@@ -380,10 +430,12 @@ onMounted(() => {
   max-height: 400px;
   object-fit: cover;
   display: block;
+  outline: 1px solid rgba(0, 0, 0, 0.08);
+  outline-offset: -1px;
 }
 
 .body-card {
-  padding: 8px 16px 24px;
+  padding: var(--space-5) var(--space-5) var(--space-6);
 }
 
 /* Markdown styles */
@@ -393,38 +445,41 @@ onMounted(() => {
 .markdown-body :deep(h4),
 .markdown-body :deep(h5),
 .markdown-body :deep(h6) {
-  margin-top: 24px;
-  margin-bottom: 16px;
+  margin-top: var(--space-5);
+  margin-bottom: var(--space-3);
   font-weight: 600;
   line-height: 1.4;
-  color: #262626;
+  color: var(--ink);
+  text-wrap: balance;
 }
 
-.markdown-body :deep(h1) { font-size: 28px; }
-.markdown-body :deep(h2) { font-size: 24px; }
-.markdown-body :deep(h3) { font-size: 20px; }
-.markdown-body :deep(h4) { font-size: 18px; }
+.markdown-body :deep(h1) { font-size: 26px; }
+.markdown-body :deep(h2) { font-size: 22px; }
+.markdown-body :deep(h3) { font-size: 18px; }
+.markdown-body :deep(h4) { font-size: 16px; }
+
 .markdown-body :deep(p) {
-  margin-bottom: 16px;
+  margin-bottom: var(--space-3);
   line-height: 1.8;
-  color: #434343;
-  font-size: 15px;
+  color: var(--text-secondary);
+  text-wrap: pretty;
 }
 
 .markdown-body :deep(code) {
-  background: #f5f5f5;
+  background: var(--code-bg);
   padding: 2px 6px;
-  border-radius: 3px;
-  font-family: 'Fira Code', monospace;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
   font-size: 0.9em;
+  color: var(--ink);
 }
 
 .markdown-body :deep(pre) {
-  background: #f5f5f5;
-  padding: 16px;
-  border-radius: 6px;
+  background: var(--code-bg);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
   overflow-x: auto;
-  margin-bottom: 16px;
+  margin-bottom: var(--space-3);
 }
 
 .markdown-body :deep(pre code) {
@@ -433,39 +488,41 @@ onMounted(() => {
 }
 
 .markdown-body :deep(blockquote) {
-  border-left: 4px solid #d9d9d9;
+  border-left: 3px solid var(--border-strong);
   padding-left: 16px;
   margin-left: 0;
-  color: #595959;
+  color: var(--text-secondary);
   font-style: italic;
 }
 
 .markdown-body :deep(ul),
 .markdown-body :deep(ol) {
   padding-left: 24px;
-  margin-bottom: 16px;
+  margin-bottom: var(--space-3);
 }
 
 .markdown-body :deep(li) {
   margin-bottom: 6px;
   line-height: 1.8;
+  color: var(--text-secondary);
 }
 
 .markdown-body :deep(img) {
   max-width: 100%;
-  border-radius: 4px;
-  margin: 16px 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-radius: var(--radius-md);
+  margin: var(--space-3) 0;
+  outline: 1px solid rgba(0, 0, 0, 0.08);
+  outline-offset: -1px;
 }
 
 .markdown-body :deep(hr) {
   border: none;
-  border-top: 1px solid #e8e8e8;
-  margin: 24px 0;
+  border-top: 1px solid var(--border);
+  margin: var(--space-5) 0;
 }
 
 .markdown-body :deep(a) {
-  color: #1890ff;
+  color: var(--accent);
   text-decoration: none;
 }
 
@@ -476,27 +533,29 @@ onMounted(() => {
 .markdown-body :deep(table) {
   width: 100%;
   border-collapse: collapse;
-  margin-bottom: 16px;
+  margin-bottom: var(--space-3);
 }
 
 .markdown-body :deep(th),
 .markdown-body :deep(td) {
-  border: 1px solid #e8e8e8;
+  border: 1px solid var(--border);
   padding: 8px 12px;
   text-align: left;
 }
 
 .markdown-body :deep(th) {
-  background: #fafafa;
+  background: var(--surface-elevated);
   font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  color: var(--text-secondary);
 }
 
 /* Agent Execution Log Panel */
 .log-card {
-  background: #fff;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  padding: 0;
+  overflow: hidden;
 }
 
 .log-header {
@@ -504,7 +563,13 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
-  padding: 4px 0;
+  padding: var(--space-4) var(--space-5);
+  background: none;
+  border: none;
+  width: 100%;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--ink);
 }
 
 .log-header-left {
@@ -515,53 +580,46 @@ onMounted(() => {
 
 .log-header-icon {
   font-size: 18px;
-  color: #595959;
+  color: var(--text-secondary);
 }
 
 .log-header-title {
   font-size: 15px;
   font-weight: 600;
-  color: #262626;
-}
-
-.log-status-tag {
-  font-size: 12px;
-  line-height: 18px;
-  height: 22px;
-  padding: 0 8px;
+  color: var(--ink);
 }
 
 .log-toggle-icon {
   font-size: 14px;
-  color: #8c8c8c;
-  transition: color 0.3s;
+  color: var(--text-muted);
+  transition: color 0.15s ease;
 }
 
 .log-header:hover .log-toggle-icon {
-  color: #262626;
+  color: var(--ink);
 }
 
 .log-body {
-  margin-top: 16px;
-  padding-top: 8px;
-  border-top: 1px solid #f0f0f0;
+  padding: 0 var(--space-5) var(--space-4);
+  border-top: 1px solid var(--border);
 }
 
 .log-spinner {
   display: flex;
   justify-content: center;
-  padding: 24px 0;
+  padding: var(--space-5) 0;
 }
 
 /* Stats Row */
 .log-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
-  padding: 16px;
-  background: #fafafa;
-  border-radius: 8px;
+  gap: var(--space-4);
+  margin: var(--space-4) 0 var(--space-5);
+  padding: var(--space-4);
+  background: var(--canvas);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
 }
 
 .log-stat-item {
@@ -569,25 +627,29 @@ onMounted(() => {
 }
 
 .log-stat-label {
-  font-size: 13px;
-  color: #8c8c8c;
+  font-size: 12px;
+  color: var(--text-muted);
   margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  font-weight: 500;
 }
 
 .log-stat-value {
   font-size: 20px;
-  font-weight: 600;
-  color: #52c41a;
+  font-weight: 700;
+  color: var(--success);
+  letter-spacing: -0.018em;
 }
 
 /* Timeline */
 .log-timeline {
-  padding: 8px 4px;
+  padding: var(--space-2) var(--space-1);
 }
 
 .timeline-item {
   display: flex;
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 .timeline-left {
@@ -615,34 +677,34 @@ onMounted(() => {
   justify-content: center;
   font-size: 14px;
   flex-shrink: 0;
-  background: #f6ffed;
-  color: #52c41a;
-  border: 2px solid #52c41a;
+  background: var(--success-subtle);
+  color: var(--success);
+  border: 2px solid var(--success);
 }
 
 .timeline-dot.dot-error {
-  background: #fff2f0;
-  color: #ff4d4f;
-  border-color: #ff4d4f;
+  background: var(--error-subtle);
+  color: var(--error);
+  border-color: var(--error);
 }
 
 .timeline-dot.dot-running {
-  background: #e6f7ff;
-  color: #1890ff;
-  border-color: #1890ff;
+  background: var(--accent-subtle);
+  color: var(--accent);
+  border-color: var(--accent);
 }
 
 .timeline-line {
   flex: 1;
   width: 2px;
-  background: #e8e8e8;
+  background: var(--border);
   margin: 4px 0;
   min-height: 32px;
 }
 
 .timeline-content {
   flex: 1;
-  padding-bottom: 20px;
+  padding-bottom: var(--space-4);
   min-height: 60px;
 }
 
@@ -656,33 +718,45 @@ onMounted(() => {
 .timeline-name {
   font-size: 14px;
   font-weight: 600;
-  color: #262626;
+  color: var(--ink);
 }
 
 .timeline-duration {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
-  color: #52c41a;
+  color: var(--success);
 }
 
 .timeline-time {
   font-size: 12px;
-  color: #8c8c8c;
+  color: var(--text-muted);
 }
 
 .timeline-last .timeline-content {
   padding-bottom: 0;
 }
 
-.log-empty {
-  padding: 24px 0;
+.empty-state {
+  text-align: center;
+  padding: var(--space-6) 0;
+  color: var(--text-muted);
+  font-size: 14px;
 }
 
 /* Responsive */
 @media (max-width: 600px) {
   .log-stats {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: var(--space-3);
+  }
+
+  .article-title {
+    font-size: 22px;
+  }
+
+  .meta-times {
+    flex-direction: column;
+    gap: var(--space-1);
   }
 }
 </style>
