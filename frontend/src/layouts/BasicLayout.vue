@@ -1,13 +1,13 @@
 <template>
   <a-layout class="basic-layout">
-    <!-- Top navigation bar -->
     <GlobalHeader />
-    <!-- Main content area -->
     <a-layout-content class="main-content">
-      <router-view />
+      <router-view v-slot="{ Component }">
+        <transition name="page-fade" mode="out-in">
+          <component :is="Component" />
+        </transition>
+      </router-view>
     </a-layout-content>
-
-    <!-- Footer copyright info -->
     <GlobalFooter />
   </a-layout>
 </template>
@@ -19,15 +19,42 @@ import GlobalFooter from '@/components/GlobalFooter.vue'
 
 <style scoped>
 .basic-layout {
-  background: none;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .main-content {
   flex: 1;
-  width: 100%;
-  padding: 0;
-  background: none;
-  margin: 0;
+  background: var(--canvas);
+  padding: var(--space-5);
+}
+
+@media (max-width: 1024px) {
+  .main-content {
+    padding: var(--space-4);
+  }
+}
+
+@media (max-width: 640px) {
+  .main-content {
+    padding: var(--space-3);
+  }
+}
+
+/* Page transition */
+.page-fade-enter-active,
+.page-fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.page-fade-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.page-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
 }
 </style>

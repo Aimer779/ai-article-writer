@@ -1,12 +1,11 @@
 <template>
   <a-layout-header class="global-header">
-    <div class="header-content">
+    <div class="header-inner">
       <!-- Left: Logo -->
-      <div class="logo">
-        <router-link to="/">
-          AI Article Writer
-        </router-link>
-      </div>
+      <router-link to="/" class="logo">
+        <span class="logo-mark">A</span>
+        <span class="logo-text">AI Article Writer</span>
+      </router-link>
 
       <!-- Center: Navigation -->
       <nav class="nav-wrapper">
@@ -14,7 +13,7 @@
           v-for="item in menuItems"
           :key="item.key"
           :to="item.key"
-          :class="['nav-tab', { active: route.path === item.key }]"
+          :class="['nav-tab', { active: isActive(item.key) }]"
         >
           <component :is="item.icon" />
           <span>{{ item.label }}</span>
@@ -23,48 +22,61 @@
 
       <!-- Right: User Actions -->
       <div class="user-actions">
-        <a-space v-if="!loginUserStore.isLoggedIn">
-          <a-button type="link" @click="router.push('/user/login')">Login</a-button>
-          <a-button type="primary" @click="router.push('/user/register')">Register</a-button>
-        </a-space>
-        <a-space v-else>
+        <template v-if="!loginUserStore.isLoggedIn">
+          <a-button
+            type="link"
+            class="login-btn"
+            @click="router.push('/user/login')"
+          >
+            Log in
+          </a-button>
+          <a-button
+            type="primary"
+            class="register-btn"
+            @click="router.push('/user/register')"
+          >
+            Get started
+          </a-button>
+        </template>
+        <template v-else>
           <router-link
             v-if="!isVip"
             to="/vip"
-            class="upgrade-vip-btn"
+            class="upgrade-badge press-scale"
           >
             <CrownOutlined />
-            <span>Upgrade VIP</span>
+            <span>Upgrade</span>
           </router-link>
           <router-link
             v-else
             to="/vip"
-            class="vip-badge"
+            class="vip-badge press-scale"
           >
             <CrownOutlined />
             <span>VIP</span>
           </router-link>
-          <a-dropdown>
-            <a-button class="user-btn">
+
+          <a-dropdown placement="bottomRight">
+            <button class="user-menu-btn press-scale">
               <UserOutlined />
-              {{ displayName }}
-              <DownOutlined />
-            </a-button>
+              <span class="user-name">{{ displayName }}</span>
+              <DownOutlined class="caret" />
+            </button>
             <template #overlay>
               <a-menu @click="handleUserMenuClick">
                 <a-menu-item v-if="isVip" key="vip">
                   <CrownOutlined />
-                  VIP Benefits
+                  VIP benefits
                 </a-menu-item>
                 <a-menu-divider v-if="isVip" />
                 <a-menu-item key="logout">
                   <LogoutOutlined />
-                  Logout
+                  Log out
                 </a-menu-item>
               </a-menu>
             </template>
           </a-dropdown>
-        </a-space>
+        </template>
       </div>
     </div>
   </a-layout-header>
@@ -116,6 +128,13 @@ const menuItems = computed(() => {
   return items
 })
 
+const isActive = (path: string) => {
+  if (path === '/') {
+    return route.path === '/'
+  }
+  return route.path.startsWith(path)
+}
+
 const displayName = computed(() => {
   return loginUserStore.loginUser.userName || loginUserStore.loginUser.userAccount || 'User'
 })
@@ -137,116 +156,199 @@ const handleUserMenuClick = async ({ key }: { key: string }) => {
 
 <style scoped>
 .global-header {
-  display: flex;
-  align-items: center;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  padding: 0 24px;
   position: sticky;
   top: 0;
   z-index: 100;
+  height: 60px;
+  line-height: 60px;
+  background: var(--surface) !important;
+  border-bottom: 1px solid var(--border);
+  padding: 0;
 }
 
-.header-content {
+.header-inner {
   display: flex;
   align-items: center;
-  width: 100%;
+  justify-content: space-between;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 var(--space-5);
+  height: 100%;
 }
 
-/* Left: Logo */
+@media (max-width: 1024px) {
+  .header-inner {
+    padding: 0 var(--space-4);
+  }
+}
+
+/* Logo */
 .logo {
-  flex-shrink: 0;
-  font-size: 20px;
-  font-weight: bold;
-}
-
-.logo a {
-  color: #1890ff;
-  text-decoration: none;
-}
-
-.logo a:hover {
-  color: #40a9ff;
-}
-
-/* Center: Navigation */
-.nav-wrapper {
-  flex: 1;
-  display: flex;
-  justify-content: center;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.logo-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.logo-text {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.logo:hover .logo-text {
+  color: var(--ink);
+}
+
+/* Navigation */
+.nav-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex: 1;
+  justify-content: center;
 }
 
 .nav-tab {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 0 16px;
-  line-height: 64px;
-  color: rgba(0, 0, 0, 0.65);
+  padding: 0 var(--space-3);
+  height: 36px;
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
   text-decoration: none;
   font-size: 14px;
-  transition: color 0.3s;
-  border-bottom: 2px solid transparent;
+  font-weight: 500;
+  transition: color 0.15s ease, background-color 0.15s ease;
   white-space: nowrap;
 }
 
 .nav-tab:hover {
-  color: #1890ff;
+  color: var(--ink);
+  background: var(--canvas);
 }
 
 .nav-tab.active {
-  color: #1890ff;
-  border-bottom-color: #1890ff;
+  color: var(--accent);
+  background: var(--accent-subtle);
 }
 
-/* Right: User Actions */
+/* User Actions */
 .user-actions {
-  flex-shrink: 0;
   display: flex;
   align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
 }
 
-.user-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+.login-btn {
+  font-weight: 500;
+  color: var(--text-secondary) !important;
 }
 
-.upgrade-vip-btn {
+.login-btn:hover {
+  color: var(--ink) !important;
+  background: var(--canvas) !important;
+}
+
+.upgrade-badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 12px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
-  color: #c41d7f;
-  font-size: 13px;
-  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--accent-subtle);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
   text-decoration: none;
-  transition: all 0.3s;
+  transition: background-color 0.15s ease;
 }
 
-.upgrade-vip-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(196, 29, 127, 0.2);
+.upgrade-badge:hover {
+  background: oklch(95% 0.03 55);
+  color: var(--accent);
 }
 
 .vip-badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 12px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
-  color: #874d00;
-  font-size: 13px;
-  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  background: oklch(95% 0.02 85);
+  color: oklch(55% 0.1 85);
+  font-size: 12px;
+  font-weight: 600;
   text-decoration: none;
+  border: 1px solid oklch(88% 0.04 85);
+  transition: background-color 0.15s ease;
 }
 
 .vip-badge:hover {
-  opacity: 0.9;
+  background: oklch(92% 0.03 85);
+  color: oklch(50% 0.12 85);
+}
+
+.user-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.user-menu-btn:hover {
+  border-color: var(--border-strong);
+  background: var(--canvas);
+}
+
+.user-name {
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.caret {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Mobile: hide center nav on small screens */
+@media (max-width: 768px) {
+  .nav-wrapper {
+    display: none;
+  }
+
+  .logo-text {
+    display: none;
+  }
 }
 </style>
