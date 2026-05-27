@@ -153,7 +153,8 @@
               <div class="content-preview">
                 <div v-if="creationStore.articleTitle" class="markdown-body">
                   <h2>Generated Title</h2>
-                  <p>{{ creationStore.articleTitle }}</p>
+                  <h3>{{ creationStore.articleTitle }}</h3>
+                  <p v-if="creationStore.articleSubTitle">{{ creationStore.articleSubTitle }}</p>
                 </div>
                 <div v-else class="empty-placeholder">
                   <a-spin v-if="creationStore.currentStepIndex >= 0 && !creationStore.articleTitle" />
@@ -279,6 +280,8 @@ const loginUserStore = useLoginUserStore()
 
 const topicInput = ref('')
 const activeTabKey = ref('title')
+const titlePreviewReady = ref(false)
+let titlePreviewTimer: number | null = null
 
 const selectedStyle = ref('default')
 const selectedMethods = ref<string[]>([])
@@ -300,13 +303,37 @@ const imageMethods = [
   { label: 'SVG', value: 'svg' },
 ]
 
-// Auto-switch tabs based on progress
 watch(
-  () => creationStore.currentStepIndex,
-  (idx) => {
-    if (idx >= 2) {
+  () => creationStore.articleTitle,
+  (title) => {
+    if (titlePreviewTimer !== null) {
+      window.clearTimeout(titlePreviewTimer)
+      titlePreviewTimer = null
+    }
+
+    titlePreviewReady.value = false
+    if (title) {
+      activeTabKey.value = 'title'
+      titlePreviewTimer = window.setTimeout(() => {
+        titlePreviewReady.value = true
+        titlePreviewTimer = null
+      }, 1200)
+    }
+  },
+)
+
+// Auto-switch tabs based on content that is actually available.
+watch(
+  () => [
+    creationStore.currentStepIndex,
+    creationStore.outlineBuffer,
+    creationStore.contentBuffer,
+    titlePreviewReady.value,
+  ] as const,
+  ([idx, outline, content, canLeaveTitle]) => {
+    if (content || idx >= 3) {
       activeTabKey.value = 'content'
-    } else if (idx >= 1) {
+    } else if ((outline || idx >= 2) && canLeaveTitle) {
       activeTabKey.value = 'outline'
     } else if (idx >= 0) {
       activeTabKey.value = 'title'
@@ -396,6 +423,10 @@ function goToArticle() {
 }
 
 onUnmounted(() => {
+  if (titlePreviewTimer !== null) {
+    window.clearTimeout(titlePreviewTimer)
+    titlePreviewTimer = null
+  }
   // Keep SSE alive for navigation
 })
 </script>

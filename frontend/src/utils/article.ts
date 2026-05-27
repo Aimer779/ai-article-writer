@@ -6,6 +6,15 @@ import type { SseMessageType } from '@/constants/article'
 export interface SseMessage {
   type: SseMessageType
   content?: string
+  message?: string
+  selectedTitle?: {
+    mainTitle?: string
+    subTitle?: string
+  }
+  titleOptions?: Array<{
+    mainTitle?: string
+    subTitle?: string
+  }>
   error?: string
 }
 

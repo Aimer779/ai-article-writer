@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 import { createArticleTask } from '@/api/articleController'
 import { SSE_MESSAGE_TYPE, CREATION_STEPS } from '@/constants/article'
 import { createProgressEventSource, parseSseMessage } from '@/utils/article'
-import type { SseMessageType } from '@/constants/article'
+import type { SseMessage } from '@/utils/article'
 
 interface TypingQueueItem {
   target: 'outline' | 'content'
@@ -24,6 +24,7 @@ export const useArticleCreationStore = defineStore('articleCreation', () => {
   const error = ref<string | null>(null)
   const isConnected = ref(false)
   const articleTitle = ref('')
+  const articleSubTitle = ref('')
   const articleId = ref<number | null>(null)
 
   // Internal refs
@@ -110,12 +111,15 @@ export const useArticleCreationStore = defineStore('articleCreation', () => {
   }
 
   // ==================== SSE Handlers ====================
-  function handleSseMessage(msg: { type: SseMessageType; content?: string }) {
+  function handleSseMessage(msg: SseMessage) {
     switch (msg.type) {
       case SSE_MESSAGE_TYPE.AGENT1_COMPLETE:
         advanceStep()
         addLog('Title options generated.')
-        if (msg.content) {
+        if (msg.selectedTitle?.mainTitle) {
+          articleTitle.value = msg.selectedTitle.mainTitle
+          articleSubTitle.value = msg.selectedTitle.subTitle || ''
+        } else if (msg.content) {
           articleTitle.value = msg.content
         }
         break
@@ -181,7 +185,7 @@ export const useArticleCreationStore = defineStore('articleCreation', () => {
       case SSE_MESSAGE_TYPE.ERROR:
         status.value = 'failed'
         isConnected.value = false
-        error.value = msg.content || 'Unknown error occurred during creation.'
+        error.value = msg.content || msg.message || 'Unknown error occurred during creation.'
         addLog(`Error: ${error.value}`)
         stopTyping()
         break
@@ -284,6 +288,7 @@ export const useArticleCreationStore = defineStore('articleCreation', () => {
     imageCount.value = 0
     error.value = null
     articleTitle.value = ''
+    articleSubTitle.value = ''
     articleId.value = null
   }
 
@@ -301,6 +306,7 @@ export const useArticleCreationStore = defineStore('articleCreation', () => {
     error,
     isConnected,
     articleTitle,
+    articleSubTitle,
     articleId,
     // Computed
     isCreating,
