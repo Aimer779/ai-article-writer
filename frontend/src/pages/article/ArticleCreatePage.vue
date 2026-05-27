@@ -85,12 +85,17 @@
                 v-for="method in imageMethods"
                 :key="method.value"
                 class="option-pill"
-                :class="{ 'option-pill-active': selectedMethods.includes(method.value) }"
+                :class="{ 
+                  'option-pill-active': selectedMethods.includes(method.value), 
+                  'option-pill-disabled': !loginUserStore.isVip && isVipMethod(method.value) 
+                }"
               >
+                <CrownOutlined v-if="isVipMethod(method.value)" />
                 <input
                   v-model="selectedMethods"
                   type="checkbox"
                   :value="method.value"
+                  :disabled="!loginUserStore.isVip && isVipMethod(method.value)"
                   class="option-input"
                 />
                 {{ method.label }}
@@ -311,6 +316,12 @@ const imageMethods = [
   { label: 'Meme', value: 'meme' },
   { label: 'SVG', value: 'svg' },
 ]
+
+const VIP_IMAGE_METHODS = ['nano_banana', 'svg']
+
+function isVipMethod(value: string) {
+  return VIP_IMAGE_METHODS.includes(value)
+}
 
 watch(
   () => creationStore.articleTitle,
@@ -779,6 +790,16 @@ onUnmounted(() => {
   border-color: var(--accent);
   color: var(--accent);
   font-weight: 500;
+}
+
+.option-pill-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.option-pill-disabled:hover {
+  border-color: var(--border);
+  color: var(--text-secondary);
 }
 
 .option-input {
