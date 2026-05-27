@@ -1,38 +1,59 @@
 <template>
-  <div class="login-page">
-    <a-card title="Login" style="width: 400px; margin: 100px auto;">
+  <div class="auth-page">
+    <div class="auth-card surface-card">
+      <div class="auth-header">
+        <div class="logo-mark">A</div>
+        <h1 class="auth-title">Welcome back</h1>
+        <p class="auth-subtitle">Log in to your AI Article Writer account</p>
+      </div>
+
       <a-form
         :model="formState"
         name="login"
+        class="auth-form"
         @finish="handleLogin"
       >
         <a-form-item
-          label="Account"
           name="userAccount"
-          :rules="[{ required: true, message: 'Please input your account!' }]"
+          :rules="[{ required: true, message: 'Please enter your account' }]"
         >
-          <a-input v-model:value="formState.userAccount" />
+          <a-input
+            v-model:value="formState.userAccount"
+            placeholder="Account"
+            size="large"
+          />
         </a-form-item>
 
         <a-form-item
-          label="Password"
           name="userPassword"
-          :rules="[{ required: true, message: 'Please input your password!' }]"
+          :rules="[{ required: true, message: 'Please enter your password' }]"
         >
-          <a-input-password v-model:value="formState.userPassword" />
+          <a-input-password
+            v-model:value="formState.userPassword"
+            placeholder="Password"
+            size="large"
+          />
         </a-form-item>
 
         <a-form-item>
-          <a-button type="primary" html-type="submit" block :loading="loading">
-            Login
+          <a-button
+            type="primary"
+            html-type="submit"
+            block
+            size="large"
+            :loading="loading"
+            class="submit-btn"
+          >
+            Log in
           </a-button>
         </a-form-item>
 
-        <div style="text-align: center;">
-          <router-link to="/user/register">Don't have an account? Register</router-link>
+        <div class="auth-footer">
+          <span>Don't have an account?</span>
+          <router-link to="/user/register">Get started</router-link>
         </div>
       </a-form>
-    </a-card>
+    </div>
   </div>
 </template>
 
@@ -74,7 +95,7 @@ const handleLogin = async (values: API.UserLoginRequest) => {
     const response = await userLogin(values)
     if (response.data.code === 0 && response.data.data) {
       loginUserStore.setLoginUser(response.data.data)
-      message.success('Login successful')
+      message.success('Logged in')
       router.push(getRedirectPath())
     } else {
       message.error(response.data.message || 'Login failed')
@@ -86,8 +107,71 @@ const handleLogin = async (values: API.UserLoginRequest) => {
 </script>
 
 <style scoped>
-.login-page {
-  min-height: 100vh;
-  background: #f0f2f5;
+.auth-page {
+  min-height: calc(100vh - 60px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  padding: var(--space-6) var(--space-5);
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: var(--space-5);
+}
+
+.logo-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  font-size: 18px;
+  margin-bottom: var(--space-3);
+}
+
+.auth-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: var(--space-1);
+  letter-spacing: -0.018em;
+}
+
+.auth-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.auth-form :deep(.ant-input),
+.auth-form :deep(.ant-input-password) {
+  font-size: 15px;
+}
+
+.submit-btn {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.auth-footer {
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-top: var(--space-2);
+}
+
+.auth-footer a {
+  margin-left: 4px;
+  font-weight: 600;
 }
 </style>

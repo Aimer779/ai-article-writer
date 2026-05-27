@@ -1,22 +1,29 @@
 <template>
   <div class="user-manage-page">
-    <a-card title="User Management">
+    <div class="page-header">
+      <div class="header-left">
+        <h1 class="page-title">User management</h1>
+        <p class="page-subtitle">Manage accounts and roles</p>
+      </div>
+    </div>
+
+    <div class="surface-card table-card">
       <a-form class="search-form" layout="inline" :model="searchParams" @finish="loadData">
-        <a-form-item label="Account" name="userAccount">
+        <a-form-item name="userAccount">
           <a-input
             v-model:value="searchParams.userAccount"
             allow-clear
             placeholder="Search account"
           />
         </a-form-item>
-        <a-form-item label="Name" name="userName">
+        <a-form-item name="userName">
           <a-input
             v-model:value="searchParams.userName"
             allow-clear
             placeholder="Search name"
           />
         </a-form-item>
-        <a-form-item label="Role" name="userRole">
+        <a-form-item name="userRole">
           <a-select
             v-model:value="searchParams.userRole"
             allow-clear
@@ -45,23 +52,28 @@
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'userRole'">
-            <a-tag :color="record.userRole === USER_ROLE.ADMIN ? 'red' : 'blue'">
+            <span
+              class="role-badge"
+              :class="record.userRole === USER_ROLE.ADMIN ? 'admin' : 'user'"
+            >
               {{ USER_ROLE_TEXT[record.userRole as UserRole] || record.userRole }}
-            </a-tag>
+            </span>
           </template>
           <template v-if="column.key === 'action'">
             <a-space>
               <a-popconfirm
-                title="Are you sure you want to delete this user?"
+                title="Delete this user?"
+                ok-text="Delete"
+                cancel-text="Cancel"
                 @confirm="handleDelete(record)"
               >
-                <a-button type="link" size="small" danger>Delete</a-button>
+                <button class="action-delete press-scale">Delete</button>
               </a-popconfirm>
             </a-space>
           </template>
         </template>
       </a-table>
-    </a-card>
+    </div>
   </div>
 </template>
 
@@ -97,7 +109,7 @@ const columns = [
   { title: 'Account', dataIndex: 'userAccount', key: 'userAccount' },
   { title: 'Name', dataIndex: 'userName', key: 'userName' },
   { title: 'Role', dataIndex: 'userRole', key: 'userRole', width: 120 },
-  { title: 'Created At', dataIndex: 'createTime', key: 'createTime', width: 220 },
+  { title: 'Created', dataIndex: 'createTime', key: 'createTime', width: 220 },
   { title: 'Action', key: 'action', width: 120 },
 ]
 
@@ -141,7 +153,7 @@ const handleDelete = async (record: API.LoginUserVO) => {
   }
   const response = await deleteUser({ id: record.id })
   if (response.data.code === 0 && response.data.data) {
-    message.success('User deleted successfully')
+    message.success('User deleted')
     loadData()
   } else {
     message.error(response.data.message || 'Delete failed')
@@ -151,10 +163,76 @@ const handleDelete = async (record: API.LoginUserVO) => {
 
 <style scoped>
 .user-manage-page {
-  padding: 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.page-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--ink);
+}
+
+.page-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.table-card {
+  padding: var(--space-4);
 }
 
 .search-form {
-  margin-bottom: 16px;
+  margin-bottom: var(--space-4);
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+
+.role-badge.admin {
+  background: var(--error-subtle);
+  color: var(--error);
+}
+
+.role-badge.user {
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
+
+.action-delete {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--error);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: color 0.15s ease;
+}
+
+.action-delete:hover {
+  color: oklch(45% 0.18 25);
 }
 </style>

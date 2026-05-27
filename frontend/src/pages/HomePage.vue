@@ -1,105 +1,122 @@
 <template>
   <div class="home-page">
-    <!-- Hero Section -->
-    <div class="hero-section">
-      <div class="hero-content">
-        <h1 class="hero-title">Welcome to AI Article Writer</h1>
-        <p class="hero-subtitle">
-          Generate high-quality articles with AI assistance. From topic to polished content with images, fully automated.
-        </p>
-        <div class="hero-actions">
-          <a-button type="primary" size="large" @click="router.push('/create')">
-            <EditOutlined />
-            Start Creating
-          </a-button>
-          <a-button size="large" @click="router.push('/articles')">
-            <FileTextOutlined />
-            History
-          </a-button>
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-inner">
+        <div class="hero-text">
+          <h1 class="hero-title">
+            Multi-Agent article generation<br />for teams that write at scale
+          </h1>
+          <p class="hero-lead">
+            From topic research to polished content with images — orchestrated by specialized AI agents, streaming in real time.
+          </p>
+          <div class="hero-actions">
+            <a-button
+              type="primary"
+              size="large"
+              class="hero-cta"
+              @click="router.push('/create')"
+            >
+              <EditOutlined />
+              Start creating
+            </a-button>
+            <a-button
+              v-if="loginUserStore.isLoggedIn"
+              size="large"
+              class="hero-secondary"
+              @click="router.push('/articles')"
+            >
+              <FileTextOutlined />
+              View history
+            </a-button>
+          </div>
+        </div>
+        <div class="hero-visual">
+          <!-- Abstract agent-flow diagram as CSS shapes -->
+          <div class="flow-diagram">
+            <div class="flow-node">Topic</div>
+            <div class="flow-line" />
+            <div class="flow-node">Research</div>
+            <div class="flow-line" />
+            <div class="flow-node">Outline</div>
+            <div class="flow-line" />
+            <div class="flow-node">Content</div>
+            <div class="flow-line" />
+            <div class="flow-node active">Images</div>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
 
     <!-- Recent Articles -->
-    <div class="recent-section">
+    <section v-if="loginUserStore.isLoggedIn" class="content-section">
       <div class="section-header">
-        <h2>Recent Articles</h2>
-        <a-button type="link" @click="router.push('/articles')">
-          View All
+        <h2>Recent articles</h2>
+        <router-link to="/articles" class="section-link">
+          View all
           <RightOutlined />
+        </router-link>
+      </div>
+
+      <div class="articles-grid">
+        <article
+          v-for="(item, index) in recentArticles"
+          :key="item.id"
+          class="article-card press-scale"
+          :style="{ animationDelay: `${index * 60}ms` }"
+          @click="viewArticle(item)"
+        >
+          <div class="card-top">
+            <span
+              class="status-badge"
+              :class="item.status?.toLowerCase() || 'pending'"
+            >
+              {{ ARTICLE_STATUS_TEXT[item.status || ''] || item.status }}
+            </span>
+            <time class="card-date">{{ formatTime(item.createTime) }}</time>
+          </div>
+          <h3 class="card-title">{{ item.mainTitle || 'Untitled' }}</h3>
+          <p class="card-topic">{{ item.topic }}</p>
+        </article>
+      </div>
+
+      <div v-if="!loading && recentArticles.length === 0" class="empty-state">
+        <div class="empty-icon">
+          <FileTextOutlined />
+        </div>
+        <h3>No articles yet</h3>
+        <p>Start your first article and the Agents will handle the rest.</p>
+        <a-button type="primary" @click="router.push('/create')">
+          Create article
         </a-button>
       </div>
 
-      <a-row :gutter="[16, 16]">
-        <a-col
-          v-for="item in recentArticles"
-          :key="item.id"
-          :xs="24"
-          :sm="12"
-          :md="8"
-        >
-          <a-card
-            hoverable
-            class="article-card"
-            @click="viewArticle(item)"
-          >
-            <div class="card-status">
-              <a-tag :color="ARTICLE_STATUS_COLOR[item.status || ''] || 'default'">
-                {{ ARTICLE_STATUS_TEXT[item.status || ''] || item.status }}
-              </a-tag>
-            </div>
-            <h3 class="card-title">{{ item.mainTitle || 'Untitled' }}</h3>
-            <p class="card-topic">{{ item.topic }}</p>
-            <div class="card-meta">
-              <span>{{ formatTime(item.createTime) }}</span>
-            </div>
-          </a-card>
-        </a-col>
-      </a-row>
-
-      <a-empty
-        v-if="!loading && recentArticles.length === 0"
-        description="No articles yet. Start creating your first article!"
-      />
-
       <div v-if="loading" class="loading-wrapper">
-        <a-spin tip="Loading..." />
+        <a-spin tip="Loading articles..." />
       </div>
-    </div>
+    </section>
 
-    <!-- Feature Highlights -->
-    <div class="features-section">
-      <h2 class="features-title">How It Works</h2>
-      <a-row :gutter="[24, 24]">
-        <a-col :xs="24" :sm="12" :md="8">
-          <div class="feature-item">
-            <div class="feature-icon">
-              <EditOutlined />
-            </div>
-            <h3>Enter a Topic</h3>
-            <p>Simply input any topic you're interested in writing about.</p>
-          </div>
-        </a-col>
-        <a-col :xs="24" :sm="12" :md="8">
-          <div class="feature-item">
-            <div class="feature-icon">
-              <ThunderboltOutlined />
-            </div>
-            <h3>AI Writes in Real-time</h3>
-            <p>Watch as AI generates outline, content, and images with live progress updates.</p>
-          </div>
-        </a-col>
-        <a-col :xs="24" :sm="12" :md="8">
-          <div class="feature-item">
-            <div class="feature-icon">
-              <DownloadOutlined />
-            </div>
-            <h3>Export & Manage</h3>
-            <p>Download your article as Markdown and manage all creations in one place.</p>
-          </div>
-        </a-col>
-      </a-row>
-    </div>
+    <!-- How it works -->
+    <section class="content-section">
+      <h2 class="section-title-center">How it works</h2>
+      <div class="steps-grid">
+        <div class="step-block">
+          <div class="step-num">01</div>
+          <h3>Enter a topic</h3>
+          <p>Describe what you want to write about. The Research Agent gathers context and trends.</p>
+        </div>
+        <div class="step-block">
+          <div class="step-num">02</div>
+          <h3>Agents collaborate</h3>
+          <p>Outline, writing, and image agents work in sequence — streaming progress live.</p>
+        </div>
+        <div class="step-block">
+          <div class="step-num">03</div>
+          <h3>Publish or export</h3>
+          <p>Review the full article with cover images, then export as Markdown or share directly.</p>
+        </div>
+      </div>
+    </section>
   </div>
 </template>
 
@@ -110,13 +127,13 @@ import {
   EditOutlined,
   FileTextOutlined,
   RightOutlined,
-  ThunderboltOutlined,
-  DownloadOutlined,
 } from '@ant-design/icons-vue'
 import { listArticleByPage } from '@/api/articleController'
-import { ARTICLE_STATUS_TEXT, ARTICLE_STATUS_COLOR } from '@/constants/article'
+import { ARTICLE_STATUS_TEXT } from '@/constants/article'
+import { useLoginUserStore } from '@/stores'
 
 const router = useRouter()
+const loginUserStore = useLoginUserStore()
 
 const loading = ref(false)
 const recentArticles = ref<API.ArticleVO[]>([])
@@ -124,7 +141,10 @@ const recentArticles = ref<API.ArticleVO[]>([])
 function formatTime(timeStr: string | undefined): string {
   if (!timeStr) return '-'
   const date = new Date(timeStr)
-  return date.toLocaleDateString()
+  return date.toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+  })
 }
 
 function viewArticle(item: API.ArticleVO) {
@@ -136,6 +156,7 @@ function viewArticle(item: API.ArticleVO) {
 }
 
 async function loadRecent() {
+  if (!loginUserStore.isLoggedIn) return
   loading.value = true
   try {
     const res = await listArticleByPage({
@@ -161,168 +182,358 @@ onMounted(() => {
 
 <style scoped>
 .home-page {
-  padding-bottom: 48px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding-bottom: var(--space-7);
 }
 
-/* Hero */
-.hero-section {
-  background: linear-gradient(135deg, #1890ff 0%, #36cfc9 100%);
-  color: #fff;
-  padding: 80px 24px;
-  text-align: center;
+/* ==================== Hero ==================== */
+.hero {
+  padding: var(--space-7) var(--space-5);
+  border-bottom: 1px solid var(--border);
 }
 
-.hero-content {
-  max-width: 720px;
+.hero-inner {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: var(--space-6);
+  align-items: center;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
 .hero-title {
-  font-size: 40px;
+  font-size: clamp(32px, 4vw, 48px);
+  line-height: 1.1;
+  letter-spacing: -0.022em;
   font-weight: 700;
-  margin-bottom: 16px;
-  color: #fff;
+  color: var(--ink);
+  margin-bottom: var(--space-4);
 }
 
-.hero-subtitle {
-  font-size: 18px;
+.hero-lead {
+  font-size: 17px;
   line-height: 1.6;
-  margin-bottom: 32px;
-  opacity: 0.95;
+  color: var(--text-secondary);
+  max-width: 480px;
+  margin-bottom: var(--space-5);
 }
 
 .hero-actions {
   display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.hero-cta {
+  height: 44px;
+  padding: 0 var(--space-4);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.hero-secondary {
+  height: 44px;
+  padding: 0 var(--space-4);
+  font-size: 15px;
+  font-weight: 500;
+  border-color: var(--border);
+  color: var(--ink);
+}
+
+.hero-secondary:hover {
+  border-color: var(--border-strong);
+  background: var(--canvas);
+}
+
+/* Flow diagram */
+.hero-visual {
+  display: flex;
+  align-items: center;
   justify-content: center;
-  gap: 16px;
 }
 
-.hero-actions .ant-btn {
-  min-width: 160px;
-  height: 48px;
-  font-size: 16px;
+.flow-diagram {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-1);
+  width: 100%;
+  max-width: 220px;
 }
 
-.hero-actions .ant-btn-primary {
-  background: #fff;
-  color: #1890ff;
-  border-color: #fff;
+.flow-node {
+  width: 100%;
+  text-align: center;
+  padding: 10px 0;
+  border-radius: var(--radius-md);
+  background: var(--canvas);
+  border: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.01em;
 }
 
-.hero-actions .ant-btn-primary:hover {
-  background: #f0f5ff;
-  color: #40a9ff;
-  border-color: #f0f5ff;
+.flow-node.active {
+  background: var(--accent-subtle);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
-.hero-actions .ant-btn:not(.ant-btn-primary) {
-  background: transparent;
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.6);
+.flow-line {
+  width: 1px;
+  height: 16px;
+  background: var(--border);
 }
 
-.hero-actions .ant-btn:not(.ant-btn-primary):hover {
-  border-color: #fff;
-  color: #fff;
+@media (max-width: 1024px) {
+  .hero-inner {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .hero-lead {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .hero-actions {
+    justify-content: center;
+  }
+
+  .hero-visual {
+    display: none;
+  }
 }
 
-/* Recent Section */
-.recent-section {
+/* ==================== Content Sections ==================== */
+.content-section {
+  padding: var(--space-6) var(--space-5) 0;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 48px 24px 24px;
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
+  align-items: baseline;
+  margin-bottom: var(--space-4);
 }
 
 .section-header h2 {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 600;
-  margin: 0;
+}
+
+.section-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--accent);
+}
+
+.section-link:hover {
+  color: var(--accent-hover);
+}
+
+/* Articles Grid */
+.articles-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+}
+
+@media (max-width: 1024px) {
+  .articles-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .articles-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .article-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+  animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
 }
 
 .article-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-1);
+  transform: translateY(-2px);
 }
 
-.card-status {
-  margin-bottom: 12px;
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-3);
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.status-badge.completed {
+  background: var(--success-subtle);
+  color: var(--success);
+}
+
+.status-badge.processing {
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
+
+.status-badge.pending {
+  background: var(--canvas);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.status-badge.failed {
+  background: var(--error-subtle);
+  color: var(--error);
+}
+
+.card-date {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 .card-title {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  margin-bottom: 8px;
-  color: #262626;
+  color: var(--ink);
+  margin-bottom: var(--space-1);
+  line-height: 1.4;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .card-topic {
   font-size: 13px;
-  color: #595959;
-  margin-bottom: 12px;
+  color: var(--text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.card-meta {
-  font-size: 12px;
-  color: #8c8c8c;
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: var(--space-7) var(--space-4);
+}
+
+.empty-icon {
+  font-size: 48px;
+  color: var(--border);
+  margin-bottom: var(--space-3);
+}
+
+.empty-state h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: var(--space-1);
+}
+
+.empty-state p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-4);
 }
 
 .loading-wrapper {
   text-align: center;
-  padding: 48px 0;
+  padding: var(--space-6) 0;
 }
 
-/* Features */
-.features-section {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 48px 24px;
-}
-
-.features-title {
+/* How it works */
+.section-title-center {
   text-align: center;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 600;
-  margin-bottom: 40px;
+  margin-bottom: var(--space-5);
 }
 
-.feature-item {
-  text-align: center;
-  padding: 24px;
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-5);
 }
 
-.feature-icon {
-  font-size: 48px;
-  color: #1890ff;
-  margin-bottom: 16px;
+@media (max-width: 768px) {
+  .steps-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
-.feature-item h3 {
-  font-size: 18px;
+.step-block {
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  transition: border-color 0.15s ease;
+}
+
+.step-block:hover {
+  border-color: var(--border-strong);
+}
+
+.step-num {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-2);
+}
+
+.step-block h3 {
+  font-size: 16px;
   font-weight: 600;
-  margin-bottom: 8px;
-  color: #262626;
+  margin-bottom: var(--space-1);
 }
 
-.feature-item p {
-  color: #595959;
+.step-block p {
+  font-size: 14px;
+  color: var(--text-secondary);
   line-height: 1.6;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

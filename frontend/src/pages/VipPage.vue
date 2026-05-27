@@ -5,35 +5,34 @@
       <div class="page-header">
         <div class="header-badge">
           <CrownOutlined />
-          <span>VIP Exclusive</span>
+          <span>VIP exclusive</span>
         </div>
-        <h1 class="page-title">Upgrade to Lifetime VIP</h1>
+        <h1 class="page-title">Upgrade to lifetime VIP</h1>
         <p class="page-subtitle">Unlock all premium features, unlimited creation quota, valid for life</p>
       </div>
 
-      <!-- Main Section: Left-Right Layout -->
+      <!-- Main Section -->
       <div class="main-section">
         <!-- Left: Pricing Card -->
-        <div class="pricing-card">
-          <div class="pricing-badge">Limited Offer</div>
+        <div class="pricing-card surface-elevated">
+          <div class="pricing-badge">Limited offer</div>
           <div class="pricing-header">
             <div class="plan-icon">
               <CrownOutlined />
             </div>
-            <h2 class="plan-name">Lifetime Membership</h2>
+            <h2 class="plan-name">Lifetime membership</h2>
             <div class="price-display">
               <span class="currency">$</span>
               <span class="price">199</span>
               <span class="period">/lifetime</span>
             </div>
-
             <div class="original-price">
               <span class="original-label">Original</span>
               <span class="original-value">$299</span>
             </div>
           </div>
 
-          <div class="pricing-divider"></div>
+          <div class="pricing-divider" />
           <div class="pricing-features">
             <div v-for="(item, index) in pricingFeatures" :key="index" class="pricing-feature">
               <CheckCircleOutlined class="feature-check" />
@@ -46,25 +45,23 @@
             size="large"
             :loading="purchasing"
             :disabled="isVip"
-            @click="handlePurchase"
             class="purchase-btn"
+            @click="handlePurchase"
           >
-            <template #icon>
-              <ThunderboltOutlined />
-            </template>
-            {{ isVip ? 'You are already a lifetime member' : 'Upgrade Now' }}
+            <ThunderboltOutlined />
+            {{ isVip ? 'You are already a lifetime member' : 'Upgrade now' }}
           </a-button>
           <div class="security-notice">
             <SafetyOutlined />
-            <span>Secure Payment · 7-Day Money-Back Guarantee</span>
+            <span>Secure payment · 7-day money-back guarantee</span>
           </div>
         </div>
 
         <!-- Right: Member Privileges -->
-        <div class="features-section">
+        <div class="features-section surface-card">
           <h3 class="section-title">
             <StarOutlined />
-            Member Privileges
+            Member privileges
           </h3>
           <div class="features-grid">
             <div v-for="(feature, index) in memberPrivileges" :key="index" class="feature-card">
@@ -79,10 +76,10 @@
       </div>
 
       <!-- FAQ Section -->
-      <div class="faq-section">
+      <div class="faq-section surface-card">
         <h3 class="section-title">
           <QuestionCircleOutlined />
-          Frequently Asked Questions
+          Frequently asked questions
         </h3>
         <div class="faq-list">
           <div
@@ -147,32 +144,32 @@ const pricingFeatures = [
 const memberPrivileges = [
   {
     icon: RocketOutlined,
-    title: 'Fast Creation',
+    title: 'Fast creation',
     desc: 'Priority AI queue, article generation speed boosted by 50%',
   },
   {
     icon: PictureOutlined,
-    title: 'Smart Images',
+    title: 'Smart images',
     desc: 'Auto-generate HD covers, Mermaid charts, and SVG illustrations',
   },
   {
     icon: FileTextOutlined,
-    title: 'Unlimited Quota',
+    title: 'Unlimited quota',
     desc: 'No daily quota limits, write as much as you want',
   },
   {
     icon: CustomerServiceOutlined,
-    title: 'VIP Support',
+    title: 'VIP support',
     desc: '7x24 dedicated support, issues resolved first',
   },
   {
     icon: SyncOutlined,
-    title: 'Lifetime Updates',
+    title: 'Lifetime updates',
     desc: 'All new features free forever, pay once and enjoy for life',
   },
   {
     icon: CrownOutlined,
-    title: 'Exclusive Badge',
+    title: 'Exclusive badge',
     desc: 'VIP exclusive badge across the site, showing your premium status',
   },
 ]
@@ -223,9 +220,7 @@ const handlePurchase = async () => {
 
 <style scoped>
 .vip-page {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
-  padding: 40px 24px;
+  padding: var(--space-6) var(--space-5);
 }
 
 .vip-container {
@@ -236,7 +231,7 @@ const handlePurchase = async () => {
 /* Page Header */
 .page-header {
   text-align: center;
-  margin-bottom: 48px;
+  margin-bottom: var(--space-6);
 }
 
 .header-badge {
@@ -244,24 +239,26 @@ const handlePurchase = async () => {
   align-items: center;
   gap: 6px;
   padding: 6px 16px;
-  background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
-  color: #874d00;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 16px;
+  background: oklch(95% 0.03 85);
+  color: oklch(55% 0.1 85);
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: var(--space-3);
+  border: 1px solid oklch(88% 0.04 85);
 }
 
 .page-title {
-  font-size: 36px;
+  font-size: 32px;
   font-weight: 700;
-  color: #1a1a2e;
-  margin-bottom: 12px;
+  color: var(--ink);
+  margin-bottom: var(--space-2);
+  letter-spacing: -0.022em;
 }
 
 .page-subtitle {
   font-size: 16px;
-  color: #666;
+  color: var(--text-secondary);
   max-width: 480px;
   margin: 0 auto;
 }
@@ -270,16 +267,13 @@ const handlePurchase = async () => {
 .main-section {
   display: grid;
   grid-template-columns: 380px 1fr;
-  gap: 32px;
-  margin-bottom: 48px;
+  gap: var(--space-5);
+  margin-bottom: var(--space-6);
 }
 
 /* Pricing Card */
 .pricing-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 32px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  padding: var(--space-5);
   position: relative;
   overflow: hidden;
 }
@@ -288,37 +282,40 @@ const handlePurchase = async () => {
   position: absolute;
   top: 0;
   right: 0;
-  background: linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%);
+  background: var(--error);
   color: #fff;
-  padding: 6px 16px;
-  font-size: 12px;
-  font-weight: 500;
-  border-bottom-left-radius: 12px;
+  padding: 5px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  border-bottom-left-radius: var(--radius-lg);
 }
 
 .pricing-header {
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: var(--space-4);
 }
 
 .plan-icon {
-  width: 64px;
-  height: 64px;
-  background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
+  width: 56px;
+  height: 56px;
+  background: oklch(95% 0.03 85);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
-  color: #fff;
-  margin: 0 auto 16px;
+  font-size: 28px;
+  color: oklch(55% 0.1 85);
+  margin: 0 auto var(--space-3);
+  border: 1px solid oklch(88% 0.04 85);
 }
 
 .plan-name {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
-  color: #1a1a2e;
-  margin-bottom: 16px;
+  color: var(--ink);
+  margin-bottom: var(--space-3);
 }
 
 .price-display {
@@ -326,25 +323,26 @@ const handlePurchase = async () => {
   align-items: baseline;
   justify-content: center;
   gap: 2px;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-1);
 }
 
 .currency {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 600;
-  color: #ff4d4f;
+  color: var(--error);
 }
 
 .price {
-  font-size: 48px;
+  font-size: 44px;
   font-weight: 700;
-  color: #ff4d4f;
+  color: var(--error);
   line-height: 1;
+  letter-spacing: -0.022em;
 }
 
 .period {
   font-size: 14px;
-  color: #999;
+  color: var(--text-muted);
 }
 
 .original-price {
@@ -356,35 +354,35 @@ const handlePurchase = async () => {
 }
 
 .original-label {
-  color: #999;
+  color: var(--text-muted);
 }
 
 .original-value {
-  color: #999;
+  color: var(--text-muted);
   text-decoration: line-through;
 }
 
 .pricing-divider {
   height: 1px;
-  background: #eee;
-  margin: 24px 0;
+  background: var(--border);
+  margin: var(--space-4) 0;
 }
 
 .pricing-features {
-  margin-bottom: 24px;
+  margin-bottom: var(--space-4);
 }
 
 .pricing-feature {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 0;
+  padding: 7px 0;
   font-size: 14px;
-  color: #444;
+  color: var(--text-secondary);
 }
 
 .feature-check {
-  color: #52c41a;
+  color: var(--success);
   font-size: 16px;
   flex-shrink: 0;
 }
@@ -392,21 +390,8 @@ const handlePurchase = async () => {
 .purchase-btn {
   width: 100%;
   height: 48px;
-  font-size: 16px;
-  font-weight: 500;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
-  border: none;
-  color: #874d00;
-}
-
-.purchase-btn:hover {
-  opacity: 0.9;
-}
-
-.purchase-btn:disabled {
-  background: #f0f0f0;
-  color: #999;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 .security-notice {
@@ -414,123 +399,117 @@ const handlePurchase = async () => {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  margin-top: 16px;
+  margin-top: var(--space-3);
   font-size: 12px;
-  color: #999;
+  color: var(--text-muted);
 }
 
 /* Features Section */
 .features-section {
-  background: #fff;
-  border-radius: 16px;
-  padding: 32px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  padding: var(--space-5);
 }
 
 .section-title {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
-  color: #1a1a2e;
-  margin-bottom: 24px;
+  color: var(--ink);
+  margin-bottom: var(--space-4);
 }
 
 .features-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
+  gap: var(--space-3);
 }
 
 .feature-card {
-  padding: 20px;
-  border-radius: 12px;
-  background: #f8f9fa;
-  transition: all 0.3s;
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--canvas);
+  border: 1px solid var(--border);
+  transition: border-color 0.15s ease;
 }
 
 .feature-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  border-color: var(--border-strong);
 }
 
 .feature-icon {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
-  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  background: var(--accent-subtle);
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
-  color: #fff;
-  margin-bottom: 12px;
+  font-size: 18px;
+  color: var(--accent);
+  margin-bottom: var(--space-2);
 }
 
 .feature-title {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
-  color: #1a1a2e;
-  margin-bottom: 6px;
+  color: var(--ink);
+  margin-bottom: 4px;
 }
 
 .feature-desc {
   font-size: 13px;
-  color: #666;
-  line-height: 1.6;
+  color: var(--text-secondary);
+  line-height: 1.5;
 }
 
 /* FAQ Section */
 .faq-section {
-  background: #fff;
-  border-radius: 16px;
-  padding: 32px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  padding: var(--space-5);
 }
 
 .faq-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-2);
 }
 
 .faq-item {
-  border: 1px solid #eee;
-  border-radius: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   overflow: hidden;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
 .faq-item:hover {
-  border-color: #ffd700;
+  border-color: var(--border-strong);
 }
 
 .faq-item.active {
-  border-color: #ffd700;
-  background: #fffbe6;
+  border-color: var(--accent);
+  background: var(--accent-subtle);
 }
 
 .faq-question {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 16px 20px;
-  font-size: 15px;
+  padding: var(--space-3) var(--space-4);
+  font-size: 14px;
   font-weight: 500;
-  color: #1a1a2e;
+  color: var(--ink);
 }
 
 .faq-q {
-  width: 24px;
-  height: 24px;
-  background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
+  width: 22px;
+  height: 22px;
+  background: var(--accent);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   color: #fff;
   flex-shrink: 0;
@@ -542,8 +521,8 @@ const handlePurchase = async () => {
 
 .faq-arrow {
   font-size: 12px;
-  color: #999;
-  transition: transform 0.3s;
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
 }
 
 .faq-item.active .faq-arrow {
@@ -551,9 +530,9 @@ const handlePurchase = async () => {
 }
 
 .faq-answer {
-  padding: 0 20px 16px 54px;
+  padding: 0 var(--space-4) var(--space-3) 50px;
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
   line-height: 1.6;
 }
 

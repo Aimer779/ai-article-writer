@@ -3,115 +3,96 @@
     <!-- Header -->
     <div class="page-header">
       <div>
-        <h1 class="page-title">Data Analysis</h1>
+        <h1 class="page-title">Data analysis</h1>
         <p class="page-subtitle">System operation overview</p>
       </div>
       <a-button class="refresh-btn" @click="handleRefresh">
         <ReloadOutlined />
-        Refresh Data
+        Refresh
       </a-button>
     </div>
 
     <!-- Stat Cards -->
-    <a-row :gutter="16" class="stat-row">
-      <a-col :xs="24" :sm="12" :lg="6">
-        <div class="stat-card">
-          <div class="stat-icon" style="background: #dcfce7; color: #22c55e;">
-            <EditOutlined />
-          </div>
-          <div class="stat-body">
-            <div class="stat-label">Today's Creation</div>
-            <div class="stat-value">{{ stats.today }}</div>
-          </div>
+    <div class="stats-grid">
+      <div class="stat-card surface-card">
+        <div class="stat-icon" style="background: var(--success-subtle); color: var(--success);">
+          <EditOutlined />
         </div>
-      </a-col>
-      <a-col :xs="24" :sm="12" :lg="6">
-        <div class="stat-card">
-          <div class="stat-icon" style="background: #dbeafe; color: #3b82f6;">
-            <BarChartOutlined />
-          </div>
-          <div class="stat-body">
-            <div class="stat-label">Weekly Creation</div>
-            <div class="stat-value">{{ stats.week }}</div>
-          </div>
+        <div class="stat-body">
+          <div class="stat-label">Today's creation</div>
+          <div class="stat-value text-tabular">{{ stats.today }}</div>
         </div>
-      </a-col>
-      <a-col :xs="24" :sm="12" :lg="6">
-        <div class="stat-card">
-          <div class="stat-icon" style="background: #f3e8ff; color: #a855f7;">
-            <RiseOutlined />
-          </div>
-          <div class="stat-body">
-            <div class="stat-label">Monthly Creation</div>
-            <div class="stat-value">{{ stats.month }}</div>
-          </div>
+      </div>
+      <div class="stat-card surface-card">
+        <div class="stat-icon" style="background: var(--accent-subtle); color: var(--accent);">
+          <BarChartOutlined />
         </div>
-      </a-col>
-      <a-col :xs="24" :sm="12" :lg="6">
-        <div class="stat-card">
-          <div class="stat-icon" style="background: #fef9c3; color: #eab308;">
-            <CheckCircleOutlined />
-          </div>
-          <div class="stat-body">
-            <div class="stat-label">Success Rate</div>
-            <div class="stat-value">{{ stats.successRate }}%</div>
-          </div>
+        <div class="stat-body">
+          <div class="stat-label">Weekly creation</div>
+          <div class="stat-value text-tabular">{{ stats.week }}</div>
         </div>
-      </a-col>
-    </a-row>
+      </div>
+      <div class="stat-card surface-card">
+        <div class="stat-icon" style="background: oklch(96% 0.02 285); color: oklch(55% 0.14 285);">
+          <RiseOutlined />
+        </div>
+        <div class="stat-body">
+          <div class="stat-label">Monthly creation</div>
+          <div class="stat-value text-tabular">{{ stats.month }}</div>
+        </div>
+      </div>
+      <div class="stat-card surface-card">
+        <div class="stat-icon" style="background: var(--warning-subtle); color: oklch(55% 0.1 85);">
+          <CheckCircleOutlined />
+        </div>
+        <div class="stat-body">
+          <div class="stat-label">Success rate</div>
+          <div class="stat-value text-tabular">{{ stats.successRate }}%</div>
+        </div>
+      </div>
+    </div>
 
     <!-- Charts -->
-    <a-row :gutter="16" class="chart-row">
-      <a-col :xs="24" :lg="12">
-        <div class="chart-card">
-          <div class="chart-header">
-            <LineChartOutlined style="color: #22c55e;" />
-            <span class="chart-title">Creation Trend</span>
-          </div>
-          <div ref="trendChartRef" class="chart-body" />
+    <div class="charts-grid">
+      <div class="chart-card surface-card">
+        <div class="chart-header">
+          <LineChartOutlined style="color: var(--accent);" />
+          <span class="chart-title">Creation trend</span>
         </div>
-      </a-col>
-      <a-col :xs="24" :lg="12">
-        <div class="chart-card">
-          <div class="chart-header">
-            <ThunderboltOutlined style="color: #22c55e;" />
-            <span class="chart-title">Performance Stats</span>
+        <div ref="trendChartRef" class="chart-body" />
+      </div>
+      <div class="chart-card surface-card">
+        <div class="chart-header">
+          <ThunderboltOutlined style="color: var(--accent);" />
+          <span class="chart-title">Performance stats</span>
+        </div>
+        <div class="performance-body">
+          <div class="performance-item">
+            <div class="performance-label">Average duration</div>
+            <div class="performance-value text-tabular">{{ stats.avgDuration }}s</div>
           </div>
-          <div class="performance-body">
-            <div class="performance-item">
-              <div class="performance-label">Average Duration</div>
-              <div class="performance-value">{{ stats.avgDuration }}s</div>
-            </div>
-            <div class="performance-divider" />
-            <div class="performance-item">
-              <div class="performance-label">Total Creation</div>
-              <div class="performance-value">{{ stats.total }}</div>
-            </div>
+          <div class="performance-divider" />
+          <div class="performance-item">
+            <div class="performance-label">Total creation</div>
+            <div class="performance-value text-tabular">{{ stats.total }}</div>
           </div>
         </div>
-      </a-col>
-    </a-row>
-
-    <a-row :gutter="16" class="chart-row">
-      <a-col :xs="24" :lg="12">
-        <div class="chart-card">
-          <div class="chart-header">
-            <TeamOutlined style="color: #22c55e;" />
-            <span class="chart-title">User Analysis</span>
-          </div>
-          <div ref="userChartRef" class="chart-body" />
+      </div>
+      <div class="chart-card surface-card">
+        <div class="chart-header">
+          <TeamOutlined style="color: var(--accent);" />
+          <span class="chart-title">User analysis</span>
         </div>
-      </a-col>
-      <a-col :xs="24" :lg="12">
-        <div class="chart-card">
-          <div class="chart-header">
-            <PieChartOutlined style="color: #22c55e;" />
-            <span class="chart-title">Quota Usage</span>
-          </div>
-          <div ref="quotaChartRef" class="chart-body" />
+        <div ref="userChartRef" class="chart-body" />
+      </div>
+      <div class="chart-card surface-card">
+        <div class="chart-header">
+          <PieChartOutlined style="color: var(--accent);" />
+          <span class="chart-title">Quota usage</span>
         </div>
-      </a-col>
-    </a-row>
+        <div ref="quotaChartRef" class="chart-body" />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -131,6 +112,7 @@ import {
 } from '@ant-design/icons-vue'
 import * as echarts from 'echarts'
 
+// TODO: Replace with real API calls to aggregate article/agent stats
 const trendChartRef = ref<HTMLDivElement | null>(null)
 const userChartRef = ref<HTMLDivElement | null>(null)
 const quotaChartRef = ref<HTMLDivElement | null>(null)
@@ -148,6 +130,19 @@ const stats = ref({
   avgDuration: 100.7,
 })
 
+// Design system hex equivalents for ECharts (canvas does not support CSS vars)
+const PALETTE = {
+  accent: '#c2783f',
+  accentLight: '#d99a6a',
+  success: '#4a9b5e',
+  error: '#c44d3a',
+  gold: '#d4a03c',
+  neutral: '#d4d0cc',
+  border: '#d4d0cc',
+  textSecondary: '#7a7268',
+  surface: '#ffffff',
+}
+
 function initTrendChart() {
   if (!trendChartRef.value) return
   trendChart = echarts.init(trendChartRef.value)
@@ -157,14 +152,14 @@ function initTrendChart() {
     xAxis: {
       type: 'category',
       data: ['Today', 'Weekly', 'Monthly', 'Total'],
-      axisLine: { lineStyle: { color: '#e2e8f0' } },
-      axisLabel: { color: '#64748b' },
+      axisLine: { lineStyle: { color: PALETTE.border } },
+      axisLabel: { color: PALETTE.textSecondary, fontFamily: 'Manrope, sans-serif' },
     },
     yAxis: {
       type: 'value',
       axisLine: { show: false },
-      splitLine: { lineStyle: { color: '#f1f5f9' } },
-      axisLabel: { color: '#64748b' },
+      splitLine: { lineStyle: { color: PALETTE.border } },
+      axisLabel: { color: PALETTE.textSecondary, fontFamily: 'Manrope, sans-serif' },
     },
     series: [
       {
@@ -173,8 +168,8 @@ function initTrendChart() {
         barWidth: '40%',
         itemStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: '#86efac' },
-            { offset: 1, color: '#22c55e' },
+            { offset: 0, color: PALETTE.accentLight },
+            { offset: 1, color: PALETTE.accent },
           ]),
           borderRadius: [4, 4, 0, 0],
         },
@@ -192,22 +187,22 @@ function initUserChart() {
       orient: 'vertical',
       right: '5%',
       top: 'center',
-      textStyle: { color: '#475569' },
+      textStyle: { color: PALETTE.textSecondary, fontFamily: 'Manrope, sans-serif' },
     },
     series: [
       {
-        name: 'User Type',
+        name: 'User type',
         type: 'pie',
         radius: ['45%', '70%'],
         center: ['35%', '50%'],
         avoidLabelOverlap: false,
-        itemStyle: { borderRadius: 4, borderColor: '#fff', borderWidth: 2 },
+        itemStyle: { borderRadius: 4, borderColor: PALETTE.surface, borderWidth: 2 },
         label: { show: false },
         emphasis: { label: { show: false } },
         data: [
-          { value: 10, name: 'VIP Member', itemStyle: { color: '#86efac' } },
-          { value: 20, name: 'Active User', itemStyle: { color: '#60a5fa' } },
-          { value: 44, name: 'Other User', itemStyle: { color: '#94a3b8' } },
+          { value: 10, name: 'VIP member', itemStyle: { color: PALETTE.gold } },
+          { value: 20, name: 'Active user', itemStyle: { color: PALETTE.accent } },
+          { value: 44, name: 'Other user', itemStyle: { color: PALETTE.neutral } },
         ],
       },
     ],
@@ -225,12 +220,12 @@ function initQuotaChart() {
         type: 'pie',
         radius: '65%',
         center: ['45%', '50%'],
-        itemStyle: { borderRadius: 4, borderColor: '#fff', borderWidth: 2 },
-        label: { show: true, position: 'outside', color: '#475569' },
-        labelLine: { lineStyle: { color: '#cbd5e1' } },
+        itemStyle: { borderRadius: 4, borderColor: PALETTE.surface, borderWidth: 2 },
+        label: { show: true, position: 'outside', color: PALETTE.textSecondary, fontFamily: 'Manrope, sans-serif' },
+        labelLine: { lineStyle: { color: PALETTE.border } },
         data: [
-          { value: 0, name: 'Used', itemStyle: { color: '#ef4444' } },
-          { value: 30, name: 'Remaining', itemStyle: { color: '#22c55e' } },
+          { value: 0, name: 'Used', itemStyle: { color: PALETTE.error } },
+          { value: 30, name: 'Remaining', itemStyle: { color: PALETTE.success } },
         ],
       },
     ],
@@ -244,6 +239,7 @@ function handleResize() {
 }
 
 async function handleRefresh() {
+  // TODO: Fetch real aggregated stats from backend
   message.success('Data refreshed')
 }
 
@@ -265,98 +261,116 @@ onUnmounted(() => {
 
 <style scoped>
 .data-page {
-  padding: 24px;
-  background: #f8fafc;
-  min-height: calc(100vh - 64px);
+  max-width: 1280px;
+  margin: 0 auto;
 }
 
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 24px;
+  margin-bottom: var(--space-4);
+  flex-wrap: wrap;
+  gap: var(--space-3);
 }
 
 .page-title {
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--ink);
   margin: 0 0 4px;
 }
 
 .page-subtitle {
   font-size: 14px;
-  color: #64748b;
+  color: var(--text-secondary);
   margin: 0;
 }
 
 .refresh-btn {
-  border-radius: 8px;
-  height: 40px;
-  font-size: 14px;
+  font-weight: 500;
 }
 
 /* Stat Cards */
-.stat-row {
-  margin-bottom: 16px;
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+@media (max-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .stat-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 20px;
+  padding: var(--space-4);
   display: flex;
   align-items: center;
-  gap: 16px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  margin-bottom: 16px;
+  gap: var(--space-3);
 }
 
 .stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+  font-size: 20px;
   flex-shrink: 0;
 }
 
 .stat-label {
-  font-size: 14px;
-  color: #64748b;
+  font-size: 12px;
+  color: var(--text-muted);
   margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  font-weight: 500;
 }
 
 .stat-value {
   font-size: 28px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--ink);
   line-height: 1.2;
+  letter-spacing: -0.022em;
 }
 
-/* Chart Cards */
-.chart-row {
-  margin-bottom: 16px;
+/* Charts */
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+}
+
+@media (max-width: 1024px) {
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .chart-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  margin-bottom: 16px;
+  padding: var(--space-4);
 }
 
 .chart-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 16px;
-  font-size: 15px;
+  margin-bottom: var(--space-3);
+  font-size: 14px;
   font-weight: 600;
-  color: #1f1f1f;
+  color: var(--ink);
 }
 
 .chart-body {
@@ -370,36 +384,30 @@ onUnmounted(() => {
   flex-direction: column;
   justify-content: center;
   height: 280px;
-  padding: 0 16px;
+  padding: 0 var(--space-2);
 }
 
 .performance-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px 0;
+  padding: var(--space-4) 0;
 }
 
 .performance-label {
   font-size: 14px;
-  color: #475569;
+  color: var(--text-secondary);
 }
 
 .performance-value {
   font-size: 24px;
   font-weight: 700;
-  color: #22c55e;
+  color: var(--accent);
+  letter-spacing: -0.018em;
 }
 
 .performance-divider {
   height: 1px;
-  background: #f1f5f9;
-}
-
-@media (max-width: 992px) {
-  .page-header {
-    flex-direction: column;
-    gap: 12px;
-  }
+  background: var(--border);
 }
 </style>
