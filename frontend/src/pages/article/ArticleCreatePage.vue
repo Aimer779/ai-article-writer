@@ -185,7 +185,6 @@
                   <a-spin v-if="creationStore.currentStepIndex >= 1 && !creationStore.outlineDisplay" />
                   <p v-else>Outline will appear here once generation starts.</p>
                 </div>
-                <span v-if="isTypingOutline" class="typing-cursor" />
               </div>
             </a-tab-pane>
 
@@ -200,7 +199,6 @@
                   <a-spin v-if="creationStore.currentStepIndex >= 2 && !creationStore.contentDisplay" />
                   <p v-else>Content will appear here after outline is complete.</p>
                 </div>
-                <span v-if="isTypingContent" class="typing-cursor" />
               </div>
             </a-tab-pane>
           </a-tabs>
@@ -377,12 +375,24 @@ const isTypingContent = computed(() => {
   )
 })
 
+function appendTypingCursor(html: string): string {
+  if (!html) return '<span class="typing-cursor"></span>'
+  const lastCloseMatch = html.match(/<\/[a-zA-Z][^>]*>(?![\s\S]*<\/[a-zA-Z][^>]*>)/)
+  if (lastCloseMatch && lastCloseMatch.index !== undefined) {
+    const idx = lastCloseMatch.index
+    return html.slice(0, idx) + '<span class="typing-cursor"></span>' + html.slice(idx)
+  }
+  return html + '<span class="typing-cursor"></span>'
+}
+
 const renderOutline = computed(() => {
-  return markdownToHtml(creationStore.outlineDisplay)
+  const html = markdownToHtml(creationStore.outlineDisplay)
+  return isTypingOutline.value ? appendTypingCursor(html) : html
 })
 
 const renderContent = computed(() => {
-  return markdownToHtml(creationStore.contentDisplay)
+  const html = markdownToHtml(creationStore.contentDisplay)
+  return isTypingContent.value ? appendTypingCursor(html) : html
 })
 
 const hotTopics = [
@@ -847,7 +857,7 @@ onUnmounted(() => {
   color: var(--text-muted);
 }
 
-.typing-cursor {
+.markdown-body :deep(.typing-cursor) {
   display: inline-block;
   width: 2px;
   height: 1.2em;
