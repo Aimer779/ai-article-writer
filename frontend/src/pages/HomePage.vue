@@ -380,15 +380,15 @@ onMounted(() => {
   border-radius: var(--radius-lg);
   overflow: hidden;
   cursor: pointer;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   opacity: 0;
 }
 
 .article-card:hover {
   border-color: var(--border-strong);
-  box-shadow: var(--shadow-1);
-  transform: translateY(-2px);
+  box-shadow: var(--shadow-2);
+  transform: translateY(-4px);
 }
 
 /* Cover image */
@@ -400,15 +400,29 @@ onMounted(() => {
   background: var(--canvas);
 }
 
+.card-cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 0 rgba(0, 0, 0, 0);
+  transition: box-shadow 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  pointer-events: none;
+}
+
+.article-card:hover .card-cover::after {
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.06);
+}
+
 .cover-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.3s ease;
+  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), filter 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .article-card:hover .cover-img {
-  transform: scale(1.04);
+  transform: scale(1.06);
+  filter: brightness(1.03);
 }
 
 .cover-placeholder {
@@ -487,6 +501,11 @@ onMounted(() => {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+  transition: color 0.2s ease;
+}
+
+.article-card:hover .card-title {
+  color: var(--accent);
 }
 
 .card-topic {
