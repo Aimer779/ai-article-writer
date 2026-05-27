@@ -240,7 +240,12 @@ function handleResize() {
 
 async function handleRefresh() {
   // TODO: Fetch real aggregated stats from backend
-  message.success('Data refreshed')
+  const hide = message.success('Data refreshed', 3)
+
+  // Fallback: force close if the auto-dismiss timer fails
+  setTimeout(() => {
+    hide?.()
+  }, 4000)
 }
 
 onMounted(async () => {
