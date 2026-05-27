@@ -129,7 +129,6 @@ import {
   EditOutlined,
   FileTextOutlined,
   RightOutlined,
-  FileImageOutlined,
 } from '@ant-design/icons-vue'
 import { listArticleByPage } from '@/api/articleController'
 import { ARTICLE_STATUS_TEXT } from '@/constants/article'
