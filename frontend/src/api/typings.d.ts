@@ -1,4 +1,43 @@
 declare namespace API {
+  type AgentExecutionStatsVO = {
+    totalCount?: number;
+    successCount?: number;
+    failedCount?: number;
+    successRate?: number;
+    averageDurationMs?: number;
+    maxDurationMs?: number;
+    minDurationMs?: number;
+  };
+
+  type AgentLogQueryRequest = {
+    pageNum?: number;
+    pageSize?: number;
+    sortField?: string;
+    sortOrder?: string;
+    id?: number;
+    taskId?: string;
+    agentName?: string;
+    status?: string;
+    startTime?: string;
+    endTime?: string;
+  };
+
+  type AgentLogVO = {
+    id?: number;
+    taskId?: string;
+    agentName?: string;
+    startTime?: string;
+    endTime?: string;
+    durationMs?: number;
+    status?: string;
+    errorMessage?: string;
+    prompt?: string;
+    inputData?: string;
+    outputData?: string;
+    createTime?: string;
+    updateTime?: string;
+  };
+
   type ArticleCreateRequest = {
     topic?: string;
   };
@@ -45,6 +84,18 @@ declare namespace API {
     updateTime?: string;
   };
 
+  type BaseResponseAgentExecutionStatsVO = {
+    code?: number;
+    data?: AgentExecutionStatsVO;
+    message?: string;
+  };
+
+  type BaseResponseAgentLogVO = {
+    code?: number;
+    data?: AgentLogVO;
+    message?: string;
+  };
+
   type BaseResponseArticleVO = {
     code?: number;
     data?: ArticleVO;
@@ -66,6 +117,12 @@ declare namespace API {
   type BaseResponseLong = {
     code?: number;
     data?: number;
+    message?: string;
+  };
+
+  type BaseResponsePageAgentLogVO = {
+    code?: number;
+    data?: PageAgentLogVO;
     message?: string;
   };
 
@@ -109,6 +166,10 @@ declare namespace API {
     id?: number;
   };
 
+  type getAgentLogByIdParams = {
+    id: number;
+  };
+
   type getArticleByIdParams = {
     id: number;
   };
@@ -145,6 +206,15 @@ declare namespace API {
     editTime?: string;
     createTime?: string;
     updateTime?: string;
+  };
+
+  type PageAgentLogVO = {
+    records?: AgentLogVO[];
+    pageNumber?: number;
+    pageSize?: number;
+    totalPage?: number;
+    totalRow?: number;
+    optimizeCountQuery?: boolean;
   };
 
   type PageArticleVO = {
