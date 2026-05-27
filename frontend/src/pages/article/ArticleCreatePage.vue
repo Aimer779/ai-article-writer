@@ -40,14 +40,23 @@
             Enter a topic and let the agents generate a complete article with outline, content, and images.
           </p>
           <div class="prompt-container" :class="{ 'prompt-disabled': !creationStore.canStart }">
-            <textarea
-              v-model="topicInput"
-              :rows="4"
-              placeholder="e.g., The Future of Artificial Intelligence in Healthcare"
-              :disabled="!creationStore.canStart"
-              class="prompt-textarea"
-              @keydown.enter.prevent="handleStart"
-            />
+            <div class="textarea-wrapper">
+              <textarea
+                v-model="topicInput"
+                :rows="4"
+                :disabled="!creationStore.canStart"
+                class="prompt-textarea"
+                @keydown.enter.prevent="handleStart"
+                @focus="handleFocus"
+                @blur="handleBlur"
+              />
+              <span
+                v-if="!topicInput && !isFocused && creationStore.canStart"
+                class="typing-placeholder"
+              >
+                {{ typingPlaceholder }}<span class="typing-cursor"></span>
+              </span>
+            </div>
             <div class="input-toolbar">
               <div class="toolbar-left">
                 <span class="char-count">{{ topicInput.length }} / 500</span>
@@ -277,7 +286,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   CheckOutlined,
@@ -297,12 +306,88 @@ const creationStore = useArticleCreationStore()
 const loginUserStore = useLoginUserStore()
 
 const topicInput = ref('')
+const isFocused = ref(false)
 const activeTabKey = ref('title')
 const titlePreviewReady = ref(false)
 let titlePreviewTimer: number | null = null
 
 const selectedStyle = ref('default')
 const selectedMethods = ref<string[]>([])
+
+/* ---------- Typing Placeholder Effect ---------- */
+const PLACEHOLDER_TOPICS = [
+  'The Future of Artificial Intelligence in Healthcare',
+  'How Machine Learning is Transforming Education',
+  'The Rise of Remote Work in Tech Industry',
+]
+
+const typingPlaceholder = ref('')
+const typingTopicIndex = ref(0)
+const typingCharIndex = ref(0)
+const typingPhase = ref<'typing' | 'waiting' | 'deleting'>('typing')
+let typingTimer: number | null = null
+
+function runTypingEffect() {
+  if (topicInput.value) return
+
+  const currentTopic = PLACEHOLDER_TOPICS[typingTopicIndex.value]
+
+  if (typingPhase.value === 'typing') {
+    if (typingCharIndex.value < currentTopic.length) {
+      typingCharIndex.value++
+      typingPlaceholder.value = currentTopic.slice(0, typingCharIndex.value)
+      typingTimer = window.setTimeout(runTypingEffect, 80)
+    } else {
+      typingPhase.value = 'waiting'
+      typingTimer = window.setTimeout(() => {
+        typingPhase.value = 'deleting'
+        runTypingEffect()
+      }, 2000)
+    }
+  } else if (typingPhase.value === 'deleting') {
+    if (typingCharIndex.value > 0) {
+      typingCharIndex.value--
+      typingPlaceholder.value = currentTopic.slice(0, typingCharIndex.value)
+      typingTimer = window.setTimeout(runTypingEffect, 40)
+    } else {
+      typingTopicIndex.value = (typingTopicIndex.value + 1) % PLACEHOLDER_TOPICS.length
+      typingPhase.value = 'typing'
+      runTypingEffect()
+    }
+  }
+}
+
+function stopTypingEffect() {
+  if (typingTimer !== null) {
+    window.clearTimeout(typingTimer)
+    typingTimer = null
+  }
+}
+
+function handleFocus() {
+  isFocused.value = true
+  stopTypingEffect()
+}
+
+function handleBlur() {
+  isFocused.value = false
+  if (!topicInput.value) {
+    typingCharIndex.value = 0
+    typingPhase.value = 'typing'
+    runTypingEffect()
+  }
+}
+
+watch(topicInput, (val) => {
+  if (val) {
+    stopTypingEffect()
+    typingPlaceholder.value = ''
+  }
+})
+
+onMounted(() => {
+  runTypingEffect()
+})
 
 const articleStyles = [
   { label: 'Default', value: 'default' },
@@ -463,6 +548,7 @@ onUnmounted(() => {
     window.clearTimeout(titlePreviewTimer)
     titlePreviewTimer = null
   }
+  stopTypingEffect()
   // Keep SSE alive for navigation
 })
 </script>
@@ -734,6 +820,10 @@ onUnmounted(() => {
   cursor: not-allowed;
 }
 
+.textarea-wrapper {
+  position: relative;
+}
+
 .prompt-textarea {
   width: 100%;
   background: transparent;
@@ -762,6 +852,41 @@ onUnmounted(() => {
   background: transparent;
   color: var(--text-muted);
   cursor: not-allowed;
+}
+
+.typing-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--text-muted);
+  pointer-events: none;
+  user-select: none;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.typing-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1.2em;
+  background: var(--accent);
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  animation: cursorBlink 1s step-end infinite;
+}
+
+@keyframes cursorBlink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
 }
 
 .input-toolbar {
