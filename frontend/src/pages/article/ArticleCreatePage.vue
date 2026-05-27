@@ -39,15 +39,31 @@
           <p class="center-subtitle">
             Enter a topic and let the agents generate a complete article with outline, content, and images.
           </p>
-          <a-textarea
-            v-model:value="topicInput"
-            :rows="4"
-            placeholder="e.g., The Future of Artificial Intelligence in Healthcare"
-            :disabled="!creationStore.canStart"
-            class="topic-textarea"
-            @pressEnter="handleStart"
-          />
-          <div class="char-count">{{ topicInput.length }} / 500</div>
+          <div class="prompt-container" :class="{ 'prompt-disabled': !creationStore.canStart }">
+            <textarea
+              v-model="topicInput"
+              :rows="4"
+              placeholder="e.g., The Future of Artificial Intelligence in Healthcare"
+              :disabled="!creationStore.canStart"
+              class="prompt-textarea"
+              @keydown.enter.prevent="handleStart"
+            />
+            <div class="input-toolbar">
+              <div class="toolbar-left">
+                <span class="char-count">{{ topicInput.length }} / 500</span>
+              </div>
+              <div class="toolbar-right">
+                <button
+                  class="submit-button"
+                  :class="{ 'submit-active': topicInput.trim() && creationStore.canStart && !creationStore.isCreating }"
+                  :disabled="!topicInput.trim() || !creationStore.canStart || creationStore.isCreating"
+                  @click="handleStart"
+                >
+                  <RocketOutlined />
+                </button>
+              </div>
+            </div>
+          </div>
 
           <!-- Article Style -->
           <div class="option-section">
@@ -102,18 +118,6 @@
               </label>
             </div>
           </div>
-
-          <a-button
-            type="primary"
-            size="large"
-            class="start-btn"
-            :loading="creationStore.isCreating"
-            :disabled="!topicInput.trim() || !creationStore.canStart"
-            @click="handleStart"
-          >
-            <RocketOutlined />
-            Start creation
-          </a-button>
 
           <a-alert
             v-if="creationStore.isFailed && creationStore.error"
@@ -712,28 +716,109 @@ onUnmounted(() => {
   margin: 0 0 var(--space-5);
 }
 
-.topic-textarea {
-  font-size: 15px;
-  resize: none;
+.prompt-container {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 20px 20px 16px;
+  transition: border-color 200ms ease, box-shadow 200ms ease;
 }
 
-.topic-textarea :deep(.ant-input) {
-  border-radius: var(--radius-lg);
+.prompt-container:focus-within {
+  border-color: var(--border-strong);
+  box-shadow: 0 0 0 3px oklch(55% 0.14 55 / 0.15);
+}
+
+.prompt-disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.prompt-textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.prompt-textarea::placeholder {
+  color: var(--text-muted);
+}
+
+.prompt-textarea:focus,
+.prompt-textarea:hover {
+  background: transparent;
+  border-color: transparent;
+}
+
+.prompt-textarea:disabled {
+  background: transparent;
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.input-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding-top: 12px;
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
 }
 
 .char-count {
-  text-align: right;
   font-size: 12px;
   color: var(--text-muted);
-  margin-top: var(--space-1);
+  line-height: 32px;
 }
 
-.start-btn {
-  width: 100%;
-  margin-top: var(--space-4);
-  height: 48px;
-  font-size: 15px;
-  font-weight: 600;
+.submit-button {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 150ms ease;
+  font-size: 16px;
+}
+
+.submit-button:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.submit-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.submit-active {
+  background: var(--accent) !important;
+  color: #ffffff !important;
+}
+
+.submit-active:hover:not(:disabled) {
+  background: var(--accent-hover) !important;
 }
 
 /* Option Sections */
