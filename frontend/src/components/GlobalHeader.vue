@@ -272,39 +272,73 @@ const handleUserMenuClick = async ({ key }: { key: string }) => {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 5px 12px;
-  border-radius: var(--radius-pill);
-  background: var(--accent-subtle);
+  padding: 1px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--accent);
+  background: transparent;
   color: var(--accent);
   font-size: 12px;
   font-weight: 600;
   text-decoration: none;
-  transition: background-color 0.15s ease;
+  transition: all 0.2s ease;
 }
 
 .upgrade-badge:hover {
-  background: oklch(95% 0.03 55);
-  color: var(--accent);
+  background: var(--accent);
+  color: #fff;
 }
 
 .vip-badge {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 5px 12px;
-  border-radius: var(--radius-pill);
-  background: oklch(95% 0.02 85);
-  color: oklch(55% 0.1 85);
+  padding: 1px 14px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #C9A227 0%, #E8C84A 50%, #F4D03F 100%);
+  color: #5C4010;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   text-decoration: none;
-  border: 1px solid oklch(88% 0.04 85);
-  transition: background-color 0.15s ease;
+  border: none;
+  box-shadow: 0 1px 4px rgba(201, 162, 39, 0.25);
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.vip-badge::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.35),
+    transparent
+  );
+  transform: skewX(-20deg);
+  animation: vip-shimmer 3s infinite;
+  pointer-events: none;
+}
+
+@keyframes vip-shimmer {
+  0% {
+    left: -100%;
+  }
+  20% {
+    left: 200%;
+  }
+  100% {
+    left: 200%;
+  }
 }
 
 .vip-badge:hover {
-  background: oklch(92% 0.03 85);
-  color: oklch(50% 0.12 85);
+  box-shadow: 0 3px 10px rgba(201, 162, 39, 0.4);
+  transform: translateY(-1px);
 }
 
 .user-menu-btn {
