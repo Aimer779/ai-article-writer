@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
@@ -61,8 +62,9 @@ public class ImageGenerationAgent {
         List<ImageRequirement> sortedRequirements = requirements.stream()
                 .sorted(Comparator.comparing(ImageRequirement::getPosition))
                 .toList();
+        String storageNamespace = UUID.randomUUID().toString().replace("-", "");
         for (ImageRequirement requirement : sortedRequirements) {
-            ImageResult imageResult = generateImage(requirement);
+            ImageResult imageResult = generateImage(requirement, storageNamespace);
             imageResults.add(imageResult);
             emitImageComplete(imageResult, streamHandler);
         }
@@ -70,7 +72,7 @@ public class ImageGenerationAgent {
         return imageResults;
     }
 
-    private ImageResult generateImage(ImageRequirement requirement) {
+    private ImageResult generateImage(ImageRequirement requirement, String storageNamespace) {
         ImageRequest request = buildImageRequest(requirement);
         try {
             ImageService imageService = imageStrategySelector.select(request);
@@ -81,7 +83,7 @@ public class ImageGenerationAgent {
                     requirement.getPosition(), imageService.getMethod().getValue(), requirement.getSectionTitle());
             ImageAsset asset = imageService.acquire(request);
             validateAsset(asset);
-            String imageUrl = resolveImageUrl(requirement, asset);
+            String imageUrl = resolveImageUrl(requirement, asset, storageNamespace);
             if (imageUrl == null || imageUrl.isBlank()) {
                 throw new IllegalStateException("Image URL cannot be blank");
             }
@@ -112,11 +114,12 @@ public class ImageGenerationAgent {
         return buildImageResult(requirement, fallbackAsset.getUrl(), fallbackAsset);
     }
 
-    private String resolveImageUrl(ImageRequirement requirement, ImageAsset asset) {
+    private String resolveImageUrl(ImageRequirement requirement, ImageAsset asset, String storageNamespace) {
         if (ImageMethodEnum.PEXELS.equals(asset.getMethod())) {
             return asset.getUrl();
         }
-        String storedUrl = imageStorageService.upload(asset, buildObjectKey(requirement, asset.getMethod(), asset));
+        String storedUrl = imageStorageService.upload(asset,
+                buildObjectKey(requirement, asset.getMethod(), asset, storageNamespace));
         if (storedUrl == null || storedUrl.isBlank()) {
             throw new IllegalStateException("Image storage returned blank URL");
         }
@@ -194,14 +197,15 @@ public class ImageGenerationAgent {
                 .build();
     }
 
-    private String buildObjectKey(ImageRequirement requirement, ImageMethodEnum method, ImageAsset asset) {
+    private String buildObjectKey(ImageRequirement requirement, ImageMethodEnum method, ImageAsset asset,
+            String storageNamespace) {
         String extension = resolveExtension(asset);
         String folder = asset.getStorageFolder();
         if (folder == null || folder.isBlank()) {
             folder = method.getValue().toLowerCase();
         }
         folder = folder.replace('\\', '/').replaceAll("^/+", "").replaceAll("/+$", "");
-        return "article-images/" + folder + "/" + requirement.getPosition() + extension;
+        return "article-images/" + folder + "/" + storageNamespace + "/" + requirement.getPosition() + extension;
     }
 
     private String resolveExtension(ImageAsset asset) {
