@@ -17,10 +17,6 @@
             :options="themeOptions"
             allow-clear
           />
-          <a-button @click="router.push('/articles')">
-            <ArrowLeftOutlined />
-            Back
-          </a-button>
           <a-button @click="handleCopyWechat">
             Copy for WeChat
           </a-button>
@@ -179,10 +175,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
 import {
-  ArrowLeftOutlined,
   DownloadOutlined,
   ClockCircleOutlined,
   CheckCircleOutlined,
@@ -202,7 +197,6 @@ import { copyToWechat } from '@/utils/clipboardExporter'
 import 'highlight.js/styles/github.css'
 
 const route = useRoute()
-const router = useRouter()
 
 const loading = ref(false)
 const error = ref<string | null>(null)
