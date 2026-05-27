@@ -116,12 +116,15 @@ function applyThemeToHtml(html: string, themeKey: string): string {
     })
   }
 
-  // Container wrapper
-  const container = doc.body.firstElementChild
-  if (container && styles.container) {
-    const existing = container.getAttribute('style') || ''
-    container.setAttribute('style', mergeStyles(existing, styles.container))
+  // Wrap all content in a container div to isolate container styles
+  const container = doc.createElement('div')
+  while (doc.body.firstChild) {
+    container.appendChild(doc.body.firstChild)
   }
+  if (styles.container) {
+    container.setAttribute('style', styles.container)
+  }
+  doc.body.appendChild(container)
 
   return doc.body.innerHTML
 }
