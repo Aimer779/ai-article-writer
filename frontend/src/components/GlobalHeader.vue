@@ -295,13 +295,13 @@ const handleUserMenuClick = async ({ key }: { key: string }) => {
   gap: 4px;
   padding: 1px 14px;
   border-radius: 6px;
-  background: linear-gradient(135deg, #C9A227 0%, #E8C84A 50%, #F4D03F 100%);
-  color: #5C4010;
+  background: linear-gradient(135deg, #FDE68A, #D4AF37);
+  color: #78350F;
   font-size: 12px;
   font-weight: 700;
   text-decoration: none;
   border: none;
-  box-shadow: 0 1px 4px rgba(201, 162, 39, 0.25);
+  box-shadow: 0 1px 4px rgba(212, 175, 55, 0.25);
   overflow: hidden;
   transition: all 0.2s ease;
 }
@@ -337,7 +337,7 @@ const handleUserMenuClick = async ({ key }: { key: string }) => {
 }
 
 .vip-badge:hover {
-  box-shadow: 0 3px 10px rgba(201, 162, 39, 0.4);
+  box-shadow: 0 3px 10px rgba(212, 175, 55, 0.4);
   transform: translateY(-1px);
 }
 
