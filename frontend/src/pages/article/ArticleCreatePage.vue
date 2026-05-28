@@ -160,14 +160,6 @@
           <div class="preview-header">
             <span class="topic-tag">Topic: {{ topicInput }}</span>
             <a-space>
-              <a-select
-                v-model:value="selectedTheme"
-                placeholder="Theme"
-                style="width: 160px"
-                :options="themeOptions"
-                allow-clear
-                size="small"
-              />
               <span
                 v-if="creationStore.isCreating"
                 class="status-badge processing"
@@ -406,7 +398,6 @@ import { useArticleCreationStore } from '@/stores/articleCreation'
 import { useLoginUserStore } from '@/stores'
 import { CREATION_STEPS } from '@/constants/article'
 import { markdownToHtml } from '@/utils/article'
-import { getStyleList } from '@/constants/themes'
 import 'highlight.js/styles/github.css'
 
 const router = useRouter()
@@ -422,11 +413,6 @@ const additionalRequirement = ref('')
 
 const selectedStyle = ref('default')
 const selectedMethods = ref<string[]>([])
-const selectedTheme = ref<string>('')
-
-const themeOptions = computed(() => {
-  return getStyleList().map((t) => ({ label: t.name, value: t.key }))
-})
 
 /* ---------- Typing Placeholder Effect ---------- */
 const PLACEHOLDER_TOPICS = [
@@ -603,12 +589,12 @@ function appendTypingCursor(html: string): string {
 }
 
 const renderOutline = computed(() => {
-  const html = markdownToHtml(creationStore.outlineDisplay, selectedTheme.value || undefined)
+  const html = markdownToHtml(creationStore.outlineDisplay)
   return isTypingOutline.value ? appendTypingCursor(html) : html
 })
 
 const renderContent = computed(() => {
-  const html = markdownToHtml(creationStore.contentDisplay, selectedTheme.value || undefined)
+  const html = markdownToHtml(creationStore.contentDisplay)
   return isTypingContent.value ? appendTypingCursor(html) : html
 })
 
