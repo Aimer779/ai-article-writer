@@ -7,10 +7,12 @@ import * as paymentController from "./paymentController";
 import * as articleController from "./articleController";
 import * as agentLogController from "./agentLogController";
 import * as healthController from "./healthController";
+import * as statisticsController from "./statisticsController";
 export default {
   userController,
   paymentController,
   articleController,
   agentLogController,
   healthController,
+  statisticsController,
 };

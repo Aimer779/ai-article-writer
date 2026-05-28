@@ -6,7 +6,7 @@
         <h1 class="page-title">Data analysis</h1>
         <p class="page-subtitle">System operation overview</p>
       </div>
-      <a-button class="refresh-btn" @click="handleRefresh">
+      <a-button class="refresh-btn" :loading="loading" @click="handleRefresh">
         <ReloadOutlined />
         Refresh
       </a-button>
@@ -69,7 +69,7 @@
         <div class="performance-body">
           <div class="performance-item">
             <div class="performance-label">Average duration</div>
-            <div class="performance-value text-tabular">{{ stats.avgDuration }}s</div>
+            <div class="performance-value text-tabular">{{ stats.avgDurationSeconds }}s</div>
           </div>
           <div class="performance-divider" />
           <div class="performance-item">
@@ -111,8 +111,8 @@ import {
   PieChartOutlined,
 } from '@ant-design/icons-vue'
 import * as echarts from 'echarts'
+import { getStatistics } from '@/api/statisticsController'
 
-// TODO: Replace with real API calls to aggregate article/agent stats
 const trendChartRef = ref<HTMLDivElement | null>(null)
 const userChartRef = ref<HTMLDivElement | null>(null)
 const quotaChartRef = ref<HTMLDivElement | null>(null)
@@ -120,14 +120,19 @@ const quotaChartRef = ref<HTMLDivElement | null>(null)
 let trendChart: echarts.ECharts | null = null
 let userChart: echarts.ECharts | null = null
 let quotaChart: echarts.ECharts | null = null
+const loading = ref(false)
 
 const stats = ref({
-  today: 11,
-  week: 18,
-  month: 74,
-  total: 74,
-  successRate: 52.7,
-  avgDuration: 100.7,
+  today: 0,
+  week: 0,
+  month: 0,
+  total: 0,
+  successRate: 0,
+  avgDurationSeconds: 0,
+  activeUsers: 0,
+  totalUsers: 0,
+  vipUsers: 0,
+  quotaUsed: 0,
 })
 
 // Design system hex equivalents for ECharts (canvas does not support CSS vars)
@@ -146,6 +151,11 @@ const PALETTE = {
 function initTrendChart() {
   if (!trendChartRef.value) return
   trendChart = echarts.init(trendChartRef.value)
+  renderTrendChart()
+}
+
+function renderTrendChart() {
+  if (!trendChart) return
   trendChart.setOption({
     tooltip: { trigger: 'axis' },
     grid: { left: '3%', right: '4%', bottom: '3%', top: '10%', containLabel: true },
@@ -181,29 +191,36 @@ function initTrendChart() {
 function initUserChart() {
   if (!userChartRef.value) return
   userChart = echarts.init(userChartRef.value)
+  renderUserChart()
+}
+
+function renderUserChart() {
+  if (!userChart) return
   userChart.setOption({
-    tooltip: { trigger: 'item' },
-    legend: {
-      orient: 'vertical',
-      right: '5%',
-      top: 'center',
-      textStyle: { color: PALETTE.textSecondary, fontFamily: 'Manrope, sans-serif' },
+    tooltip: { trigger: 'axis' },
+    grid: { left: '3%', right: '4%', bottom: '3%', top: '10%', containLabel: true },
+    xAxis: {
+      type: 'category',
+      data: ['Total', 'Active', 'VIP'],
+      axisLine: { lineStyle: { color: PALETTE.border } },
+      axisLabel: { color: PALETTE.textSecondary, fontFamily: 'Manrope, sans-serif' },
+    },
+    yAxis: {
+      type: 'value',
+      axisLine: { show: false },
+      splitLine: { lineStyle: { color: PALETTE.border } },
+      axisLabel: { color: PALETTE.textSecondary, fontFamily: 'Manrope, sans-serif' },
     },
     series: [
       {
-        name: 'User type',
-        type: 'pie',
-        radius: ['45%', '70%'],
-        center: ['35%', '50%'],
-        avoidLabelOverlap: false,
-        itemStyle: { borderRadius: 4, borderColor: PALETTE.surface, borderWidth: 2 },
-        label: { show: false },
-        emphasis: { label: { show: false } },
         data: [
-          { value: 10, name: 'VIP member', itemStyle: { color: PALETTE.gold } },
-          { value: 20, name: 'Active user', itemStyle: { color: PALETTE.accent } },
-          { value: 44, name: 'Other user', itemStyle: { color: PALETTE.neutral } },
+          { value: stats.value.totalUsers, itemStyle: { color: PALETTE.neutral } },
+          { value: stats.value.activeUsers, itemStyle: { color: PALETTE.accent } },
+          { value: stats.value.vipUsers, itemStyle: { color: PALETTE.gold } },
         ],
+        type: 'bar',
+        barWidth: '40%',
+        itemStyle: { borderRadius: [4, 4, 0, 0] },
       },
     ],
   })
@@ -212,6 +229,11 @@ function initUserChart() {
 function initQuotaChart() {
   if (!quotaChartRef.value) return
   quotaChart = echarts.init(quotaChartRef.value)
+  renderQuotaChart()
+}
+
+function renderQuotaChart() {
+  if (!quotaChart) return
   quotaChart.setOption({
     tooltip: { trigger: 'item' },
     series: [
@@ -224,12 +246,17 @@ function initQuotaChart() {
         label: { show: true, position: 'outside', color: PALETTE.textSecondary, fontFamily: 'Manrope, sans-serif' },
         labelLine: { lineStyle: { color: PALETTE.border } },
         data: [
-          { value: 0, name: 'Used', itemStyle: { color: PALETTE.error } },
-          { value: 30, name: 'Remaining', itemStyle: { color: PALETTE.success } },
+          { value: stats.value.quotaUsed, name: 'Used', itemStyle: { color: PALETTE.error } },
         ],
       },
     ],
   })
+}
+
+function renderCharts() {
+  renderTrendChart()
+  renderUserChart()
+  renderQuotaChart()
 }
 
 function handleResize() {
@@ -239,13 +266,39 @@ function handleResize() {
 }
 
 async function handleRefresh() {
-  // TODO: Fetch real aggregated stats from backend
-  const hide = message.success('Data refreshed', 3)
+  await loadStatistics(true)
+}
 
-  // Fallback: force close if the auto-dismiss timer fails
-  setTimeout(() => {
-    hide?.()
-  }, 4000)
+async function loadStatistics(showSuccess = false) {
+  loading.value = true
+  try {
+    const res = await getStatistics()
+    if (res.data.code !== 0 || !res.data.data) {
+      message.error(res.data.message || 'Failed to load statistics')
+      return
+    }
+    const data = res.data.data
+    stats.value = {
+      today: data.todayCount || 0,
+      week: data.weekCount || 0,
+      month: data.monthCount || 0,
+      total: data.totalCount || 0,
+      successRate: data.successRate || 0,
+      avgDurationSeconds: Number(((data.avgDurationMs || 0) / 1000).toFixed(1)),
+      activeUsers: data.activeUserCount || 0,
+      totalUsers: data.totalUserCount || 0,
+      vipUsers: data.vipUserCount || 0,
+      quotaUsed: data.quotaUsed || 0,
+    }
+    renderCharts()
+    if (showSuccess) {
+      message.success('Data refreshed')
+    }
+  } catch (err: any) {
+    message.error(err.response?.data?.message || 'Failed to load statistics')
+  } finally {
+    loading.value = false
+  }
 }
 
 onMounted(async () => {
@@ -253,6 +306,7 @@ onMounted(async () => {
   initTrendChart()
   initUserChart()
   initQuotaChart()
+  await loadStatistics()
   window.addEventListener('resize', handleResize)
 })
 

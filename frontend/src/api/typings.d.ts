@@ -1,4 +1,17 @@
 declare namespace API {
+  type StatisticsVO = {
+    todayCount?: number;
+    weekCount?: number;
+    monthCount?: number;
+    totalCount?: number;
+    successRate?: number;
+    avgDurationMs?: number;
+    activeUserCount?: number;
+    totalUserCount?: number;
+    vipUserCount?: number;
+    quotaUsed?: number;
+  };
+
   type AgentExecutionStatsVO = {
     totalCount?: number;
     successCount?: number;
@@ -117,6 +130,12 @@ declare namespace API {
   type BaseResponseLong = {
     code?: number;
     data?: number;
+    message?: string;
+  };
+
+  type BaseResponseStatisticsVO = {
+    code?: number;
+    data?: StatisticsVO;
     message?: string;
   };
 
