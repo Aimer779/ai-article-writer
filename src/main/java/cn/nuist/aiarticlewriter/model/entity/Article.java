@@ -58,6 +58,21 @@ public class Article implements Serializable {
     private String subTitle;
 
     /**
+     * Candidate title options in JSON format.
+     */
+    private String titleOptions;
+
+    /**
+     * User writing requirement accumulated during creation.
+     */
+    private String userRequirement;
+
+    /**
+     * Current generation workflow step.
+     */
+    private String currentStep;
+
+    /**
      * Article outline in JSON format.
      */
     private String outline;
@@ -83,7 +98,7 @@ public class Article implements Serializable {
     private String images;
 
     /**
-     * Task status: PENDING/PROCESSING/COMPLETED/FAILED.
+     * Task status: PENDING/PROCESSING/WAITING_USER_INPUT/COMPLETED/FAILED.
      */
     private String status;
 

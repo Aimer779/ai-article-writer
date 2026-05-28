@@ -2,6 +2,7 @@ package cn.nuist.aiarticlewriter.service;
 
 import cn.nuist.aiarticlewriter.agent.ArticleAgentOrchestrator;
 import cn.nuist.aiarticlewriter.agent.support.SseEmitterManager;
+import cn.nuist.aiarticlewriter.model.entity.Article;
 import cn.nuist.aiarticlewriter.model.enums.ArticleStatusEnum;
 import cn.nuist.aiarticlewriter.model.enums.SseMessageTypeEnum;
 import cn.nuist.aiarticlewriter.model.state.article.ArticleState;
@@ -43,11 +44,11 @@ public class ArticleAsyncService {
      */
     @Async("articleExecutor")
     public void executeArticleGeneration(String taskId, String topic) {
-        executeArticleGeneration(taskId, null, topic, null);
+        generateTitleOptionsAndPause(taskId, null, topic, null);
     }
 
     /**
-     * Execute article generation asynchronously.
+     * Generate title options asynchronously and pause for user selection.
      *
      * @param taskId article generation task id
      * @param userId user id
@@ -55,8 +56,8 @@ public class ArticleAsyncService {
      * @param userRequirement optional user requirement
      */
     @Async("articleExecutor")
-    public void executeArticleGeneration(String taskId, Long userId, String topic, String userRequirement) {
-        log.info("Async article generation started, taskId={}, topic={}", taskId, topic);
+    public void generateTitleOptionsAndPause(String taskId, Long userId, String topic, String userRequirement) {
+        log.info("Async title generation started, taskId={}, topic={}", taskId, topic);
         ArticleState state = null;
 
         try {
@@ -65,67 +66,127 @@ public class ArticleAsyncService {
 
             state = articleAgentOrchestrator.createInitialState(taskId, userId, topic);
             articleAgentOrchestrator.generateTitleOptions(state, userRequirement);
-            TitleResult selectedTitle = state.getTitleOptions().getFirst();
+            articleService.saveTitleOptionsAndWait(taskId, state, userRequirement);
+            sendSseMessage(taskId, SseMessageTypeEnum.AGENT1_COMPLETE, Map.of(
+                    "taskId", taskId,
+                    "titleOptions", state.getTitleOptions()
+            ));
+            sendSseMessage(taskId, SseMessageTypeEnum.WAITING_USER_INPUT, Map.of(
+                    "taskId", taskId,
+                    "step", "TITLE_SELECTION",
+                    "message", "Waiting for title selection"
+            ));
+
+            log.info("Async title generation paused for user input, taskId={}", taskId);
+        } catch (Exception e) {
+            handleGenerationFailure(taskId, state, e);
+        }
+    }
+
+    /**
+     * Regenerate title options for a task that has already been prepared by the service layer.
+     *
+     * @param taskId article generation task id
+     */
+    @Async("articleExecutor")
+    public void regenerateTitleOptions(String taskId) {
+        Article article = articleService.getByTaskId(taskId);
+        if (article == null) {
+            sendSseMessage(taskId, SseMessageTypeEnum.ERROR, Map.of(
+                    "taskId", taskId,
+                    "message", "Article task does not exist"
+            ));
+            return;
+        }
+        generateTitleOptionsAndPause(taskId, article.getUserId(), article.getTopic(), article.getUserRequirement());
+    }
+
+    /**
+     * Continue article generation after the user selects a title.
+     *
+     * @param taskId article generation task id
+     */
+    @Async("articleExecutor")
+    public void continueAfterTitleSelected(String taskId) {
+        log.info("Async article generation resumed, taskId={}", taskId);
+        ArticleState state = null;
+
+        try {
+            Article article = articleService.getByTaskId(taskId);
+            if (article == null) {
+                throw new IllegalStateException("Article task does not exist");
+            }
+            TitleResult selectedTitle = TitleResult.builder()
+                    .mainTitle(article.getMainTitle())
+                    .subTitle(article.getSubTitle())
+                    .build();
+            state = articleAgentOrchestrator.createInitialState(taskId, article.getUserId(), article.getTopic());
             articleAgentOrchestrator.selectTitle(state, selectedTitle);
             sendSseMessage(taskId, SseMessageTypeEnum.AGENT1_COMPLETE, Map.of(
                     "taskId", taskId,
-                    "titleOptions", state.getTitleOptions(),
                     "selectedTitle", selectedTitle
             ));
 
-            ArticleState currentState = state;
-            articleAgentOrchestrator.generateOutline(state, userRequirement,
-                    message -> handleAgentMessage(taskId, message, currentState));
-            sendSseMessage(taskId, SseMessageTypeEnum.AGENT2_COMPLETE, Map.of(
-                    "taskId", taskId,
-                    "outline", state.getOutlineMarkdown()
-            ));
-
-            articleAgentOrchestrator.generateContent(state, userRequirement,
-                    message -> handleAgentMessage(taskId, message, currentState));
-            sendSseMessage(taskId, SseMessageTypeEnum.AGENT3_COMPLETE, Map.of(
-                    "taskId", taskId,
-                    "content", state.getContent()
-            ));
-
-            articleAgentOrchestrator.analyzeImageRequirements(state);
-            sendSseMessage(taskId, SseMessageTypeEnum.AGENT4_COMPLETE, Map.of(
-                    "taskId", taskId,
-                    "contentWithPlaceholders", state.getContentWithPlaceholders(),
-                    "imageRequirements", state.getImageRequirements()
-            ));
-
-            articleAgentOrchestrator.generateImages(state, message -> handleAgentMessage(taskId, message, currentState));
-            sendSseMessage(taskId, SseMessageTypeEnum.AGENT5_COMPLETE, Map.of(
-                    "taskId", taskId,
-                    "images", state.getImages()
-            ));
-
-            articleAgentOrchestrator.assembleFullContent(state);
-            sendSseMessage(taskId, SseMessageTypeEnum.MERGE_COMPLETE, Map.of(
-                    "taskId", taskId,
-                    "fullContent", state.getFullContent()
-            ));
-
-            articleService.saveArticleContent(taskId, state);
-            articleService.updateArticleStatus(taskId, ArticleStatusEnum.COMPLETED, null);
-            sendSseMessage(taskId, SseMessageTypeEnum.ALL_COMPLETE, Map.of("taskId", taskId));
-            sseEmitterManager.complete(taskId);
-
+            executeRemainingGeneration(taskId, state, article.getUserRequirement());
             log.info("Async article generation completed, taskId={}", taskId);
         } catch (Exception e) {
-            log.error("Async article generation failed, taskId={}", taskId, e);
-            if (state != null) {
-                state.setStatus(ArticleStatusEnum.FAILED);
-                state.setErrorMessage(e.getMessage());
-            }
-            articleService.updateArticleStatus(taskId, ArticleStatusEnum.FAILED, e.getMessage());
-            sendSseMessage(taskId, SseMessageTypeEnum.ERROR, Map.of(
-                    "taskId", taskId,
-                    "message", e.getMessage() == null ? "Article generation failed" : e.getMessage()
-            ));
-            sseEmitterManager.complete(taskId);
+            handleGenerationFailure(taskId, state, e);
         }
+    }
+
+    private void executeRemainingGeneration(String taskId, ArticleState state, String userRequirement) {
+        ArticleState currentState = state;
+        articleAgentOrchestrator.generateOutline(state, userRequirement,
+                message -> handleAgentMessage(taskId, message, currentState));
+        sendSseMessage(taskId, SseMessageTypeEnum.AGENT2_COMPLETE, Map.of(
+                "taskId", taskId,
+                "outline", state.getOutlineMarkdown()
+        ));
+
+        articleAgentOrchestrator.generateContent(state, userRequirement,
+                message -> handleAgentMessage(taskId, message, currentState));
+        sendSseMessage(taskId, SseMessageTypeEnum.AGENT3_COMPLETE, Map.of(
+                "taskId", taskId,
+                "content", state.getContent()
+        ));
+
+        articleAgentOrchestrator.analyzeImageRequirements(state);
+        sendSseMessage(taskId, SseMessageTypeEnum.AGENT4_COMPLETE, Map.of(
+                "taskId", taskId,
+                "contentWithPlaceholders", state.getContentWithPlaceholders(),
+                "imageRequirements", state.getImageRequirements()
+        ));
+
+        articleAgentOrchestrator.generateImages(state, message -> handleAgentMessage(taskId, message, currentState));
+        sendSseMessage(taskId, SseMessageTypeEnum.AGENT5_COMPLETE, Map.of(
+                "taskId", taskId,
+                "images", state.getImages()
+        ));
+
+        articleAgentOrchestrator.assembleFullContent(state);
+        sendSseMessage(taskId, SseMessageTypeEnum.MERGE_COMPLETE, Map.of(
+                "taskId", taskId,
+                "fullContent", state.getFullContent()
+        ));
+
+        articleService.saveArticleContent(taskId, state);
+        articleService.updateArticleStatus(taskId, ArticleStatusEnum.COMPLETED, null);
+        sendSseMessage(taskId, SseMessageTypeEnum.ALL_COMPLETE, Map.of("taskId", taskId));
+        sseEmitterManager.complete(taskId);
+    }
+
+    private void handleGenerationFailure(String taskId, ArticleState state, Exception e) {
+        log.error("Async article generation failed, taskId={}", taskId, e);
+        if (state != null) {
+            state.setStatus(ArticleStatusEnum.FAILED);
+            state.setErrorMessage(e.getMessage());
+        }
+        articleService.updateArticleStatus(taskId, ArticleStatusEnum.FAILED, e.getMessage());
+        sendSseMessage(taskId, SseMessageTypeEnum.ERROR, Map.of(
+                "taskId", taskId,
+                "message", e.getMessage() == null ? "Article generation failed" : e.getMessage()
+        ));
+        sseEmitterManager.complete(taskId);
     }
 
     private void handleAgentMessage(String taskId, String message, ArticleState state) {

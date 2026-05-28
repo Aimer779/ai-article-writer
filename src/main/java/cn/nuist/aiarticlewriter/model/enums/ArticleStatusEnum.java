@@ -12,6 +12,7 @@ public enum ArticleStatusEnum {
 
     PENDING("Pending", "PENDING"),
     PROCESSING("Processing", "PROCESSING"),
+    WAITING_USER_INPUT("Waiting user input", "WAITING_USER_INPUT"),
     COMPLETED("Completed", "COMPLETED"),
     FAILED("Failed", "FAILED");
 

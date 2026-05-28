@@ -55,6 +55,14 @@ declare namespace API {
     topic?: string;
   };
 
+  type ArticleTitleRegenerateRequest = {
+    additionalRequirement?: string;
+  };
+
+  type ArticleTitleSelectRequest = {
+    titleIndex?: number;
+  };
+
   type ArticleQueryRequest = {
     pageNum?: number;
     pageSize?: number;
@@ -85,6 +93,9 @@ declare namespace API {
     topic?: string;
     mainTitle?: string;
     subTitle?: string;
+    titleOptions?: string;
+    userRequirement?: string;
+    currentStep?: string;
     outline?: string;
     content?: string;
     fullContent?: string;

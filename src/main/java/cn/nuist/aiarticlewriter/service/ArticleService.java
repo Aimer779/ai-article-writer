@@ -5,6 +5,7 @@ import cn.nuist.aiarticlewriter.model.entity.Article;
 import cn.nuist.aiarticlewriter.model.entity.User;
 import cn.nuist.aiarticlewriter.model.dto.article.ArticleQueryRequest;
 import cn.nuist.aiarticlewriter.model.state.article.ArticleState;
+import cn.nuist.aiarticlewriter.model.state.article.TitleResult;
 import cn.nuist.aiarticlewriter.model.vo.ArticleVO;
 import com.mybatisflex.core.paginate.Page;
 
@@ -114,6 +115,35 @@ public interface ArticleService {
      * @param errorMessage error message
      */
     void updateArticleStatus(String taskId, ArticleStatusEnum status, String errorMessage);
+
+    /**
+     * Save generated title options and pause for user selection.
+     *
+     * @param taskId article generation task id
+     * @param state article generation state
+     * @param userRequirement current user requirement
+     */
+    void saveTitleOptionsAndWait(String taskId, ArticleState state, String userRequirement);
+
+    /**
+     * Mark a task ready to regenerate title options.
+     *
+     * @param taskId article generation task id
+     * @param additionalRequirement additional writing direction
+     * @param loginUser current login user
+     * @return updated article task
+     */
+    Article prepareTitleRegeneration(String taskId, String additionalRequirement, User loginUser);
+
+    /**
+     * Select one generated title option for a waiting task.
+     *
+     * @param taskId article generation task id
+     * @param titleIndex zero-based option index
+     * @param loginUser current login user
+     * @return selected title
+     */
+    TitleResult selectTitleOption(String taskId, Integer titleIndex, User loginUser);
 
     /**
      * Save generated article content.

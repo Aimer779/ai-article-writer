@@ -169,13 +169,21 @@
                 size="small"
               />
               <span
-                v-if="creationStore.isConnected"
-                class="status-badge processing"
-              >Streaming</span>
-              <span
-                v-else-if="creationStore.isCreating"
+                v-if="creationStore.isCreating"
                 class="status-badge processing"
               >Creating</span>
+              <span
+                v-else-if="creationStore.isWaitingTitle"
+                class="status-badge waiting"
+              >Waiting</span>
+              <span
+                v-else-if="creationStore.isRegeneratingTitle"
+                class="status-badge processing"
+              >Regenerating</span>
+              <span
+                v-else-if="creationStore.isConnected"
+                class="status-badge processing"
+              >Streaming</span>
               <span
                 v-else-if="creationStore.isCompleted"
                 class="status-badge completed"
@@ -190,7 +198,58 @@
           <a-tabs v-model:activeKey="activeTabKey" class="preview-tabs">
             <a-tab-pane key="title" tab="Title">
               <div class="content-preview">
-                <div v-if="creationStore.articleTitle" class="markdown-body">
+                <div v-if="showTitleDecision" class="title-decision">
+                  <div class="decision-header">
+                    <div>
+                      <h2>Choose a title</h2>
+                      <p>Pick one option to continue, or add direction and regenerate the list.</p>
+                    </div>
+                    <span class="status-badge waiting">Decision</span>
+                  </div>
+
+                  <div class="title-options">
+                    <div v-if="creationStore.isRegeneratingTitle" class="regenerating-state">
+                      <a-spin />
+                      <span>Regenerating title options...</span>
+                    </div>
+                    <button
+                      v-for="(option, index) in creationStore.titleOptions"
+                      :key="`${option.mainTitle}-${index}`"
+                      class="title-option"
+                      :class="{ 'title-option-selected': creationStore.selectedTitleIndex === index }"
+                      :disabled="creationStore.isRegeneratingTitle"
+                      @click="handleChooseTitle(index)"
+                    >
+                      <span class="option-index">{{ index + 1 }}</span>
+                      <span class="option-copy">
+                        <strong>{{ option.mainTitle }}</strong>
+                        <span v-if="option.subTitle">{{ option.subTitle }}</span>
+                      </span>
+                    </button>
+                  </div>
+
+                  <div class="requirement-box">
+                    <a-textarea
+                      v-model:value="additionalRequirement"
+                      :rows="3"
+                      :maxlength="500"
+                      :disabled="creationStore.isRegeneratingTitle"
+                      placeholder="Add audience, tone, angle, or other title direction"
+                    />
+                    <div class="requirement-actions">
+                      <span class="char-count">{{ additionalRequirement.length }} / 500</span>
+                      <a-button
+                        :loading="creationStore.isRegeneratingTitle"
+                        :disabled="!additionalRequirement.trim()"
+                        @click="handleRegenerateTitles"
+                      >
+                        <template #icon><ReloadOutlined /></template>
+                        Regenerate titles
+                      </a-button>
+                    </div>
+                  </div>
+                </div>
+                <div v-else-if="creationStore.articleTitle" class="markdown-body">
                   <h2>Generated title</h2>
                   <h3>{{ creationStore.articleTitle }}</h3>
                   <p v-if="creationStore.articleSubTitle">{{ creationStore.articleSubTitle }}</p>
@@ -304,6 +363,7 @@ import {
   CrownOutlined,
   FireOutlined,
   StarOutlined,
+  ReloadOutlined,
 } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { useArticleCreationStore } from '@/stores/articleCreation'
@@ -322,6 +382,7 @@ const isFocused = ref(false)
 const activeTabKey = ref('title')
 const titlePreviewReady = ref(false)
 let titlePreviewTimer: number | null = null
+const additionalRequirement = ref('')
 
 const selectedStyle = ref('default')
 const selectedMethods = ref<string[]>([])
@@ -512,6 +573,10 @@ const renderContent = computed(() => {
   return isTypingContent.value ? appendTypingCursor(html) : html
 })
 
+const showTitleDecision = computed(() => {
+  return creationStore.titleOptions.length > 0 || creationStore.isWaitingTitle || creationStore.isRegeneratingTitle
+})
+
 const hotTopics = [
   'How AI Changes the Workplace in 2026',
   'How Programmers Improve Competitiveness',
@@ -548,10 +613,30 @@ async function handleStart() {
   }
 }
 
+async function handleChooseTitle(index: number) {
+  const ok = await creationStore.chooseTitle(index)
+  if (ok) {
+    message.success('Title selected')
+  }
+}
+
+async function handleRegenerateTitles() {
+  const requirement = additionalRequirement.value.trim()
+  if (!requirement) {
+    message.warning('Please add title direction')
+    return
+  }
+  const ok = await creationStore.regenerateTitleOptions(requirement)
+  if (ok) {
+    additionalRequirement.value = ''
+  }
+}
+
 function handleReset() {
   const currentTopic = topicInput.value
   creationStore.reset()
   topicInput.value = currentTopic
+  additionalRequirement.value = ''
 }
 
 function goToArticle() {
@@ -1082,6 +1167,11 @@ onUnmounted(() => {
   color: var(--accent);
 }
 
+.status-badge.waiting {
+  background: var(--warning-subtle);
+  color: oklch(46% 0.1 75);
+}
+
 .status-badge.failed {
   background: var(--error-subtle);
   color: var(--error);
@@ -1103,6 +1193,143 @@ onUnmounted(() => {
   justify-content: center;
   min-height: 300px;
   color: var(--text-muted);
+}
+
+.title-decision {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.decision-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.decision-header h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+  color: var(--ink);
+}
+
+.decision-header p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.title-options {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+}
+
+.regenerating-state {
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.title-option {
+  width: 100%;
+  min-height: 82px;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.title-option:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--accent-subtle);
+  transform: translateY(-1px);
+}
+
+.title-option:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.title-option:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.title-option-selected {
+  border-color: var(--accent);
+  background: var(--accent-subtle);
+}
+
+.option-index {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--canvas);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.title-option-selected .option-index,
+.title-option:hover:not(:disabled) .option-index {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.option-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.option-copy strong {
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.option-copy span {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.requirement-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--canvas);
+}
+
+.requirement-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
 }
 
 .markdown-body :deep(.typing-cursor) {
@@ -1254,6 +1481,12 @@ onUnmounted(() => {
   .center-panel {
     padding: var(--space-4);
     min-height: auto;
+  }
+
+  .decision-header,
+  .requirement-actions {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 </style>

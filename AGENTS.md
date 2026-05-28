@@ -90,9 +90,12 @@ ai-article-writer/
 Read these reference docs only when the task is related:
 
 - Article generation workflow: `doc/article-workflow.md`
+- Title human-in-the-loop workflow: `doc/title-hitl-workflow.md`
 - SSE message protocol: `doc/sse-protocol.md`
 - Image acquisition and storage: `doc/image-service.md`
 - Runtime configuration and tests: `doc/runtime-config-and-tests.md`
+
+Title human-in-the-loop follows: create task -> generate 3 to 5 title options -> persist `titleOptions` -> set `currentStep=TITLE_SELECTION` and `status=WAITING_USER_INPUT` -> user selects a title or adds requirements to regenerate titles -> selected title resumes outline/content/image generation. Only allow title selection/regeneration while the task is in `WAITING_USER_INPUT` and `TITLE_SELECTION`.
 
 Image generation follows: select provider -> acquire `ImageAsset` -> upload to storage -> fallback to Picsum on failure. New image providers should implement `ImageService`, return `ImageAsset`, and register their method in `ImageMethodEnum`. Do not return temporary third-party image URLs as final article image URLs when COS is enabled.
 
@@ -124,6 +127,9 @@ Get-Content sql/add_payment_vip.sql | mysql -u root -p
 
 # Apply agent log migration in PowerShell
 Get-Content sql/add_agent_log.sql | mysql -u root -p
+
+# Apply title human-in-the-loop migration in PowerShell
+Get-Content sql/add_title_hitl.sql | mysql -u root -p
 ```
 
 ### Frontend

@@ -10,6 +10,7 @@ import cn.nuist.aiarticlewriter.mapper.ArticleMapper;
 import cn.nuist.aiarticlewriter.model.dto.article.ArticleQueryRequest;
 import cn.nuist.aiarticlewriter.model.entity.Article;
 import cn.nuist.aiarticlewriter.model.entity.User;
+import cn.nuist.aiarticlewriter.model.enums.ArticleStepEnum;
 import cn.nuist.aiarticlewriter.model.enums.ArticleStatusEnum;
 import cn.nuist.aiarticlewriter.model.state.article.ArticleState;
 import cn.nuist.aiarticlewriter.model.state.article.ImageResult;
@@ -17,11 +18,13 @@ import cn.nuist.aiarticlewriter.model.state.article.TitleResult;
 import cn.nuist.aiarticlewriter.model.vo.ArticleVO;
 import cn.nuist.aiarticlewriter.service.ArticleService;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import jakarta.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -62,6 +65,7 @@ public class ArticleServiceImpl implements ArticleService {
                 .taskId(taskId)
                 .userId(loginUser.getId())
                 .topic(topic.trim())
+                .currentStep(ArticleStepEnum.INIT.getValue())
                 .status(ArticleStatusEnum.PENDING.getValue())
                 .createTime(now)
                 .updateTime(now)
@@ -216,6 +220,7 @@ public class ArticleServiceImpl implements ArticleService {
                 .taskId(taskId)
                 .userId(userId == null ? DEFAULT_USER_ID : userId)
                 .topic(topic.trim())
+                .currentStep(ArticleStepEnum.INIT.getValue())
                 .status(ArticleStatusEnum.PENDING.getValue())
                 .createTime(now)
                 .updateTime(now)
@@ -246,6 +251,88 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
     @Override
+    public void saveTitleOptionsAndWait(String taskId, ArticleState state, String userRequirement) {
+        validateTaskId(taskId);
+        ThrowUtils.throwIf(state == null, ErrorCode.PARAMS_ERROR, "Article state cannot be null");
+        ThrowUtils.throwIf(state.getTitleOptions() == null || state.getTitleOptions().isEmpty(),
+                ErrorCode.PARAMS_ERROR, "Title options cannot be empty");
+
+        Article article = getByTaskId(taskId);
+        ThrowUtils.throwIf(article == null, ErrorCode.NOT_FOUND_ERROR, "Article task does not exist");
+
+        article.setTopic(state.getTopic());
+        article.setTitleOptions(toJson(state.getTitleOptions()));
+        article.setUserRequirement(StrUtil.blankToDefault(userRequirement, null));
+        article.setMainTitle(null);
+        article.setSubTitle(null);
+        article.setCurrentStep(ArticleStepEnum.TITLE_SELECTION.getValue());
+        article.setStatus(ArticleStatusEnum.WAITING_USER_INPUT.getValue());
+        article.setErrorMessage(null);
+        article.setUpdateTime(LocalDateTime.now());
+
+        int result = articleMapper.update(article);
+        ThrowUtils.throwIf(result <= 0, ErrorCode.OPERATION_ERROR, "Save title options failed");
+        log.info("Article title options saved, taskId={}, count={}", taskId, state.getTitleOptions().size());
+    }
+
+    @Override
+    public Article prepareTitleRegeneration(String taskId, String additionalRequirement, User loginUser) {
+        validateLoginUser(loginUser);
+        validateTaskId(taskId);
+        ThrowUtils.throwIf(StrUtil.isBlank(additionalRequirement), ErrorCode.PARAMS_ERROR,
+                "Additional requirement cannot be blank");
+
+        Article article = getByTaskId(taskId);
+        ThrowUtils.throwIf(article == null, ErrorCode.NOT_FOUND_ERROR, "Article task does not exist");
+        validateArticleAccess(article, loginUser);
+        validateTitleSelectionState(article);
+
+        article.setUserRequirement(mergeRequirement(article.getUserRequirement(), additionalRequirement));
+        article.setCurrentStep(ArticleStepEnum.TITLE.getValue());
+        article.setStatus(ArticleStatusEnum.PROCESSING.getValue());
+        article.setErrorMessage(null);
+        article.setUpdateTime(LocalDateTime.now());
+
+        int result = articleMapper.update(article);
+        ThrowUtils.throwIf(result <= 0, ErrorCode.OPERATION_ERROR, "Prepare title regeneration failed");
+        log.info("Article title regeneration prepared, taskId={}", taskId);
+        return article;
+    }
+
+    @Override
+    public TitleResult selectTitleOption(String taskId, Integer titleIndex, User loginUser) {
+        validateLoginUser(loginUser);
+        validateTaskId(taskId);
+        ThrowUtils.throwIf(titleIndex == null || titleIndex < 0, ErrorCode.PARAMS_ERROR,
+                "Title index is invalid");
+
+        Article article = getByTaskId(taskId);
+        ThrowUtils.throwIf(article == null, ErrorCode.NOT_FOUND_ERROR, "Article task does not exist");
+        validateArticleAccess(article, loginUser);
+        validateTitleSelectionState(article);
+
+        List<TitleResult> titleOptions = parseTitleOptions(article.getTitleOptions());
+        ThrowUtils.throwIf(titleIndex >= titleOptions.size(), ErrorCode.PARAMS_ERROR,
+                "Title index is out of range");
+
+        TitleResult selectedTitle = titleOptions.get(titleIndex);
+        ThrowUtils.throwIf(selectedTitle == null || StrUtil.isBlank(selectedTitle.getMainTitle()),
+                ErrorCode.PARAMS_ERROR, "Selected title is invalid");
+
+        article.setMainTitle(selectedTitle.getMainTitle().trim());
+        article.setSubTitle(StrUtil.blankToDefault(selectedTitle.getSubTitle(), null));
+        article.setCurrentStep(ArticleStepEnum.OUTLINE.getValue());
+        article.setStatus(ArticleStatusEnum.PROCESSING.getValue());
+        article.setErrorMessage(null);
+        article.setUpdateTime(LocalDateTime.now());
+
+        int result = articleMapper.update(article);
+        ThrowUtils.throwIf(result <= 0, ErrorCode.OPERATION_ERROR, "Select title option failed");
+        log.info("Article title selected, taskId={}, index={}", taskId, titleIndex);
+        return selectedTitle;
+    }
+
+    @Override
     public void saveArticleContent(String taskId, ArticleState state) {
         validateTaskId(taskId);
         ThrowUtils.throwIf(state == null, ErrorCode.PARAMS_ERROR, "Article state cannot be null");
@@ -264,6 +351,7 @@ public class ArticleServiceImpl implements ArticleService {
         article.setFullContent(state.getFullContent());
         article.setCoverImage(resolveCoverImage(state));
         article.setImages(toJson(state.getImages()));
+        article.setCurrentStep(ArticleStepEnum.COMPLETED.getValue());
         article.setStatus(ArticleStatusEnum.COMPLETED.getValue());
         article.setErrorMessage(null);
         article.setCompletedTime(LocalDateTime.now());
@@ -292,6 +380,31 @@ public class ArticleServiceImpl implements ArticleService {
 
     private boolean isAdmin(User loginUser) {
         return loginUser != null && UserConstant.ADMIN_ROLE.equals(loginUser.getUserRole());
+    }
+
+    private void validateTitleSelectionState(Article article) {
+        ThrowUtils.throwIf(!ArticleStatusEnum.WAITING_USER_INPUT.getValue().equals(article.getStatus())
+                        || !ArticleStepEnum.TITLE_SELECTION.getValue().equals(article.getCurrentStep()),
+                ErrorCode.OPERATION_ERROR, "Article task is not waiting for title selection");
+    }
+
+    private String mergeRequirement(String currentRequirement, String additionalRequirement) {
+        String trimmedAdditionalRequirement = additionalRequirement.trim();
+        if (StrUtil.isBlank(currentRequirement)) {
+            return trimmedAdditionalRequirement;
+        }
+        return currentRequirement.trim() + "\n" + trimmedAdditionalRequirement;
+    }
+
+    private List<TitleResult> parseTitleOptions(String titleOptionsJson) {
+        ThrowUtils.throwIf(StrUtil.isBlank(titleOptionsJson), ErrorCode.OPERATION_ERROR,
+                "Title options do not exist");
+        try {
+            return objectMapper.readValue(titleOptionsJson, new TypeReference<>() {
+            });
+        } catch (JsonProcessingException e) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "Parse title options failed");
+        }
     }
 
     private String resolveCoverImage(ArticleState state) {

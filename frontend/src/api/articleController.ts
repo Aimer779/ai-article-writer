@@ -31,6 +31,42 @@ export async function createArticleTask(
   });
 }
 
+/** Regenerate article title options POST /article/${param0}/title/regenerate */
+export async function regenerateTitles(
+  params: { taskId: string },
+  body: API.ArticleTitleRegenerateRequest,
+  options?: { [key: string]: any }
+) {
+  const { taskId: param0, ...queryParams } = params;
+  return request<API.BaseResponseBoolean>(`/article/${param0}/title/regenerate`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    params: { ...queryParams },
+    data: body,
+    ...(options || {}),
+  });
+}
+
+/** Select article title POST /article/${param0}/title/select */
+export async function selectTitle(
+  params: { taskId: string },
+  body: API.ArticleTitleSelectRequest,
+  options?: { [key: string]: any }
+) {
+  const { taskId: param0, ...queryParams } = params;
+  return request<API.BaseResponseBoolean>(`/article/${param0}/title/select`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    params: { ...queryParams },
+    data: body,
+    ...(options || {}),
+  });
+}
+
 /** Delete article POST /article/delete */
 export async function deleteArticle(
   body: API.DeleteRequest,

@@ -45,6 +45,21 @@ public class ArticleVO implements Serializable {
     private String subTitle;
 
     /**
+     * Candidate title options in JSON format.
+     */
+    private String titleOptions;
+
+    /**
+     * User writing requirement accumulated during creation.
+     */
+    private String userRequirement;
+
+    /**
+     * Current generation workflow step.
+     */
+    private String currentStep;
+
+    /**
      * Article outline in JSON format.
      */
     private String outline;

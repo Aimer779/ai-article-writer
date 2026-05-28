@@ -5,8 +5,10 @@ import type { SseMessageType } from '@/constants/article'
  */
 export interface SseMessage {
   type: SseMessageType
+  taskId?: string
   content?: string
   message?: string
+  step?: string
   selectedTitle?: {
     mainTitle?: string
     subTitle?: string

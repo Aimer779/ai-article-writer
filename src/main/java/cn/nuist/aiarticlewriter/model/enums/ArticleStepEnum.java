@@ -12,6 +12,7 @@ public enum ArticleStepEnum {
 
     INIT("Initial state", "INIT"),
     TITLE("Title generation", "TITLE"),
+    TITLE_SELECTION("Title selection", "TITLE_SELECTION"),
     OUTLINE("Outline generation", "OUTLINE"),
     CONTENT("Content generation", "CONTENT"),
     IMAGE_REQUIREMENT("Image requirement generation", "IMAGE_REQUIREMENT"),

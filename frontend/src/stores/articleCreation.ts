@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { createArticleTask } from '@/api/articleController'
+import { createArticleTask, regenerateTitles, selectTitle } from '@/api/articleController'
 import { SSE_MESSAGE_TYPE, CREATION_STEPS } from '@/constants/article'
 import { createProgressEventSource, parseSseMessage } from '@/utils/article'
 import type { SseMessage } from '@/utils/article'
@@ -10,10 +10,17 @@ interface TypingQueueItem {
   chars: string[]
 }
 
+interface TitleOption {
+  mainTitle?: string
+  subTitle?: string
+}
+
 export const useArticleCreationStore = defineStore('articleCreation', () => {
   // ==================== State ====================
   const taskId = ref<string | null>(null)
-  const status = ref<'idle' | 'creating' | 'connecting' | 'streaming' | 'completed' | 'failed'>('idle')
+  const status = ref<
+    'idle' | 'creating' | 'connecting' | 'streaming' | 'waitingTitle' | 'regeneratingTitle' | 'completed' | 'failed'
+  >('idle')
   const currentStepIndex = ref(-1)
   const outlineBuffer = ref('')
   const outlineDisplay = ref('')
@@ -26,6 +33,8 @@ export const useArticleCreationStore = defineStore('articleCreation', () => {
   const articleTitle = ref('')
   const articleSubTitle = ref('')
   const articleId = ref<number | null>(null)
+  const titleOptions = ref<TitleOption[]>([])
+  const selectedTitleIndex = ref<number | null>(null)
 
   // Internal refs
   let eventSource: EventSource | null = null
@@ -35,6 +44,8 @@ export const useArticleCreationStore = defineStore('articleCreation', () => {
   // ==================== Computed ====================
   const isCreating = computed(() => status.value === 'creating')
   const isStreaming = computed(() => status.value === 'streaming' || status.value === 'connecting')
+  const isWaitingTitle = computed(() => status.value === 'waitingTitle')
+  const isRegeneratingTitle = computed(() => status.value === 'regeneratingTitle')
   const isCompleted = computed(() => status.value === 'completed')
   const isFailed = computed(() => status.value === 'failed')
 
@@ -114,13 +125,32 @@ export const useArticleCreationStore = defineStore('articleCreation', () => {
   function handleSseMessage(msg: SseMessage) {
     switch (msg.type) {
       case SSE_MESSAGE_TYPE.AGENT1_COMPLETE:
+        if (msg.titleOptions?.length) {
+          titleOptions.value = msg.titleOptions
+          selectedTitleIndex.value = null
+          articleTitle.value = ''
+          articleSubTitle.value = ''
+          status.value = 'waitingTitle'
+          currentStepIndex.value = 0
+          addLog('Title options generated. Waiting for your selection.')
+          break
+        }
+
         advanceStep()
-        addLog('Title options generated.')
+        addLog('Title selected. Continuing article generation.')
+        titleOptions.value = []
         if (msg.selectedTitle?.mainTitle) {
           articleTitle.value = msg.selectedTitle.mainTitle
           articleSubTitle.value = msg.selectedTitle.subTitle || ''
         } else if (msg.content) {
           articleTitle.value = msg.content
+        }
+        break
+
+      case SSE_MESSAGE_TYPE.WAITING_USER_INPUT:
+        if (msg.step === 'TITLE_SELECTION') {
+          status.value = 'waitingTitle'
+          currentStepIndex.value = 0
         }
         break
 
@@ -226,6 +256,53 @@ export const useArticleCreationStore = defineStore('articleCreation', () => {
     }
   }
 
+  async function chooseTitle(index: number): Promise<boolean> {
+    if (!taskId.value) return false
+
+    selectedTitleIndex.value = index
+    try {
+      const res = await selectTitle({ taskId: taskId.value }, { titleIndex: index })
+      if (res.data.code === 0 && res.data.data) {
+        status.value = 'streaming'
+        addLog(`Title option ${index + 1} selected.`)
+        return true
+      }
+      throw new Error(res.data.message || 'Failed to select title')
+    } catch (err) {
+      status.value = 'failed'
+      const msg = err instanceof Error ? err.message : 'Network error'
+      error.value = msg
+      addLog(`Failed to select title: ${msg}`)
+      return false
+    }
+  }
+
+  async function regenerateTitleOptions(additionalRequirement: string): Promise<boolean> {
+    if (!taskId.value || !additionalRequirement.trim()) return false
+
+    status.value = 'regeneratingTitle'
+    titleOptions.value = []
+    selectedTitleIndex.value = null
+    addLog('Regenerating title options with your added direction...')
+
+    try {
+      const res = await regenerateTitles(
+        { taskId: taskId.value },
+        { additionalRequirement: additionalRequirement.trim() },
+      )
+      if (res.data.code === 0 && res.data.data) {
+        return true
+      }
+      throw new Error(res.data.message || 'Failed to regenerate titles')
+    } catch (err) {
+      status.value = 'failed'
+      const msg = err instanceof Error ? err.message : 'Network error'
+      error.value = msg
+      addLog(`Failed to regenerate titles: ${msg}`)
+      return false
+    }
+  }
+
   function connectSSE(id: string) {
     disconnectSSE()
     taskId.value = id
@@ -290,6 +367,8 @@ export const useArticleCreationStore = defineStore('articleCreation', () => {
     articleTitle.value = ''
     articleSubTitle.value = ''
     articleId.value = null
+    titleOptions.value = []
+    selectedTitleIndex.value = null
   }
 
   return {
@@ -308,9 +387,13 @@ export const useArticleCreationStore = defineStore('articleCreation', () => {
     articleTitle,
     articleSubTitle,
     articleId,
+    titleOptions,
+    selectedTitleIndex,
     // Computed
     isCreating,
     isStreaming,
+    isWaitingTitle,
+    isRegeneratingTitle,
     isCompleted,
     isFailed,
     currentStep,
@@ -318,6 +401,8 @@ export const useArticleCreationStore = defineStore('articleCreation', () => {
     // Actions
     createTask,
     connectSSE,
+    chooseTitle,
+    regenerateTitleOptions,
     disconnectSSE,
     reset,
     addLog,

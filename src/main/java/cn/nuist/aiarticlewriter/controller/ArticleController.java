@@ -1,5 +1,6 @@
 package cn.nuist.aiarticlewriter.controller;
 
+import cn.hutool.core.util.StrUtil;
 import cn.nuist.aiarticlewriter.agent.support.SseEmitterManager;
 import cn.nuist.aiarticlewriter.common.BaseResponse;
 import cn.nuist.aiarticlewriter.common.DeleteRequest;
@@ -8,18 +9,28 @@ import cn.nuist.aiarticlewriter.exception.ErrorCode;
 import cn.nuist.aiarticlewriter.exception.ThrowUtils;
 import cn.nuist.aiarticlewriter.model.dto.article.ArticleCreateRequest;
 import cn.nuist.aiarticlewriter.model.dto.article.ArticleQueryRequest;
+import cn.nuist.aiarticlewriter.model.dto.article.ArticleTitleRegenerateRequest;
+import cn.nuist.aiarticlewriter.model.dto.article.ArticleTitleSelectRequest;
 import cn.nuist.aiarticlewriter.model.dto.article.ArticleUpdateRequest;
 import cn.nuist.aiarticlewriter.model.entity.Article;
 import cn.nuist.aiarticlewriter.model.entity.User;
+import cn.nuist.aiarticlewriter.model.enums.ArticleStatusEnum;
+import cn.nuist.aiarticlewriter.model.enums.ArticleStepEnum;
+import cn.nuist.aiarticlewriter.model.enums.SseMessageTypeEnum;
+import cn.nuist.aiarticlewriter.model.state.article.TitleResult;
 import cn.nuist.aiarticlewriter.model.vo.ArticleVO;
 import cn.nuist.aiarticlewriter.service.ArticleAsyncService;
 import cn.nuist.aiarticlewriter.service.ArticleService;
 import cn.nuist.aiarticlewriter.service.UserService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -52,6 +63,9 @@ public class ArticleController {
     @Resource
     private UserService userService;
 
+    @Resource
+    private ObjectMapper objectMapper;
+
     /**
      * Create an article generation task.
      *
@@ -66,7 +80,8 @@ public class ArticleController {
         ThrowUtils.throwIf(articleCreateRequest == null, ErrorCode.PARAMS_ERROR);
         User loginUser = userService.getLoginUser(request);
         String taskId = articleService.createArticleTask(articleCreateRequest.getTopic(), loginUser);
-        articleAsyncService.executeArticleGeneration(taskId, loginUser.getId(), articleCreateRequest.getTopic(), null);
+        articleAsyncService.generateTitleOptionsAndPause(taskId, loginUser.getId(), articleCreateRequest.getTopic(),
+                null);
         return ResultUtils.success(taskId);
     }
 
@@ -83,11 +98,53 @@ public class ArticleController {
         ThrowUtils.throwIf(taskId == null || taskId.trim().isEmpty(), ErrorCode.PARAMS_ERROR,
                 "Task id cannot be blank");
         User loginUser = userService.getLoginUser(request);
-        articleService.getArticleVOByTaskId(taskId, loginUser);
+        ArticleVO articleVO = articleService.getArticleVOByTaskId(taskId, loginUser);
 
         SseEmitter emitter = sseEmitterManager.createEmitter(taskId);
+        sendTitleSelectionSnapshotIfNeeded(taskId, articleVO);
         log.info("SSE connection established, taskId={}", taskId);
         return emitter;
+    }
+
+    /**
+     * Select a generated title option and continue article generation.
+     *
+     * @param taskId article generation task id
+     * @param requestBody title selection request
+     * @param request HTTP request
+     * @return selection result
+     */
+    @PostMapping("/{taskId}/title/select")
+    @Operation(summary = "Select article title")
+    public BaseResponse<Boolean> selectTitle(@PathVariable String taskId,
+            @RequestBody ArticleTitleSelectRequest requestBody, HttpServletRequest request) {
+        ThrowUtils.throwIf(requestBody == null, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        TitleResult selectedTitle = articleService.selectTitleOption(taskId, requestBody.getTitleIndex(), loginUser);
+        articleAsyncService.continueAfterTitleSelected(taskId);
+        log.info("Article title selected by user, taskId={}, userId={}, mainTitle={}", taskId, loginUser.getId(),
+                selectedTitle.getMainTitle());
+        return ResultUtils.success(true);
+    }
+
+    /**
+     * Regenerate title options with additional user requirement.
+     *
+     * @param taskId article generation task id
+     * @param requestBody title regeneration request
+     * @param request HTTP request
+     * @return regeneration result
+     */
+    @PostMapping("/{taskId}/title/regenerate")
+    @Operation(summary = "Regenerate article title options")
+    public BaseResponse<Boolean> regenerateTitles(@PathVariable String taskId,
+            @RequestBody ArticleTitleRegenerateRequest requestBody, HttpServletRequest request) {
+        ThrowUtils.throwIf(requestBody == null, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        articleService.prepareTitleRegeneration(taskId, requestBody.getAdditionalRequirement(), loginUser);
+        articleAsyncService.regenerateTitleOptions(taskId);
+        log.info("Article title regeneration requested, taskId={}, userId={}", taskId, loginUser.getId());
+        return ResultUtils.success(true);
     }
 
     /**
@@ -204,5 +261,31 @@ public class ArticleController {
         User loginUser = userService.getLoginUser(request);
         boolean result = articleService.deleteArticle(deleteRequest.getId(), loginUser);
         return ResultUtils.success(result);
+    }
+
+    private void sendTitleSelectionSnapshotIfNeeded(String taskId, ArticleVO articleVO) {
+        if (articleVO == null
+                || !ArticleStatusEnum.WAITING_USER_INPUT.getValue().equals(articleVO.getStatus())
+                || !ArticleStepEnum.TITLE_SELECTION.getValue().equals(articleVO.getCurrentStep())
+                || StrUtil.isBlank(articleVO.getTitleOptions())) {
+            return;
+        }
+
+        Map<String, Object> titleData = new HashMap<>();
+        titleData.put("type", SseMessageTypeEnum.AGENT1_COMPLETE.getValue());
+        titleData.put("taskId", taskId);
+        try {
+            titleData.put("titleOptions", objectMapper.readValue(articleVO.getTitleOptions(), Object.class));
+            sseEmitterManager.send(taskId, objectMapper.writeValueAsString(titleData));
+
+            Map<String, Object> waitingData = new HashMap<>();
+            waitingData.put("type", SseMessageTypeEnum.WAITING_USER_INPUT.getValue());
+            waitingData.put("taskId", taskId);
+            waitingData.put("step", ArticleStepEnum.TITLE_SELECTION.getValue());
+            waitingData.put("message", "Waiting for title selection");
+            sseEmitterManager.send(taskId, objectMapper.writeValueAsString(waitingData));
+        } catch (JsonProcessingException e) {
+            log.error("Failed to send title selection snapshot, taskId={}", taskId, e);
+        }
     }
 }

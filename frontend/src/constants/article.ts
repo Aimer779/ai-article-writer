@@ -4,6 +4,7 @@
 export const ARTICLE_STATUS = {
   PENDING: 'PENDING',
   PROCESSING: 'PROCESSING',
+  WAITING_USER_INPUT: 'WAITING_USER_INPUT',
   COMPLETED: 'COMPLETED',
   FAILED: 'FAILED',
 } as const
@@ -15,6 +16,7 @@ export type ArticleStatus = (typeof ARTICLE_STATUS)[keyof typeof ARTICLE_STATUS]
  */
 export const SSE_MESSAGE_TYPE = {
   AGENT1_COMPLETE: 'AGENT1_COMPLETE',
+  WAITING_USER_INPUT: 'WAITING_USER_INPUT',
   AGENT2_STREAMING: 'AGENT2_STREAMING',
   AGENT2_COMPLETE: 'AGENT2_COMPLETE',
   AGENT3_STREAMING: 'AGENT3_STREAMING',
@@ -36,9 +38,9 @@ export type SseMessageType = (typeof SSE_MESSAGE_TYPE)[keyof typeof SSE_MESSAGE_
 export const CREATION_STEPS = [
   {
     key: 'title',
-    title: 'Title Generation',
-    description: 'Generating title options',
-    completeTypes: [SSE_MESSAGE_TYPE.AGENT1_COMPLETE],
+    title: 'Title decision',
+    description: 'Generate and choose title',
+    completeTypes: [SSE_MESSAGE_TYPE.AGENT1_COMPLETE, SSE_MESSAGE_TYPE.WAITING_USER_INPUT],
   },
   {
     key: 'outline',
@@ -80,6 +82,7 @@ export const CREATION_STEPS = [
 export const ARTICLE_STATUS_TEXT: Record<string, string> = {
   [ARTICLE_STATUS.PENDING]: 'Pending',
   [ARTICLE_STATUS.PROCESSING]: 'Processing',
+  [ARTICLE_STATUS.WAITING_USER_INPUT]: 'Waiting for input',
   [ARTICLE_STATUS.COMPLETED]: 'Completed',
   [ARTICLE_STATUS.FAILED]: 'Failed',
 }
@@ -87,6 +90,7 @@ export const ARTICLE_STATUS_TEXT: Record<string, string> = {
 export const ARTICLE_STATUS_COLOR: Record<string, string> = {
   [ARTICLE_STATUS.PENDING]: 'default',
   [ARTICLE_STATUS.PROCESSING]: 'processing',
+  [ARTICLE_STATUS.WAITING_USER_INPUT]: 'warning',
   [ARTICLE_STATUS.COMPLETED]: 'success',
   [ARTICLE_STATUS.FAILED]: 'error',
 }

@@ -23,6 +23,7 @@ Internal agent streaming can still use prefixed strings such as `AGENT2_STREAMIN
 Use `SseMessageTypeEnum` as the source of truth:
 
 - `AGENT1_COMPLETE`
+- `WAITING_USER_INPUT`
 - `AGENT2_STREAMING`
 - `AGENT2_COMPLETE`
 - `AGENT3_STREAMING`
@@ -33,3 +34,19 @@ Use `SseMessageTypeEnum` as the source of truth:
 - `MERGE_COMPLETE`
 - `ALL_COMPLETE`
 - `ERROR`
+
+## Title Selection Pause
+
+After title generation, the backend sends:
+
+```json
+{"type":"AGENT1_COMPLETE","taskId":"...","titleOptions":[{"mainTitle":"...","subTitle":"..."}]}
+```
+
+Then it sends:
+
+```json
+{"type":"WAITING_USER_INPUT","taskId":"...","step":"TITLE_SELECTION","message":"Waiting for title selection"}
+```
+
+The frontend should show title options and keep the task open. Selecting a title calls `POST /article/{taskId}/title/select`; adding title direction calls `POST /article/{taskId}/title/regenerate`.

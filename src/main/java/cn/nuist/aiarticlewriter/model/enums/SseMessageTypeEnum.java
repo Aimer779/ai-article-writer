@@ -11,6 +11,7 @@ import java.util.Arrays;
 public enum SseMessageTypeEnum {
 
     AGENT1_COMPLETE("AGENT1_COMPLETE", "Title generation completed"),
+    WAITING_USER_INPUT("WAITING_USER_INPUT", "Waiting for user input"),
     AGENT2_STREAMING("AGENT2_STREAMING", "Outline streaming output"),
     AGENT2_COMPLETE("AGENT2_COMPLETE", "Outline generation completed"),
     AGENT3_STREAMING("AGENT3_STREAMING", "Content streaming output"),
