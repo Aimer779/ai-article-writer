@@ -74,6 +74,15 @@ const router = createRouter({
         requiresAdmin: true,
       },
     },
+    {
+      path: "/admin/agentLogs",
+      name: "Agent Logs",
+      component: () => import("@/pages/admin/AgentLogPage.vue"),
+      meta: {
+        requiresAuth: true,
+        requiresAdmin: true,
+      },
+    },
   ],
 });
 

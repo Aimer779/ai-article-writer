@@ -125,14 +125,14 @@
                       <div
                         class="timeline-dot"
                         :class="{
-                          'dot-success': log.status === 'success',
-                          'dot-error': log.status === 'failed',
-                          'dot-running': log.status === 'running',
+                          'dot-success': normalizeLogStatus(log.status) === 'SUCCESS',
+                          'dot-error': normalizeLogStatus(log.status) === 'FAILED',
+                          'dot-running': normalizeLogStatus(log.status) === 'RUNNING',
                         }"
                       >
-                        <CheckCircleOutlined v-if="log.status === 'success'" />
-                        <CloseCircleOutlined v-else-if="log.status === 'failed'" />
-                        <LoadingOutlined v-else-if="log.status === 'running'" />
+                        <CheckCircleOutlined v-if="normalizeLogStatus(log.status) === 'SUCCESS'" />
+                        <CloseCircleOutlined v-else-if="normalizeLogStatus(log.status) === 'FAILED'" />
+                        <LoadingOutlined v-else-if="normalizeLogStatus(log.status) === 'RUNNING'" />
                         <ProfileOutlined v-else />
                       </div>
                       <div v-if="index !== agentLogs.length - 1" class="timeline-line" />
@@ -227,6 +227,10 @@ function formatTime(timeStr: string): string {
 const formatDuration = (ms?: number): string => {
   if (ms === undefined || ms === null) return '-'
   return `${Math.round(ms)}ms`
+}
+
+const normalizeLogStatus = (status?: string): string => {
+  return (status || '').toUpperCase()
 }
 
 const totalDuration = computed(() => {

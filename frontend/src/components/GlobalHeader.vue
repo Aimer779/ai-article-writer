@@ -92,6 +92,7 @@ import {
   UnorderedListOutlined,
   SettingOutlined,
   BarChartOutlined,
+  FileSearchOutlined,
   UserOutlined,
   DownOutlined,
   LogoutOutlined,
@@ -122,6 +123,7 @@ const menuItems = computed(() => {
     items.push(
       { key: '/admin/userManage', label: 'Management', icon: SettingOutlined },
       { key: '/admin/dataAnalysis', label: 'Data', icon: BarChartOutlined },
+      { key: '/admin/agentLogs', label: 'Logs', icon: FileSearchOutlined },
     )
   }
 
