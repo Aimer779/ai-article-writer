@@ -228,24 +228,36 @@
                     </button>
                   </div>
 
-                  <div class="requirement-box">
-                    <a-textarea
-                      v-model:value="additionalRequirement"
-                      :rows="3"
-                      :maxlength="500"
-                      :disabled="creationStore.isRegeneratingTitle"
-                      placeholder="Add audience, tone, angle, or other title direction"
-                    />
-                    <div class="requirement-actions">
-                      <span class="char-count">{{ additionalRequirement.length }} / 500</span>
-                      <a-button
-                        :loading="creationStore.isRegeneratingTitle"
-                        :disabled="!additionalRequirement.trim()"
-                        @click="handleRegenerateTitles"
-                      >
-                        <template #icon><ReloadOutlined /></template>
-                        Regenerate titles
-                      </a-button>
+                  <div
+                    class="prompt-container"
+                    :class="{ 'prompt-disabled': creationStore.isRegeneratingTitle }"
+                  >
+                    <div class="textarea-wrapper">
+                      <textarea
+                        v-model="additionalRequirement"
+                        :rows="3"
+                        :maxlength="500"
+                        :disabled="creationStore.isRegeneratingTitle"
+                        class="prompt-textarea"
+                        placeholder="Add audience, tone, angle, or other title direction"
+                      />
+                    </div>
+                    <div class="input-toolbar">
+                      <div class="toolbar-left">
+                        <span class="char-count">{{ additionalRequirement.length }} / 500</span>
+                      </div>
+                      <div class="toolbar-right">
+                        <button
+                          class="regen-button"
+                          :class="{ 'regen-active': additionalRequirement.trim() && !creationStore.isRegeneratingTitle }"
+                          :disabled="!additionalRequirement.trim() || creationStore.isRegeneratingTitle"
+                          @click="handleRegenerateTitles"
+                        >
+                          <ReloadOutlined v-if="!creationStore.isRegeneratingTitle" />
+                          <span v-else class="btn-spinner" />
+                          Regenerate
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1089,6 +1101,56 @@ onUnmounted(() => {
   background: var(--accent-hover) !important;
 }
 
+.regen-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  border: none;
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.regen-button:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.regen-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.regen-active {
+  background: var(--accent) !important;
+  color: #ffffff !important;
+}
+
+.regen-active:hover:not(:disabled) {
+  background: var(--accent-hover) !important;
+}
+
+.btn-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Option Sections */
 .option-section {
   margin-top: var(--space-4);
@@ -1354,23 +1416,6 @@ onUnmounted(() => {
   font-size: 13px;
   line-height: 1.55;
   color: var(--text-secondary);
-}
-
-.requirement-box {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--canvas);
-}
-
-.requirement-actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
 }
 
 .outline-review {
