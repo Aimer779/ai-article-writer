@@ -8,9 +8,12 @@
 | Build Tool | Vite | 8.x |
 | Language | TypeScript | 6.x |
 | UI Library | Ant Design Vue | 4.x |
+| Icons | @ant-design/icons-vue | 7.x |
 | State Management | Pinia | 3.x |
 | Router | Vue Router | 5.x |
 | HTTP Client | Axios | 1.x |
+| Charts | ECharts | 6.x |
+| Markdown | markdown-it + highlight.js | 14.x / 11.x |
 | API Code Generation | @umijs/openapi | 1.x |
 | Package Manager | pnpm | 10.x |
 
@@ -27,10 +30,14 @@ frontend/
 │   │   ├── index.ts
 │   │   ├── typings.d.ts
 │   │   ├── articleController.ts
+│   │   ├── agentLogController.ts
 │   │   ├── healthController.ts
+│   │   ├── paymentController.ts
+│   │   ├── statisticsController.ts
 │   │   └── userController.ts
 │   ├── pages/                     # Page components
 │   │   ├── HomePage.vue
+│   │   ├── VipPage.vue
 │   │   ├── user/
 │   │   │   ├── UserLoginPage.vue
 │   │   │   └── UserRegisterPage.vue
@@ -39,6 +46,8 @@ frontend/
 │   │   │   ├── ArticleDetailPage.vue
 │   │   │   └── ArticleListPage.vue
 │   │   └── admin/
+│   │       ├── AgentLogPage.vue
+│   │       ├── DataAnalysisPage.vue
 │   │       └── UserManagePage.vue
 │   ├── components/                # Shared components
 │   │   ├── GlobalHeader.vue
@@ -46,6 +55,7 @@ frontend/
 │   │   └── HelloWorld.vue
 │   ├── constants/                 # Shared frontend constants
 │   │   ├── article.ts
+│   │   ├── themes/                # Article rendering / WeChat export themes
 │   │   └── user.ts
 │   ├── layouts/                   # Layout components
 │   │   └── BasicLayout.vue
@@ -56,15 +66,21 @@ frontend/
 │   │   └── articleCreation.ts
 │   ├── utils/                     # Utilities
 │   │   ├── article.ts
+│   │   ├── clipboardExporter.ts
+│   │   ├── markdown.ts
 │   │   └── request.ts             # Axios wrapper
 │   └── assets/                    # Static assets
 │       ├── hero.png
 │       ├── vite.svg
 │       └── vue.svg
 ├── vite.config.ts                 # Vite config
+├── DESIGN.md                      # Frontend design system and UI guidance
 ├── tsconfig.json                  # TypeScript config
 ├── tsconfig.node.json             # Node environment TS config
 ├── openapi2ts.config.ts           # OpenAPI code generation config
+├── public/
+│   ├── favicon.svg
+│   └── icons.svg
 └── package.json
 ```
 
@@ -76,6 +92,8 @@ frontend/
 4. **Route Components**: Use lazy loading `() => import(...)`
 5. **Language**: Code comments, variable names, and UI text use English
 6. **Generated Code**: Keep generated code comments and any manual adjustments in English
+7. **Design System**: Check `DESIGN.md` before adding or restyling pages and reuse existing surface, badge, table, and form patterns
+8. **Admin UI**: Keep admin pages dense and task-focused: page header, filter form, table/chart surface, clear loading and empty states
 
 ## Key Points
 
@@ -84,11 +102,18 @@ frontend/
 3. **Code Generation**: Run `pnpm openapi2ts` after starting backend to generate API code
 4. **Generated API Clients**: Generated API clients live under `src/api/`; prefer generated controller functions such as `@/api/userController` and `@/api/articleController` over handwritten API wrappers
 5. **Generated Types**: OpenAPI types are generated in `src/api/typings.d.ts` under the global `API` namespace, such as `API.LoginUserVO` and `API.UserLoginRequest`
-6. **User Constants**: User roles and user-related constants should be defined in `src/constants/user.ts`
-7. **Article Constants**: Article-related constants (SSE message types, creation steps) should be defined in `src/constants/article.ts`
-8. **Login State**: Login state is managed by `useLoginUserStore` in `src/stores/index.ts`
-9. **Article Creation State**: Article creation and SSE stream state is managed by `useArticleCreationStore` in `src/stores/articleCreation.ts`
-10. **Route Auth**: Protected routes should use route metadata such as `requiresAuth` and `requiresAdmin`, with access enforced by the router guard
+6. **Temporary API Wrappers**: If the backend adds an endpoint before OpenAPI is regenerated, a handwritten wrapper may be added in the generated style, then reconciled after `pnpm openapi2ts`
+7. **User Constants**: User roles and user-related constants should be defined in `src/constants/user.ts`
+8. **Article Constants**: Article-related constants (SSE message types, creation steps) should be defined in `src/constants/article.ts`
+9. **Theme Constants**: Article rendering and WeChat export themes live under `src/constants/themes/`; register new themes in `src/constants/themes/index.ts`
+10. **Login State**: Login state is managed by `useLoginUserStore` in `src/stores/index.ts`
+11. **Article Creation State**: Article creation and SSE stream state is managed by `useArticleCreationStore` in `src/stores/articleCreation.ts`
+12. **Route Auth**: Protected routes should use route metadata such as `requiresAuth` and `requiresAdmin`, with access enforced by the router guard and final authorization enforced by the backend
+13. **Admin Routes**: Admin pages currently include `/admin/userManage`, `/admin/dataAnalysis`, and `/admin/agentLogs`; add top navigation entries in `GlobalHeader.vue` when a page should be discoverable
+14. **Statistics Dashboard**: Data analysis uses `@/api/statisticsController#getStatistics` and renders charts with ECharts
+15. **Agent Logs**: Log querying uses `@/api/agentLogController#listAgentLogByPage`; status values come from the backend as `RUNNING`, `SUCCESS`, and `FAILED`
+16. **VIP and Payments**: VIP membership and Stripe checkout flows use `@/api/paymentController`
+17. **Markdown Rendering**: Article rendering uses `utils/article.ts` and `utils/markdown.ts`; WeChat clipboard export uses `utils/clipboardExporter.ts`
 
 
 ## Development Commands
