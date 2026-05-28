@@ -8,6 +8,7 @@ import cn.nuist.aiarticlewriter.common.ResultUtils;
 import cn.nuist.aiarticlewriter.exception.ErrorCode;
 import cn.nuist.aiarticlewriter.exception.ThrowUtils;
 import cn.nuist.aiarticlewriter.model.dto.article.ArticleCreateRequest;
+import cn.nuist.aiarticlewriter.model.dto.article.ArticleOutlineConfirmRequest;
 import cn.nuist.aiarticlewriter.model.dto.article.ArticleQueryRequest;
 import cn.nuist.aiarticlewriter.model.dto.article.ArticleTitleRegenerateRequest;
 import cn.nuist.aiarticlewriter.model.dto.article.ArticleTitleSelectRequest;
@@ -101,7 +102,7 @@ public class ArticleController {
         ArticleVO articleVO = articleService.getArticleVOByTaskId(taskId, loginUser);
 
         SseEmitter emitter = sseEmitterManager.createEmitter(taskId);
-        sendTitleSelectionSnapshotIfNeeded(taskId, articleVO);
+        sendWaitingSnapshotIfNeeded(taskId, articleVO);
         log.info("SSE connection established, taskId={}", taskId);
         return emitter;
     }
@@ -124,6 +125,26 @@ public class ArticleController {
         articleAsyncService.continueAfterTitleSelected(taskId);
         log.info("Article title selected by user, taskId={}, userId={}, mainTitle={}", taskId, loginUser.getId(),
                 selectedTitle.getMainTitle());
+        return ResultUtils.success(true);
+    }
+
+    /**
+     * Confirm reviewed outline and continue article generation.
+     *
+     * @param taskId article generation task id
+     * @param requestBody outline confirm request
+     * @param request HTTP request
+     * @return confirm result
+     */
+    @PostMapping("/{taskId}/outline/confirm")
+    @Operation(summary = "Confirm article outline")
+    public BaseResponse<Boolean> confirmOutline(@PathVariable String taskId,
+            @RequestBody ArticleOutlineConfirmRequest requestBody, HttpServletRequest request) {
+        ThrowUtils.throwIf(requestBody == null, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        articleService.confirmOutline(taskId, requestBody.getOutlineMarkdown(), loginUser);
+        articleAsyncService.continueAfterOutlineConfirmed(taskId);
+        log.info("Article outline confirmed by user, taskId={}, userId={}", taskId, loginUser.getId());
         return ResultUtils.success(true);
     }
 
@@ -263,6 +284,11 @@ public class ArticleController {
         return ResultUtils.success(result);
     }
 
+    private void sendWaitingSnapshotIfNeeded(String taskId, ArticleVO articleVO) {
+        sendTitleSelectionSnapshotIfNeeded(taskId, articleVO);
+        sendOutlineReviewSnapshotIfNeeded(taskId, articleVO);
+    }
+
     private void sendTitleSelectionSnapshotIfNeeded(String taskId, ArticleVO articleVO) {
         if (articleVO == null
                 || !ArticleStatusEnum.WAITING_USER_INPUT.getValue().equals(articleVO.getStatus())
@@ -286,6 +312,32 @@ public class ArticleController {
             sseEmitterManager.send(taskId, objectMapper.writeValueAsString(waitingData));
         } catch (JsonProcessingException e) {
             log.error("Failed to send title selection snapshot, taskId={}", taskId, e);
+        }
+    }
+
+    private void sendOutlineReviewSnapshotIfNeeded(String taskId, ArticleVO articleVO) {
+        if (articleVO == null
+                || !ArticleStatusEnum.WAITING_USER_INPUT.getValue().equals(articleVO.getStatus())
+                || !ArticleStepEnum.OUTLINE_REVIEW.getValue().equals(articleVO.getCurrentStep())
+                || StrUtil.isBlank(articleVO.getOutline())) {
+            return;
+        }
+
+        Map<String, Object> outlineData = new HashMap<>();
+        outlineData.put("type", SseMessageTypeEnum.AGENT2_COMPLETE.getValue());
+        outlineData.put("taskId", taskId);
+        try {
+            outlineData.put("outline", objectMapper.readValue(articleVO.getOutline(), String.class));
+            sseEmitterManager.send(taskId, objectMapper.writeValueAsString(outlineData));
+
+            Map<String, Object> waitingData = new HashMap<>();
+            waitingData.put("type", SseMessageTypeEnum.WAITING_USER_INPUT.getValue());
+            waitingData.put("taskId", taskId);
+            waitingData.put("step", ArticleStepEnum.OUTLINE_REVIEW.getValue());
+            waitingData.put("message", "Waiting for outline review");
+            sseEmitterManager.send(taskId, objectMapper.writeValueAsString(waitingData));
+        } catch (JsonProcessingException e) {
+            log.error("Failed to send outline review snapshot, taskId={}", taskId, e);
         }
     }
 }

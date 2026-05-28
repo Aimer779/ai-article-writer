@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { createArticleTask, regenerateTitles, selectTitle } from '@/api/articleController'
+import { confirmOutline, createArticleTask, regenerateTitles, selectTitle } from '@/api/articleController'
 import { SSE_MESSAGE_TYPE, CREATION_STEPS } from '@/constants/article'
 import { createProgressEventSource, parseSseMessage } from '@/utils/article'
 import type { SseMessage } from '@/utils/article'
@@ -19,7 +19,16 @@ export const useArticleCreationStore = defineStore('articleCreation', () => {
   // ==================== State ====================
   const taskId = ref<string | null>(null)
   const status = ref<
-    'idle' | 'creating' | 'connecting' | 'streaming' | 'waitingTitle' | 'regeneratingTitle' | 'completed' | 'failed'
+    | 'idle'
+    | 'creating'
+    | 'connecting'
+    | 'streaming'
+    | 'waitingTitle'
+    | 'regeneratingTitle'
+    | 'waitingOutline'
+    | 'confirmingOutline'
+    | 'completed'
+    | 'failed'
   >('idle')
   const currentStepIndex = ref(-1)
   const outlineBuffer = ref('')
@@ -35,6 +44,7 @@ export const useArticleCreationStore = defineStore('articleCreation', () => {
   const articleId = ref<number | null>(null)
   const titleOptions = ref<TitleOption[]>([])
   const selectedTitleIndex = ref<number | null>(null)
+  const editableOutline = ref('')
 
   // Internal refs
   let eventSource: EventSource | null = null
@@ -46,6 +56,8 @@ export const useArticleCreationStore = defineStore('articleCreation', () => {
   const isStreaming = computed(() => status.value === 'streaming' || status.value === 'connecting')
   const isWaitingTitle = computed(() => status.value === 'waitingTitle')
   const isRegeneratingTitle = computed(() => status.value === 'regeneratingTitle')
+  const isWaitingOutline = computed(() => status.value === 'waitingOutline')
+  const isConfirmingOutline = computed(() => status.value === 'confirmingOutline')
   const isCompleted = computed(() => status.value === 'completed')
   const isFailed = computed(() => status.value === 'failed')
 
@@ -121,6 +133,17 @@ export const useArticleCreationStore = defineStore('articleCreation', () => {
     }
   }
 
+  function enterOutlineReview() {
+    stopTyping()
+    outlineDisplay.value = outlineBuffer.value
+    editableOutline.value = outlineDisplay.value
+    currentStepIndex.value = 1
+    if (status.value !== 'waitingOutline') {
+      status.value = 'waitingOutline'
+      addLog('Outline generated. Waiting for your review.')
+    }
+  }
+
   // ==================== SSE Handlers ====================
   function handleSseMessage(msg: SseMessage) {
     switch (msg.type) {
@@ -151,6 +174,8 @@ export const useArticleCreationStore = defineStore('articleCreation', () => {
         if (msg.step === 'TITLE_SELECTION') {
           status.value = 'waitingTitle'
           currentStepIndex.value = 0
+        } else if (msg.step === 'OUTLINE_REVIEW') {
+          enterOutlineReview()
         }
         break
 
@@ -162,11 +187,14 @@ export const useArticleCreationStore = defineStore('articleCreation', () => {
         break
 
       case SSE_MESSAGE_TYPE.AGENT2_COMPLETE:
-        advanceStep()
-        addLog('Outline completed.')
         stopTyping()
-        // Ensure full outline is displayed
-        outlineDisplay.value = outlineBuffer.value
+        if (msg.outline !== undefined) {
+          outlineBuffer.value = msg.outline
+        } else {
+          outlineBuffer.value = outlineDisplay.value || outlineBuffer.value
+        }
+        addLog('Outline completed.')
+        enterOutlineReview()
         break
 
       case SSE_MESSAGE_TYPE.AGENT3_STREAMING:
@@ -303,6 +331,37 @@ export const useArticleCreationStore = defineStore('articleCreation', () => {
     }
   }
 
+  async function confirmReviewedOutline(outlineMarkdown: string): Promise<boolean> {
+    if (!taskId.value || !outlineMarkdown.trim()) return false
+
+    status.value = 'confirmingOutline'
+    addLog('Confirming outline and continuing article generation...')
+
+    try {
+      const confirmedOutline = outlineMarkdown.trim()
+      const res = await confirmOutline(
+        { taskId: taskId.value },
+        { outlineMarkdown: confirmedOutline },
+      )
+      if (res.data.code === 0 && res.data.data) {
+        outlineBuffer.value = confirmedOutline
+        outlineDisplay.value = confirmedOutline
+        editableOutline.value = confirmedOutline
+        status.value = 'streaming'
+        currentStepIndex.value = 2
+        addLog('Outline confirmed. Continuing content creation.')
+        return true
+      }
+      throw new Error(res.data.message || 'Failed to confirm outline')
+    } catch (err) {
+      status.value = 'failed'
+      const msg = err instanceof Error ? err.message : 'Network error'
+      error.value = msg
+      addLog(`Failed to confirm outline: ${msg}`)
+      return false
+    }
+  }
+
   function connectSSE(id: string) {
     disconnectSSE()
     taskId.value = id
@@ -315,7 +374,16 @@ export const useArticleCreationStore = defineStore('articleCreation', () => {
 
       eventSource.onopen = () => {
         isConnected.value = true
-        status.value = 'streaming'
+        if (
+          status.value !== 'waitingTitle' &&
+          status.value !== 'regeneratingTitle' &&
+          status.value !== 'waitingOutline' &&
+          status.value !== 'confirmingOutline' &&
+          status.value !== 'completed' &&
+          status.value !== 'failed'
+        ) {
+          status.value = 'streaming'
+        }
         addLog('Connected to progress stream.')
       }
 
@@ -369,6 +437,7 @@ export const useArticleCreationStore = defineStore('articleCreation', () => {
     articleId.value = null
     titleOptions.value = []
     selectedTitleIndex.value = null
+    editableOutline.value = ''
   }
 
   return {
@@ -389,11 +458,14 @@ export const useArticleCreationStore = defineStore('articleCreation', () => {
     articleId,
     titleOptions,
     selectedTitleIndex,
+    editableOutline,
     // Computed
     isCreating,
     isStreaming,
     isWaitingTitle,
     isRegeneratingTitle,
+    isWaitingOutline,
+    isConfirmingOutline,
     isCompleted,
     isFailed,
     currentStep,
@@ -403,6 +475,7 @@ export const useArticleCreationStore = defineStore('articleCreation', () => {
     connectSSE,
     chooseTitle,
     regenerateTitleOptions,
+    confirmReviewedOutline,
     disconnectSSE,
     reset,
     addLog,

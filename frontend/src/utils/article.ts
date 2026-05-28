@@ -9,6 +9,7 @@ export interface SseMessage {
   content?: string
   message?: string
   step?: string
+  outline?: string
   selectedTitle?: {
     mainTitle?: string
     subTitle?: string

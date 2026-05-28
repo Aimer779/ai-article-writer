@@ -3,6 +3,7 @@ package cn.nuist.aiarticlewriter.service;
 import cn.nuist.aiarticlewriter.agent.ArticleAgentOrchestrator;
 import cn.nuist.aiarticlewriter.agent.support.SseEmitterManager;
 import cn.nuist.aiarticlewriter.model.entity.Article;
+import cn.nuist.aiarticlewriter.model.enums.ArticleStepEnum;
 import cn.nuist.aiarticlewriter.model.enums.ArticleStatusEnum;
 import cn.nuist.aiarticlewriter.model.enums.SseMessageTypeEnum;
 import cn.nuist.aiarticlewriter.model.state.article.ArticleState;
@@ -127,24 +128,61 @@ public class ArticleAsyncService {
                     "selectedTitle", selectedTitle
             ));
 
-            executeRemainingGeneration(taskId, state, article.getUserRequirement());
+            generateOutlineAndPause(taskId, state, article.getUserRequirement());
+            log.info("Async article generation paused for outline review, taskId={}", taskId);
+        } catch (Exception e) {
+            handleGenerationFailure(taskId, state, e);
+        }
+    }
+
+    /**
+     * Continue article generation after the user confirms the outline.
+     *
+     * @param taskId article generation task id
+     */
+    @Async("articleExecutor")
+    public void continueAfterOutlineConfirmed(String taskId) {
+        log.info("Async article generation resumed after outline review, taskId={}", taskId);
+        ArticleState state = null;
+
+        try {
+            Article article = articleService.getByTaskId(taskId);
+            if (article == null) {
+                throw new IllegalStateException("Article task does not exist");
+            }
+            TitleResult selectedTitle = TitleResult.builder()
+                    .mainTitle(article.getMainTitle())
+                    .subTitle(article.getSubTitle())
+                    .build();
+            state = articleAgentOrchestrator.createInitialState(taskId, article.getUserId(), article.getTopic());
+            articleAgentOrchestrator.selectTitle(state, selectedTitle);
+            state.setOutlineMarkdown(parseOutlineMarkdown(article.getOutline()));
+
+            executePostOutlineGeneration(taskId, state, article.getUserRequirement());
             log.info("Async article generation completed, taskId={}", taskId);
         } catch (Exception e) {
             handleGenerationFailure(taskId, state, e);
         }
     }
 
-    private void executeRemainingGeneration(String taskId, ArticleState state, String userRequirement) {
-        ArticleState currentState = state;
+    private void generateOutlineAndPause(String taskId, ArticleState state, String userRequirement) {
         articleAgentOrchestrator.generateOutline(state, userRequirement,
-                message -> handleAgentMessage(taskId, message, currentState));
+                message -> handleAgentMessage(taskId, message, state));
+        articleService.saveOutlineAndWait(taskId, state);
         sendSseMessage(taskId, SseMessageTypeEnum.AGENT2_COMPLETE, Map.of(
                 "taskId", taskId,
                 "outline", state.getOutlineMarkdown()
         ));
+        sendSseMessage(taskId, SseMessageTypeEnum.WAITING_USER_INPUT, Map.of(
+                "taskId", taskId,
+                "step", ArticleStepEnum.OUTLINE_REVIEW.getValue(),
+                "message", "Waiting for outline review"
+        ));
+    }
 
+    private void executePostOutlineGeneration(String taskId, ArticleState state, String userRequirement) {
         articleAgentOrchestrator.generateContent(state, userRequirement,
-                message -> handleAgentMessage(taskId, message, currentState));
+                message -> handleAgentMessage(taskId, message, state));
         sendSseMessage(taskId, SseMessageTypeEnum.AGENT3_COMPLETE, Map.of(
                 "taskId", taskId,
                 "content", state.getContent()
@@ -157,7 +195,7 @@ public class ArticleAsyncService {
                 "imageRequirements", state.getImageRequirements()
         ));
 
-        articleAgentOrchestrator.generateImages(state, message -> handleAgentMessage(taskId, message, currentState));
+        articleAgentOrchestrator.generateImages(state, message -> handleAgentMessage(taskId, message, state));
         sendSseMessage(taskId, SseMessageTypeEnum.AGENT5_COMPLETE, Map.of(
                 "taskId", taskId,
                 "images", state.getImages()
@@ -173,6 +211,17 @@ public class ArticleAsyncService {
         articleService.updateArticleStatus(taskId, ArticleStatusEnum.COMPLETED, null);
         sendSseMessage(taskId, SseMessageTypeEnum.ALL_COMPLETE, Map.of("taskId", taskId));
         sseEmitterManager.complete(taskId);
+    }
+
+    private String parseOutlineMarkdown(String outlineJson) {
+        if (outlineJson == null || outlineJson.isBlank()) {
+            throw new IllegalStateException("Article outline does not exist");
+        }
+        try {
+            return objectMapper.readValue(outlineJson, String.class);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Parse article outline failed", e);
+        }
     }
 
     private void handleGenerationFailure(String taskId, ArticleState state, Exception e) {

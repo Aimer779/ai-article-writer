@@ -50,3 +50,19 @@ Then it sends:
 ```
 
 The frontend should show title options and keep the task open. Selecting a title calls `POST /article/{taskId}/title/select`; adding title direction calls `POST /article/{taskId}/title/regenerate`.
+
+## Outline Review Pause
+
+After outline generation, the backend sends:
+
+```json
+{"type":"AGENT2_COMPLETE","taskId":"...","outline":"## Section\n..."}
+```
+
+Then it sends:
+
+```json
+{"type":"WAITING_USER_INPUT","taskId":"...","step":"OUTLINE_REVIEW","message":"Waiting for outline review"}
+```
+
+The frontend should show the outline in an editable Markdown textarea. Confirming the edited outline calls `POST /article/{taskId}/outline/confirm`, then content streaming resumes.

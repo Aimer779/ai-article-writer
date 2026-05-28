@@ -181,6 +181,14 @@
                 class="status-badge processing"
               >Regenerating</span>
               <span
+                v-else-if="creationStore.isWaitingOutline"
+                class="status-badge waiting"
+              >Review</span>
+              <span
+                v-else-if="creationStore.isConfirmingOutline"
+                class="status-badge processing"
+              >Confirming</span>
+              <span
                 v-else-if="creationStore.isConnected"
                 class="status-badge processing"
               >Streaming</span>
@@ -263,8 +271,36 @@
 
             <a-tab-pane key="outline" tab="Outline">
               <div class="content-preview">
+                <div v-if="showOutlineReview" class="outline-review">
+                  <div class="decision-header">
+                    <div>
+                      <h2>Review the outline</h2>
+                      <p>Edit the Markdown outline before content generation continues.</p>
+                    </div>
+                    <span class="status-badge waiting">Review</span>
+                  </div>
+                  <a-textarea
+                    v-model:value="creationStore.editableOutline"
+                    :rows="16"
+                    :maxlength="8000"
+                    :disabled="creationStore.isConfirmingOutline"
+                    class="outline-editor"
+                  />
+                  <div class="outline-actions">
+                    <span class="char-count">{{ creationStore.editableOutline.length }} / 8000</span>
+                    <a-button
+                      type="primary"
+                      :loading="creationStore.isConfirmingOutline"
+                      :disabled="!creationStore.editableOutline.trim()"
+                      @click="handleConfirmOutline"
+                    >
+                      <template #icon><CheckOutlined /></template>
+                      Confirm outline
+                    </a-button>
+                  </div>
+                </div>
                 <div
-                  v-if="creationStore.outlineDisplay"
+                  v-else-if="creationStore.outlineDisplay"
                   class="markdown-body"
                   v-html="renderOutline"
                 />
@@ -516,9 +552,12 @@ watch(
     creationStore.outlineBuffer,
     creationStore.contentBuffer,
     titlePreviewReady.value,
+    creationStore.status,
   ] as const,
-  ([idx, outline, content, canLeaveTitle]) => {
-    if (content || idx >= 3) {
+  ([idx, outline, content, canLeaveTitle, status]) => {
+    if (status === 'waitingOutline' || status === 'confirmingOutline') {
+      activeTabKey.value = 'outline'
+    } else if (content || idx >= 3) {
       activeTabKey.value = 'content'
     } else if ((outline || idx >= 2) && canLeaveTitle) {
       activeTabKey.value = 'outline'
@@ -577,6 +616,10 @@ const showTitleDecision = computed(() => {
   return creationStore.titleOptions.length > 0 || creationStore.isWaitingTitle || creationStore.isRegeneratingTitle
 })
 
+const showOutlineReview = computed(() => {
+  return creationStore.isWaitingOutline || creationStore.isConfirmingOutline
+})
+
 const hotTopics = [
   'How AI Changes the Workplace in 2026',
   'How Programmers Improve Competitiveness',
@@ -629,6 +672,18 @@ async function handleRegenerateTitles() {
   const ok = await creationStore.regenerateTitleOptions(requirement)
   if (ok) {
     additionalRequirement.value = ''
+  }
+}
+
+async function handleConfirmOutline() {
+  const outline = creationStore.editableOutline.trim()
+  if (!outline) {
+    message.warning('Please keep at least one outline section')
+    return
+  }
+  const ok = await creationStore.confirmReviewedOutline(outline)
+  if (ok) {
+    message.success('Outline confirmed')
   }
 }
 
@@ -1332,6 +1387,27 @@ onUnmounted(() => {
   gap: var(--space-3);
 }
 
+.outline-review {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.outline-editor {
+  min-height: 360px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.outline-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-top: var(--space-2);
+}
+
 .markdown-body :deep(.typing-cursor) {
   display: inline-block;
   width: 2px;
@@ -1484,7 +1560,8 @@ onUnmounted(() => {
   }
 
   .decision-header,
-  .requirement-actions {
+  .requirement-actions,
+  .outline-actions {
     flex-direction: column;
     align-items: stretch;
   }

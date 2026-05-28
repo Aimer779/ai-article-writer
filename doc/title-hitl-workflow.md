@@ -8,8 +8,9 @@ Use this when changing the title selection pause, regeneration behavior, or fron
 2. The title agent generates 3 to 5 candidate titles.
 3. The backend persists `titleOptions`, sets `currentStep = TITLE_SELECTION`, and sets `status = WAITING_USER_INPUT`.
 4. The frontend receives `AGENT1_COMPLETE` and `WAITING_USER_INPUT`, then displays title options.
-5. `POST /article/{taskId}/title/select` saves the selected title and resumes outline, content, image, and assembly stages.
-6. `POST /article/{taskId}/title/regenerate` appends the additional requirement, reruns title generation, and replaces `titleOptions`.
+5. `POST /article/{taskId}/title/select` saves the selected title and resumes outline generation.
+6. After outline generation, the workflow pauses again for `OUTLINE_REVIEW` before content, image, and assembly stages.
+7. `POST /article/{taskId}/title/regenerate` appends the additional requirement, reruns title generation, and replaces `titleOptions`.
 
 ## Persistence
 

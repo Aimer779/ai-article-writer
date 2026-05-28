@@ -126,6 +126,14 @@ public interface ArticleService {
     void saveTitleOptionsAndWait(String taskId, ArticleState state, String userRequirement);
 
     /**
+     * Save generated outline and pause for user review.
+     *
+     * @param taskId article generation task id
+     * @param state article generation state
+     */
+    void saveOutlineAndWait(String taskId, ArticleState state);
+
+    /**
      * Mark a task ready to regenerate title options.
      *
      * @param taskId article generation task id
@@ -144,6 +152,16 @@ public interface ArticleService {
      * @return selected title
      */
     TitleResult selectTitleOption(String taskId, Integer titleIndex, User loginUser);
+
+    /**
+     * Confirm the reviewed outline and resume content generation.
+     *
+     * @param taskId article generation task id
+     * @param outlineMarkdown confirmed outline Markdown
+     * @param loginUser current login user
+     * @return confirmed outline Markdown
+     */
+    String confirmOutline(String taskId, String outlineMarkdown, User loginUser);
 
     /**
      * Save generated article content.

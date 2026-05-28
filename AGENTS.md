@@ -95,7 +95,9 @@ Read these reference docs only when the task is related:
 - Image acquisition and storage: `doc/image-service.md`
 - Runtime configuration and tests: `doc/runtime-config-and-tests.md`
 
-Title human-in-the-loop follows: create task -> generate 3 to 5 title options -> persist `titleOptions` -> set `currentStep=TITLE_SELECTION` and `status=WAITING_USER_INPUT` -> user selects a title or adds requirements to regenerate titles -> selected title resumes outline/content/image generation. Only allow title selection/regeneration while the task is in `WAITING_USER_INPUT` and `TITLE_SELECTION`.
+Title human-in-the-loop follows: create task -> generate 3 to 5 title options -> persist `titleOptions` -> set `currentStep=TITLE_SELECTION` and `status=WAITING_USER_INPUT` -> user selects a title or adds requirements to regenerate titles -> selected title resumes outline generation. Only allow title selection/regeneration while the task is in `WAITING_USER_INPUT` and `TITLE_SELECTION`.
+
+Outline human-in-the-loop follows: selected title -> generate Markdown outline -> persist `outline` -> set `currentStep=OUTLINE_REVIEW` and `status=WAITING_USER_INPUT` -> user edits and confirms the outline -> confirmed outline resumes content/image/final assembly generation. Reuse the existing `article.outline` field as a JSON-serialized Markdown string; no extra migration is required.
 
 Image generation follows: select provider -> acquire `ImageAsset` -> upload to storage -> fallback to Picsum on failure. New image providers should implement `ImageService`, return `ImageAsset`, and register their method in `ImageMethodEnum`. Do not return temporary third-party image URLs as final article image URLs when COS is enabled.
 

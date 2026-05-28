@@ -300,6 +300,33 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
     @Override
+    public void saveOutlineAndWait(String taskId, ArticleState state) {
+        validateTaskId(taskId);
+        ThrowUtils.throwIf(state == null, ErrorCode.PARAMS_ERROR, "Article state cannot be null");
+        ThrowUtils.throwIf(StrUtil.isBlank(state.getOutlineMarkdown()), ErrorCode.PARAMS_ERROR,
+                "Outline cannot be blank");
+
+        Article article = getByTaskId(taskId);
+        ThrowUtils.throwIf(article == null, ErrorCode.NOT_FOUND_ERROR, "Article task does not exist");
+
+        TitleResult title = state.getSelectedTitle() == null ? state.getTitle() : state.getSelectedTitle();
+        if (title != null) {
+            article.setMainTitle(title.getMainTitle());
+            article.setSubTitle(title.getSubTitle());
+        }
+        article.setTopic(state.getTopic());
+        article.setOutline(toJson(state.getOutlineMarkdown()));
+        article.setCurrentStep(ArticleStepEnum.OUTLINE_REVIEW.getValue());
+        article.setStatus(ArticleStatusEnum.WAITING_USER_INPUT.getValue());
+        article.setErrorMessage(null);
+        article.setUpdateTime(LocalDateTime.now());
+
+        int result = articleMapper.update(article);
+        ThrowUtils.throwIf(result <= 0, ErrorCode.OPERATION_ERROR, "Save outline failed");
+        log.info("Article outline saved for review, taskId={}", taskId);
+    }
+
+    @Override
     public TitleResult selectTitleOption(String taskId, Integer titleIndex, User loginUser) {
         validateLoginUser(loginUser);
         validateTaskId(taskId);
@@ -330,6 +357,31 @@ public class ArticleServiceImpl implements ArticleService {
         ThrowUtils.throwIf(result <= 0, ErrorCode.OPERATION_ERROR, "Select title option failed");
         log.info("Article title selected, taskId={}, index={}", taskId, titleIndex);
         return selectedTitle;
+    }
+
+    @Override
+    public String confirmOutline(String taskId, String outlineMarkdown, User loginUser) {
+        validateLoginUser(loginUser);
+        validateTaskId(taskId);
+        ThrowUtils.throwIf(StrUtil.isBlank(outlineMarkdown), ErrorCode.PARAMS_ERROR,
+                "Outline cannot be blank");
+
+        Article article = getByTaskId(taskId);
+        ThrowUtils.throwIf(article == null, ErrorCode.NOT_FOUND_ERROR, "Article task does not exist");
+        validateArticleAccess(article, loginUser);
+        validateOutlineReviewState(article);
+
+        String confirmedOutline = outlineMarkdown.trim();
+        article.setOutline(toJson(confirmedOutline));
+        article.setCurrentStep(ArticleStepEnum.CONTENT.getValue());
+        article.setStatus(ArticleStatusEnum.PROCESSING.getValue());
+        article.setErrorMessage(null);
+        article.setUpdateTime(LocalDateTime.now());
+
+        int result = articleMapper.update(article);
+        ThrowUtils.throwIf(result <= 0, ErrorCode.OPERATION_ERROR, "Confirm outline failed");
+        log.info("Article outline confirmed, taskId={}, userId={}", taskId, loginUser.getId());
+        return confirmedOutline;
     }
 
     @Override
@@ -386,6 +438,12 @@ public class ArticleServiceImpl implements ArticleService {
         ThrowUtils.throwIf(!ArticleStatusEnum.WAITING_USER_INPUT.getValue().equals(article.getStatus())
                         || !ArticleStepEnum.TITLE_SELECTION.getValue().equals(article.getCurrentStep()),
                 ErrorCode.OPERATION_ERROR, "Article task is not waiting for title selection");
+    }
+
+    private void validateOutlineReviewState(Article article) {
+        ThrowUtils.throwIf(!ArticleStatusEnum.WAITING_USER_INPUT.getValue().equals(article.getStatus())
+                        || !ArticleStepEnum.OUTLINE_REVIEW.getValue().equals(article.getCurrentStep()),
+                ErrorCode.OPERATION_ERROR, "Article task is not waiting for outline review");
     }
 
     private String mergeRequirement(String currentRequirement, String additionalRequirement) {

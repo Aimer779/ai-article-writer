@@ -14,6 +14,7 @@ public enum ArticleStepEnum {
     TITLE("Title generation", "TITLE"),
     TITLE_SELECTION("Title selection", "TITLE_SELECTION"),
     OUTLINE("Outline generation", "OUTLINE"),
+    OUTLINE_REVIEW("Outline review", "OUTLINE_REVIEW"),
     CONTENT("Content generation", "CONTENT"),
     IMAGE_REQUIREMENT("Image requirement generation", "IMAGE_REQUIREMENT"),
     IMAGE_GENERATION("Image generation", "IMAGE_GENERATION"),

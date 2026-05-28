@@ -63,6 +63,10 @@ declare namespace API {
     titleIndex?: number;
   };
 
+  type ArticleOutlineConfirmRequest = {
+    outlineMarkdown?: string;
+  };
+
   type ArticleQueryRequest = {
     pageNum?: number;
     pageSize?: number;

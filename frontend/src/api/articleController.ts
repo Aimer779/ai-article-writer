@@ -67,6 +67,24 @@ export async function selectTitle(
   });
 }
 
+/** Confirm article outline POST /article/${param0}/outline/confirm */
+export async function confirmOutline(
+  params: { taskId: string },
+  body: API.ArticleOutlineConfirmRequest,
+  options?: { [key: string]: any }
+) {
+  const { taskId: param0, ...queryParams } = params;
+  return request<API.BaseResponseBoolean>(`/article/${param0}/outline/confirm`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    params: { ...queryParams },
+    data: body,
+    ...(options || {}),
+  });
+}
+
 /** Delete article POST /article/delete */
 export async function deleteArticle(
   body: API.DeleteRequest,
