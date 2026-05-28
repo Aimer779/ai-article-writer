@@ -31,11 +31,14 @@
           </a-select>
         </a-form-item>
         <a-form-item name="agentName">
-          <a-input
+          <a-select
             v-model:value="searchParams.agentName"
             allow-clear
+            show-search
+            option-filter-prop="label"
             placeholder="Agent name"
             style="width: 220px"
+            :options="agentOptions"
           />
         </a-form-item>
         <a-form-item name="taskId">
@@ -178,6 +181,15 @@ const columns = [
   { title: 'Error', dataIndex: 'errorMessage', key: 'errorMessage', ellipsis: true, width: 260 },
   { title: 'Created', dataIndex: 'createTime', key: 'createTime', sorter: true, width: 190 },
   { title: 'Action', key: 'action', fixed: 'right', width: 100 },
+]
+
+const agentOptions = [
+  { label: 'Generate titles', value: 'agent1_generate_titles' },
+  { label: 'Generate outline', value: 'agent2_generate_outline' },
+  { label: 'Generate content', value: 'agent3_generate_content' },
+  { label: 'Analyze image requirements', value: 'agent4_analyze_image_requirements' },
+  { label: 'Generate images', value: 'agent5_generate_images' },
+  { label: 'Assemble full content', value: 'agent6_assemble_full_content' },
 ]
 
 const normalizeStatus = (status?: string) => (status || '').toUpperCase()
